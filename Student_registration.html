@@ -69,7 +69,16 @@ select{
   background-repeat:no-repeat; background-position:right 16px center; padding-right:40px; cursor:pointer;
 }
 select:invalid{ color:#6f6555; }
-select option{ color:#1b1712; background:#f3ecdd; }
+select option{ color:var(--text); background:#211f1a; }
+select option:checked, select option:hover{ background:var(--gold-deep); color:#f5f0e4; }
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus{
+  -webkit-text-fill-color:var(--text);
+  caret-color:var(--text);
+  transition:background-color 9999s ease-in-out 0s;
+  box-shadow:0 0 0 1000px rgba(255,255,255,0.03) inset;
+}
 input:hover, select:hover{ border-color:rgba(196,168,110,0.32); }
 input:focus, select:focus{ border-color:var(--gold); background:rgba(196,168,110,0.05); box-shadow:0 0 0 3px rgba(196,168,110,0.1); }
 input.invalid{ border-color:var(--error); }
@@ -199,6 +208,8 @@ button.submit:disabled{ opacity:0.5; cursor:not-allowed; box-shadow:none; }
       Sent to your WhatsApp
     </div>
   </div>
+
+  <div class="powered-by">Powered by <span>Milestones Group</span></div>
 </div>
 
 <script>
