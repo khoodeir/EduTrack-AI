@@ -885,20 +885,17 @@
   let history = [];
   const HISTORY_LIMIT = 8;
 
-  // Session state — scanning is gated behind an active session.
+  // Session state — attendance scanning is gated behind an active session.
+  // Payment scanning is allowed to run even without a session (see canScan()).
   let sessionActive = false;
   let sessionStartTime = null;
   let sessionTimerInterval = null;
 
-  // Search modal — which field the typed query is matched against.
-  let searchType = "name";
-  const SEARCH_PLACEHOLDERS = {
-    name: "Student name…",
-    id: "Student Number…",
-    qr: "Paste or type QR code…"
-  };
-  let searchScanner = null;
-  let searchScannerRunning = false;
+  // Whether scanning is currently allowed: either a session is running,
+  // or we're in Payment mode (which doesn't require a session).
+  function canScan(){
+    return sessionActive || currentMode === "payment";
+  }
 
   /* ---------- Toast ---------- */
   function showToast(message){
@@ -1041,11 +1038,19 @@
 
     stopScanner();
     sending = false;
+
+    // If we're in Payment mode, scanning is still allowed without a session —
+    // so keep the camera frame active and immediately restart the scanner.
+    // Attendance mode still requires a session, so it goes back to the placeholder.
     const frame = document.getElementById("scanFrame");
-    frame.classList.add("session-off");
-    document.getElementById("reader").innerHTML = "";
-    document.getElementById("cooldownBadge").classList.remove("show");
-    setStatus("Session ended — start a new session to resume scanning", "wait");
+    if(canScan()){
+      document.getElementById("cooldownBadge").classList.remove("show");
+    } else {
+      frame.classList.add("session-off");
+      document.getElementById("reader").innerHTML = "";
+      document.getElementById("cooldownBadge").classList.remove("show");
+      setStatus("Session ended — start a new session to resume scanning", "wait");
+    }
     renderSessionBar();
 
     document.getElementById("gradeLevel").disabled = false;
@@ -1070,6 +1075,10 @@
     }).catch(()=>{});
 
     sessionStartTime = null;
+
+    if(canScan()){
+      startScanner();
+    }
   }
 
   /* ---------- Mode ---------- */
@@ -1092,8 +1101,26 @@
       }
     }
 
+    // Payment mode can scan without an active session; Attendance mode can't.
+    // When there's no session running, switching modes needs to show/hide the
+    // camera and start/stop it accordingly.
+    if(!sessionActive){
+      const frame = document.getElementById("scanFrame");
+      if(mode === "payment"){
+        frame.classList.remove("session-off");
+        startScanner();
+      } else {
+        stopScanner();
+        sending = false;
+        if(resumeTimer){ clearTimeout(resumeTimer); resumeTimer = null; }
+        frame.classList.add("session-off");
+        document.getElementById("reader").innerHTML = "";
+        document.getElementById("cooldownBadge").classList.remove("show");
+      }
+    }
+
     if(!sending){
-      setStatus(sessionActive ? "Waiting for QR code…" : "Start the session to begin scanning", "wait");
+      setStatus(canScan() ? "Waiting for QR code…" : "Start the session to begin scanning", "wait");
     }
   }
 
@@ -1251,13 +1278,13 @@
   // Manual "scan next" — also used by the auto-resume timer.
   function scanNext(){
     if(resumeTimer){ clearTimeout(resumeTimer); resumeTimer = null; }
-    if(!sessionActive) return;
+    if(!canScan()) return;
     startScanner();
   }
 
   /* ---------- Scanning ---------- */
   function onScanSuccess(decodedText){
-    if(sending || !sessionActive) return;
+    if(sending || !canScan()) return;
 
     const cooldownRemaining = isOnCooldown(decodedText);
     if(cooldownRemaining > 0){
@@ -1303,9 +1330,6 @@
         const s = data.student || {};
         renderResultCard(currentMode, s, { month, amount }, true);
         pushHistory(s.name || "Student", s.time || "", true);
-        if(currentMode === "payment"){
-          document.getElementById("payAmount").value = "";
-        }
         beep("success");
       } else {
         const msg = data.message || "Something went wrong";
@@ -1343,7 +1367,7 @@
   }
 
   function startScanner(){
-    if(!sessionActive) return;
+    if(!canScan()) return;
     sending = false;
     document.getElementById("paymentHint").textContent = "";
     setStatus("Waiting for QR code…", "wait");
