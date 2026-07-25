@@ -885,6 +885,16 @@
   let history = [];
   const HISTORY_LIMIT = 8;
 
+  // Search feature variables
+  let searchType = "name";
+  let searchScanner = null;
+  let searchScannerRunning = false;
+  const SEARCH_PLACEHOLDERS = {
+    name: "Student name…",
+    id: "Student number…",
+    qr: ""
+  };
+
   // Session state — attendance scanning is gated behind an active session.
   // Payment scanning is allowed to run even without a session (see canScan()).
   let sessionActive = false;
