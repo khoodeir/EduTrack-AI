@@ -386,7 +386,7 @@
       </div>
 
       <div class="chart-card" style="margin-bottom:28px;">
-        <div class="section-title">Monthly Revenue <span class="tag" id="revenueSourceTag">monthly_statistics</span></div>
+        <div class="section-title">Monthly Revenue <span class="tag" id="revenueSourceTag">monthly_snapshots</span></div>
         <div class="chart-box" style="height:190px;">
           <canvas id="revenueChart"></canvas>
           <div class="chart-empty" id="revChartEmpty">No monthly revenue recorded yet</div>
@@ -526,7 +526,6 @@
   const SCHEMA = {
     attendanceTable: (g) => `attendance_${g}_secondary`,
     paymentsTable: (g) => `payments_${g}_secondary`,
-    statsTable: "monthly_statistics",
     col: {
       fullName: "full_name",
       qrCode: "qr_code",
@@ -537,11 +536,7 @@
       lastAttendance: "last_attendance",
       amountPaid: "amount_paid",
       paymentStatus: "payment_status",
-      lastPaymentDate: "last_payment_date",
-      statsGrade: "grade",
-      statsMonth: "month",
-      statsYear: "year",
-      statsRevenue: "revenue"
+      lastPaymentDate: "last_payment_date"
     }
   };
 
@@ -631,11 +626,11 @@
 
   async function fetchStats(){
     try{
-      const { data, error } = await supa.from(SCHEMA.statsTable).select("*");
+      const { data, error } = await supa.from(HIST_SCHEMA.table).select("*");
       if(error) throw error;
       return data || [];
     }catch(e){
-      return []; // stats table is optional — dashboard still works without it
+      return []; // monthly_snapshots table is optional — dashboard still works without it
     }
   }
 
@@ -802,11 +797,15 @@
     const emptyEl = document.getElementById("revChartEmpty");
     destroyChart("rev");
     if(!chartLibReady()){ canvas.style.display="none"; emptyEl.textContent="Chart library failed to load — try refreshing"; emptyEl.classList.add("show"); return; }
-    const col = SCHEMA.col;
+    const col = HIST_SCHEMA.col;
 
     let rows = combined.statsRows || [];
     if(currentGrade !== "all"){
-      rows = rows.filter(r => r[col.statsGrade] === currentGrade);
+      rows = rows.filter(r => r[col.grade] === currentGrade);
+    } else {
+      // "all" totals are saved as their own row (grade = "all"); exclude them here
+      // so the grouped bars only sum the three real grades.
+      rows = rows.filter(r => r[col.grade] !== "all");
     }
     if(!rows.length){ canvas.style.display = "none"; emptyEl.classList.add("show"); return; }
 
@@ -815,11 +814,11 @@
       const byGradeMonth = {}; // { grade: { "YYYY-MM": revenue } }
       const monthKeys = new Set();
       rows.forEach(r => {
-        const g = r[col.statsGrade];
-        const key = `${r[col.statsYear]}-${String(r[col.statsMonth]).padStart(2,"0")}`;
+        const g = r[col.grade];
+        const key = `${r[col.year]}-${String(r[col.month]).padStart(2,"0")}`;
         monthKeys.add(key);
         byGradeMonth[g] = byGradeMonth[g] || {};
-        byGradeMonth[g][key] = (byGradeMonth[g][key] || 0) + (Number(r[col.statsRevenue]) || 0);
+        byGradeMonth[g][key] = (byGradeMonth[g][key] || 0) + (Number(r[col.revenue]) || 0);
       });
       const sortedMonths = Array.from(monthKeys).sort().slice(-6);
       if(!sortedMonths.length){ canvas.style.display = "none"; emptyEl.classList.add("show"); return; }
@@ -852,8 +851,8 @@
       // Single grade: one bar per month, as before.
       const byKey = {};
       rows.forEach(r => {
-        const key = `${r[col.statsYear]}-${String(r[col.statsMonth]).padStart(2,"0")}`;
-        byKey[key] = (byKey[key] || 0) + (Number(r[col.statsRevenue]) || 0);
+        const key = `${r[col.year]}-${String(r[col.month]).padStart(2,"0")}`;
+        byKey[key] = (byKey[key] || 0) + (Number(r[col.revenue]) || 0);
       });
       const sortedKeys = Object.keys(byKey).sort().slice(-6);
       if(!sortedKeys.length){ canvas.style.display = "none"; emptyEl.classList.add("show"); return; }
