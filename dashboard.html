@@ -244,6 +244,42 @@
   .footer-note{ text-align:center; font-size:11.5px; color:var(--muted); margin-top:30px; display:flex; align-items:center; justify-content:center; gap:7px; }
   .footer-note::before{ content:"🔒"; font-size:11px; }
 
+  /* ===== History / Archive tab ===== */
+  .tab.history-tab{ margin-inline-start:14px; }
+  .tab.history-tab::before{
+    content:"🗂 "; font-size:11px;
+  }
+  .hist-banner{
+    display:none; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;
+    background:var(--gold-soft); border:1px solid var(--line); border-radius:12px;
+    padding:14px 18px; margin-bottom:22px;
+  }
+  .hist-banner .msg{ font-size:12.5px; color:var(--ink-2); font-weight:600; }
+  .hist-banner .msg span{ display:block; font-size:11px; color:var(--muted); font-weight:400; margin-top:2px; }
+  .hist-toolbar{
+    display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    margin-bottom:22px;
+  }
+  .hist-toolbar .left{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .hist-select{
+    padding:10px 14px; border-radius:9px; border:1px solid var(--line); background:var(--card);
+    color:var(--ink); font-family:'Inter',sans-serif; font-size:12.5px; font-weight:600; cursor:pointer; outline:none;
+  }
+  .save-snapshot-btn{
+    display:flex; align-items:center; gap:8px; padding:10px 18px; border-radius:9px; border:none;
+    background:linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%); color:#241a05;
+    font-family:'Inter',sans-serif; font-weight:700; font-size:12.5px; cursor:pointer;
+    box-shadow:0 6px 16px rgba(120,95,40,0.2); transition:all .15s ease;
+  }
+  .save-snapshot-btn:hover{ filter:brightness(1.06); transform:translateY(-1px); }
+  .save-snapshot-btn:disabled{ opacity:.6; cursor:default; transform:none; }
+  .delta-cards{ display:grid; grid-template-columns:repeat(4,1fr); gap:13px; margin-bottom:28px; }
+  .delta-badge{ font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:3px; margin-top:8px; }
+  .delta-badge.up{ color:var(--success); }
+  .delta-badge.down{ color:var(--error); }
+  .delta-badge.flat{ color:var(--muted); }
+  .hist-table-note{ font-size:11px; color:var(--muted); margin-bottom:12px; }
+
   @media (max-width:900px){
     .kpi-grid{ grid-template-columns:repeat(2,1fr); }
     .two-col, .list-grid{ grid-template-columns:1fr; }
@@ -283,9 +319,11 @@
     <div class="tab" data-grade="first">First Secondary</div>
     <div class="tab" data-grade="second">Second Secondary</div>
     <div class="tab" data-grade="third">Third Secondary</div>
+    <div class="tab history-tab" id="historyTab">Monthly History</div>
   </div>
 
   <div class="tab-panel">
+    <div id="dashboardView">
     <div class="state-msg show" id="loadingMsg">
       <span class="spinner"></span> Loading data from Supabase…
     </div>
@@ -398,6 +436,79 @@
       </div>
 
     </div>
+    </div>
+
+    <div id="historyView" style="display:none;">
+      <div class="state-msg show" id="histLoadingMsg">
+        <span class="spinner"></span> Loading monthly history…
+      </div>
+      <div class="state-msg err" id="histErrorMsg"></div>
+
+      <div class="content" id="histContent">
+
+        <div class="hist-banner" id="histBanner">
+          <div class="msg">
+            No snapshot saved yet for the current month.
+            <span>Save it before the month rolls over, so this month's numbers aren't lost.</span>
+          </div>
+          <button class="save-snapshot-btn" onclick="saveCurrentMonthSnapshot()">💾 Save current month now</button>
+        </div>
+
+        <div class="hist-toolbar">
+          <div class="left">
+            <select class="hist-select" id="histGradeSelect" onchange="onHistGradeChange()">
+              <option value="all">All Grades</option>
+              <option value="first">First Secondary</option>
+              <option value="second">Second Secondary</option>
+              <option value="third">Third Secondary</option>
+            </select>
+          </div>
+          <button class="save-snapshot-btn" id="saveSnapshotBtn" onclick="saveCurrentMonthSnapshot()">💾 Save Current Month</button>
+        </div>
+
+        <div class="delta-cards" id="deltaCards"></div>
+
+        <div class="two-col">
+          <div class="chart-card">
+            <div class="section-title">Attendance & Collection Rate <span class="tag">Trend</span></div>
+            <div class="chart-box">
+              <canvas id="histRateChart"></canvas>
+              <div class="chart-empty" id="histRateEmpty">No history saved yet</div>
+            </div>
+          </div>
+          <div class="chart-card">
+            <div class="section-title">Revenue by Month</div>
+            <div class="chart-box">
+              <canvas id="histRevenueChart"></canvas>
+              <div class="chart-empty" id="histRevenueEmpty">No history saved yet</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="section-title">Month-by-Month Comparison</div>
+          <div class="hist-table-note">Each row is a saved snapshot. Change vs. shows the difference from the previous saved month.</div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Month</th>
+                  <th>Students</th>
+                  <th>Attendance Rate</th>
+                  <th>Collection Rate</th>
+                  <th>Revenue</th>
+                  <th>Paid</th>
+                  <th>Unpaid</th>
+                </tr>
+              </thead>
+              <tbody id="histTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
   </div>
 
   <div class="footer-note">Data is read live from Supabase using a read-only anon key</div>
@@ -448,13 +559,24 @@
   let charts = {};
 
   /* ---------- Tabs ---------- */
-  document.querySelectorAll("#gradeTabs .tab").forEach(tab => {
+  document.querySelectorAll("#gradeTabs .tab[data-grade]").forEach(tab => {
     tab.addEventListener("click", () => {
       document.querySelectorAll("#gradeTabs .tab").forEach(t => t.classList.remove("active"));
       tab.classList.add("active");
       currentGrade = tab.dataset.grade;
+      document.getElementById("dashboardView").style.display = "";
+      document.getElementById("historyView").style.display = "none";
       loadDashboard();
     });
+  });
+
+  document.getElementById("historyTab").addEventListener("click", () => {
+    document.querySelectorAll("#gradeTabs .tab").forEach(t => t.classList.remove("active"));
+    document.getElementById("historyTab").classList.add("active");
+    document.getElementById("dashboardView").style.display = "none";
+    document.getElementById("historyView").style.display = "";
+    document.getElementById("histGradeSelect").value = historyGradeFilter;
+    loadHistory();
   });
 
   function setPayFilter(f){
@@ -834,6 +956,258 @@
           <td>${s.parentPhone ? `<a class="phone-link" href="tel:${s.parentPhone}">${s.parentPhone}</a>` : "—"}</td>
           <td>${hasPaymentRecord ? `<span class="chip ${paid ? 'paid' : 'unpaid'}">${paid ? 'Paid' : 'Unpaid'}</span>` : "—"}</td>
           <td>${s.lastAttendance || "—"}</td>
+        </tr>`;
+    }).join("");
+  }
+
+  /* ============================================================
+     MONTHLY HISTORY / ARCHIVE
+     Needs a "monthly_snapshots" table in Supabase with an INSERT +
+     SELECT (+ DELETE, for re-saving the same month) policy for the
+     anon role. Suggested columns:
+       year int, month int, grade text,
+       students_count int, attendance_rate numeric,
+       total_revenue numeric, paid_count int, unpaid_count int,
+       collection_rate numeric, created_at timestamptz default now()
+     ============================================================ */
+  const HIST_SCHEMA = {
+    table: "monthly_snapshots",
+    col: {
+      year: "year",
+      month: "month",
+      grade: "grade",
+      students: "students_count",
+      attendanceRate: "attendance_rate",
+      revenue: "total_revenue",
+      paidCount: "paid_count",
+      unpaidCount: "unpaid_count",
+      collectionRate: "collection_rate"
+    }
+  };
+
+  let historyRows = [];
+  let historyGradeFilter = "all";
+  let histCharts = {};
+
+  function onHistGradeChange(){
+    historyGradeFilter = document.getElementById("histGradeSelect").value;
+    renderHistory();
+  }
+
+  function monthLabel(y, m){
+    return new Date(y, m - 1, 1).toLocaleString("en-US", { month: "short", year: "numeric" });
+  }
+
+  function computeKpis(students){
+    const studentsCount = students.length;
+    const pcts = students.map(s => pct(s.attendanceCount, s.absenceCount)).filter(v => v != null);
+    const attendanceRate = pcts.length ? Math.round(pcts.reduce((a,b)=>a+b,0) / pcts.length) : 0;
+    const paid = students.filter(s => isPaid(s.paymentStatus));
+    const withRecord = students.filter(s => s.paymentStatus !== "");
+    const unpaidCount = withRecord.length - paid.length;
+    const collectionRate = withRecord.length ? Math.round((paid.length / withRecord.length) * 100) : 0;
+    const revenue = paid.reduce((sum, s) => sum + (s.amountPaid || 0), 0);
+    return { studentsCount, attendanceRate, revenue, paidCount: paid.length, unpaidCount, collectionRate };
+  }
+
+  async function computeAllGradeSnapshots(){
+    const results = await Promise.all(GRADES.map(fetchGrade));
+    const perGrade = {};
+    GRADES.forEach((g, i) => { perGrade[g] = computeKpis(results[i]); });
+    perGrade.all = computeKpis(results.flat());
+    return perGrade;
+  }
+
+  async function saveCurrentMonthSnapshot(){
+    const btns = document.querySelectorAll(".save-snapshot-btn");
+    btns.forEach(b => { b.disabled = true; b.dataset.origText = b.textContent; b.textContent = "Saving…"; });
+    try{
+      const now = new Date();
+      const year = now.getFullYear(), month = now.getMonth() + 1;
+      const perGrade = await computeAllGradeSnapshots();
+      const col = HIST_SCHEMA.col;
+      const rows = Object.keys(perGrade).map(g => ({
+        [col.year]: year,
+        [col.month]: month,
+        [col.grade]: g,
+        [col.students]: perGrade[g].studentsCount,
+        [col.attendanceRate]: perGrade[g].attendanceRate,
+        [col.revenue]: perGrade[g].revenue,
+        [col.paidCount]: perGrade[g].paidCount,
+        [col.unpaidCount]: perGrade[g].unpaidCount,
+        [col.collectionRate]: perGrade[g].collectionRate
+      }));
+
+      // Clear any previous snapshot for this month first, so saving twice just updates it.
+      await supa.from(HIST_SCHEMA.table).delete().eq(col.year, year).eq(col.month, month);
+      const { error } = await supa.from(HIST_SCHEMA.table).insert(rows);
+      if(error) throw error;
+
+      await loadHistory();
+    }catch(err){
+      console.error(err);
+      alert("Couldn't save this month's snapshot: " + (err.message || err) +
+        "\n\nMake sure a \"monthly_snapshots\" table exists with INSERT/DELETE/SELECT policies for the anon role.");
+    }finally{
+      btns.forEach(b => { b.disabled = false; b.textContent = b.dataset.origText || "💾 Save Current Month"; });
+    }
+  }
+
+  async function loadHistory(){
+    const loadingEl = document.getElementById("histLoadingMsg");
+    const errorEl = document.getElementById("histErrorMsg");
+    const contentEl = document.getElementById("histContent");
+    loadingEl.classList.add("show");
+    errorEl.classList.remove("show");
+    contentEl.classList.remove("show");
+
+    try{
+      const { data, error } = await supa.from(HIST_SCHEMA.table).select("*");
+      if(error) throw error;
+      historyRows = data || [];
+      renderHistory();
+      contentEl.classList.add("show");
+    }catch(err){
+      console.error(err);
+      errorEl.innerHTML = `
+        <div style="font-weight:700;">Couldn't load monthly history</div>
+        <div style="font-size:12px; max-width:520px;">
+          ${err.message || err}<br><br>
+          This most likely means the "monthly_snapshots" table doesn't exist yet, or the anon role
+          doesn't have a SELECT policy for it. Create the table with the columns listed in the code
+          comments above, and add read/write policies for the anon role.
+        </div>`;
+      errorEl.classList.add("show");
+    }finally{
+      loadingEl.classList.remove("show");
+    }
+  }
+
+  function renderHistory(){
+    const col = HIST_SCHEMA.col;
+    const rows = historyRows
+      .filter(r => r[col.grade] === historyGradeFilter)
+      .sort((a,b) => (a[col.year]-b[col.year]) || (a[col.month]-b[col.month]));
+
+    // Banner: warn if the current month hasn't been archived yet.
+    const now = new Date();
+    const curY = now.getFullYear(), curM = now.getMonth() + 1;
+    const hasCurrent = historyRows.some(r => r[col.year] === curY && r[col.month] === curM);
+    document.getElementById("histBanner").style.display = hasCurrent ? "none" : "flex";
+
+    renderDeltaCards(rows);
+    renderHistCharts(rows);
+    renderHistTable(rows);
+  }
+
+  function deltaBadge(curr, prev, suffix){
+    if(prev == null || curr == null) return "";
+    const diff = curr - prev;
+    if(diff === 0) return `<span class="delta-badge flat">— no change</span>`;
+    const dir = diff > 0 ? "up" : "down";
+    const arrow = diff > 0 ? "▲" : "▼";
+    return `<span class="delta-badge ${dir}">${arrow} ${Math.abs(diff)}${suffix || ""} vs last month</span>`;
+  }
+
+  function renderDeltaCards(rows){
+    const col = HIST_SCHEMA.col;
+    const el = document.getElementById("deltaCards");
+    const last = rows[rows.length - 1];
+    const prev = rows[rows.length - 2];
+    if(!last){ el.innerHTML = `<div class="empty-note" style="grid-column:1/-1;">No saved months yet for this grade — save the current month to start tracking.</div>`; return; }
+
+    const cards = [
+      { label: "Students", val: last[col.students], sub: monthLabel(last[col.year], last[col.month]), badge: deltaBadge(last[col.students], prev ? prev[col.students] : null, "") },
+      { label: "Attendance Rate", val: `${last[col.attendanceRate]}%`, sub: "average", badge: deltaBadge(last[col.attendanceRate], prev ? prev[col.attendanceRate] : null, "%") },
+      { label: "Revenue", val: fmtEGP(last[col.revenue]), sub: `${last[col.paidCount]} paid`, badge: deltaBadge(last[col.revenue], prev ? prev[col.revenue] : null, " EGP") },
+      { label: "Collection Rate", val: `${last[col.collectionRate]}%`, sub: `${last[col.unpaidCount]} unpaid`, badge: deltaBadge(last[col.collectionRate], prev ? prev[col.collectionRate] : null, "%") }
+    ];
+    el.innerHTML = cards.map(c => `
+      <div class="kpi-card">
+        <div class="kpi-label">${c.label}</div>
+        <div class="kpi-value num">${c.val}</div>
+        <div class="kpi-sub">${c.sub}</div>
+        ${c.badge}
+      </div>
+    `).join("");
+  }
+
+  function destroyHistChart(key){ if(histCharts[key]){ histCharts[key].destroy(); histCharts[key] = null; } }
+
+  function renderHistCharts(rows){
+    const col = HIST_SCHEMA.col;
+    const rateCanvas = document.getElementById("histRateChart");
+    const rateEmpty = document.getElementById("histRateEmpty");
+    const revCanvas = document.getElementById("histRevenueChart");
+    const revEmpty = document.getElementById("histRevenueEmpty");
+    destroyHistChart("rate");
+    destroyHistChart("rev");
+
+    if(!chartLibReady() || !rows.length){
+      rateCanvas.style.display = "none"; rateEmpty.classList.add("show");
+      revCanvas.style.display = "none"; revEmpty.classList.add("show");
+      return;
+    }
+    rateCanvas.style.display = "block"; rateEmpty.classList.remove("show");
+    revCanvas.style.display = "block"; revEmpty.classList.remove("show");
+
+    const labels = rows.map(r => monthLabel(r[col.year], r[col.month]));
+
+    histCharts.rate = new Chart(rateCanvas, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          { label: "Attendance Rate", data: rows.map(r => r[col.attendanceRate]), borderColor: "rgba(185,129,47,0.9)", backgroundColor: "rgba(185,129,47,0.15)", fill: true, tension: 0.3 },
+          { label: "Collection Rate", data: rows.map(r => r[col.collectionRate]), borderColor: "rgba(46,125,82,0.9)", backgroundColor: "rgba(46,125,82,0.12)", fill: true, tension: 0.3 }
+        ]
+      },
+      options: {
+        maintainAspectRatio: false,
+        plugins: { legend: { position: "bottom", labels: { font: { family: "Inter", size: 11 }, padding: 12 } }, tooltip: { callbacks: { label: c => `${c.dataset.label}: ${c.raw}%` } } },
+        scales: {
+          y: { beginAtZero: true, max: 100, ticks: { callback: v => v + "%", font: { size: 10 } }, grid: { color: "rgba(185,129,47,0.08)" } },
+          x: { ticks: { font: { size: 10 } }, grid: { display: false } }
+        }
+      }
+    });
+
+    histCharts.rev = new Chart(revCanvas, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [{ label: "Revenue", data: rows.map(r => r[col.revenue]), backgroundColor: "rgba(185,129,47,0.65)", borderRadius: 6, maxBarThickness: 40 }]
+      },
+      options: {
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmtEGP(c.raw) } } },
+        scales: {
+          y: { beginAtZero: true, ticks: { font: { size: 10 } }, grid: { color: "rgba(185,129,47,0.08)" } },
+          x: { ticks: { font: { size: 10 } }, grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  function renderHistTable(rows){
+    const col = HIST_SCHEMA.col;
+    const body = document.getElementById("histTableBody");
+    if(!rows.length){
+      body.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--muted); padding:24px;">No saved months yet</td></tr>`;
+      return;
+    }
+    body.innerHTML = rows.slice().reverse().map((r, idx) => {
+      const olderRows = rows.slice(0, rows.length - 1 - idx);
+      const prev = olderRows.length ? olderRows[olderRows.length - 1] : null;
+      return `
+        <tr>
+          <td style="font-weight:600;">${monthLabel(r[col.year], r[col.month])}</td>
+          <td>${r[col.students]}</td>
+          <td>${r[col.attendanceRate]}% ${deltaBadge(r[col.attendanceRate], prev ? prev[col.attendanceRate] : null, "%")}</td>
+          <td>${r[col.collectionRate]}% ${deltaBadge(r[col.collectionRate], prev ? prev[col.collectionRate] : null, "%")}</td>
+          <td>${fmtEGP(r[col.revenue])} ${deltaBadge(r[col.revenue], prev ? prev[col.revenue] : null, " EGP")}</td>
+          <td>${r[col.paidCount]}</td>
+          <td>${r[col.unpaidCount]}</td>
         </tr>`;
     }).join("");
   }
