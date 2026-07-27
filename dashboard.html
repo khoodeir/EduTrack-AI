@@ -66,12 +66,23 @@
   }
   .brand h1{ font-family:'Cormorant Garamond',serif; font-size:26px; font-weight:700; color:var(--gold-2); letter-spacing:-0.01em; }
   .brand p{ font-size:12.5px; color:var(--muted); margin-top:2px; }
-  .top-actions{ display:flex; align-items:center; gap:12px; }
+  .top-actions{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
   .updated-note{ font-size:11.5px; color:var(--muted); display:flex; align-items:center; gap:6px; }
   .updated-note::before{
     content:""; width:6px; height:6px; border-radius:50%; background:var(--success);
     box-shadow:0 0 0 3px var(--success-soft);
   }
+  .scanner-btn{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:11px 18px; border-radius:10px;
+    background:linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%);
+    color:#241a05; font-family:'Inter',sans-serif; font-size:13px; font-weight:700;
+    text-decoration:none; box-shadow:0 6px 16px rgba(185,129,47,0.28);
+    transition:transform .15s ease, box-shadow .15s ease;
+    white-space:nowrap;
+  }
+  .scanner-btn:hover{ transform:translateY(-1px); box-shadow:0 8px 20px rgba(185,129,47,0.35); }
+  .scanner-btn svg{ width:16px; height:16px; flex-shrink:0; }
   .refresh-btn{
     display:flex; align-items:center; gap:8px;
     padding:11px 20px; border-radius:10px; border:none;
@@ -307,6 +318,15 @@
   </div>
   <div class="top-actions">
     <span class="updated-note" id="updatedNote"></span>
+    <a class="scanner-btn" href="https://khoodeir.github.io/EduTrack-AI/">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/>
+        <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/>
+        <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/>
+        <path d="M14 14h7v7h-7z" stroke="currentColor" stroke-width="1.8"/>
+      </svg>
+      Attendance Scanner
+    </a>
     <button class="refresh-btn" id="refreshBtn" onclick="loadDashboard()">
       <span class="spin">↻</span> Refresh data
     </button>
