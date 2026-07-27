@@ -781,7 +781,7 @@
       return;
     }
     closeDashboardGate();
-    window.open(DASHBOARD_URL, "_blank");
+    window.location.href = DASHBOARD_URL;
   }
 
   function checkDashboardPassword(){
@@ -789,7 +789,7 @@
     const stored = getStoredPasswordHash();
     if(stored && simpleHash(entered) === stored){
       closeDashboardGate();
-      window.open(DASHBOARD_URL, "_blank");
+      window.location.href = DASHBOARD_URL;
     } else {
       document.getElementById('dashboardGateError').textContent = "Wrong password";
     }
