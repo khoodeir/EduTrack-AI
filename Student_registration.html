@@ -495,7 +495,13 @@ async function sendMessage(){
 
     const data = await res.json();
 
-    addMessage(data.reply || data.message || "No response","bot");
+    addMessage(
+    data.output ||
+    data.reply ||
+    data.message ||
+    "No response",
+    "bot"
+);
 
   }catch(e){
 
