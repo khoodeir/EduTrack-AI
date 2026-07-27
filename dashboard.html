@@ -9,6 +9,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<!-- Speed up navigation to the other two pages: fetch them into the browser cache in the background -->
+<link rel="prefetch" href="index.html">
+<link rel="prefetch" href="student_search.html">
+<!-- Warm up connections to the CDNs this page and the linked pages depend on -->
+<link rel="preconnect" href="https://unpkg.com">
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://evbjulsahncllewwvlxp.supabase.co">
 <style>
   :root{
     --ink:#2c2116;
@@ -318,7 +326,7 @@
   </div>
   <div class="top-actions">
     <span class="updated-note" id="updatedNote"></span>
-    <a class="scanner-btn" href="https://khoodeir.github.io/EduTrack-AI/">
+    <a class="scanner-btn" href="index.html">
       <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/>
         <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/>
