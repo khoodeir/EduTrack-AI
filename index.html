@@ -869,8 +869,11 @@
 
   // Session state — attendance scanning is gated behind an active session.
   // Payment scanning is allowed to run even without a session (see canScan()).
-  let sessionActive = false;
-  let sessionStartTime = null;
+  let sessionActive = localStorage.getItem("sessionActive") === "true";
+
+  let sessionStartTime = localStorage.getItem("sessionStartTime")
+  ? Number(localStorage.getItem("sessionStartTime"))
+  : null;
   let sessionTimerInterval = null;
 
   // Whether scanning is currently allowed: either a session is running,
@@ -981,6 +984,9 @@
     if(sessionActive) return;
     sessionActive = true;
     sessionStartTime = Date.now();
+    localStorage.setItem("sessionActive", "true");
+    localStorage.setItem("sessionStartTime", sessionStartTime);
+    localStorage.setItem("sessionGrade", currentGrade);
     renderSessionBar();
     tickSessionTimer();
     if(sessionTimerInterval) clearInterval(sessionTimerInterval);
@@ -1010,6 +1016,9 @@
   function endSession(){
     if(!sessionActive) return;
     sessionActive = false;
+    localStorage.removeItem("sessionActive");
+    localStorage.removeItem("sessionStartTime");
+    localStorage.removeItem("sessionGrade");
     if(sessionTimerInterval){ clearInterval(sessionTimerInterval); sessionTimerInterval = null; }
     if(resumeTimer){ clearTimeout(resumeTimer); resumeTimer = null; }
 
@@ -1052,6 +1061,9 @@
     }).catch(()=>{});
 
     sessionStartTime = null;
+    localStorage.removeItem("sessionActive");
+    localStorage.removeItem("sessionStartTime");
+    localStorage.removeItem("sessionGrade");
 
     if(canScan()){
       startScanner();
@@ -1360,6 +1372,20 @@
 
   applySettings();
   renderSessionBar();
+  if (sessionActive) {
+    currentGrade = localStorage.getItem("sessionGrade") || currentGrade;
+
+    document.getElementById("gradeLevel").value = currentGrade;
+    document.getElementById("gradeLevel").disabled = true;
+    document.getElementById("gradeLockHint").classList.add("show");
+    document.getElementById("gradeLockOverlay").classList.add("show");
+
+    tickSessionTimer();
+    sessionTimerInterval = setInterval(tickSessionTimer, 1000);
+
+    document.getElementById("scanFrame").classList.remove("session-off");
+    startScanner();
+}
 </script>
 </body>
 </html>
