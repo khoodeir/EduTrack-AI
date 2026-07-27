@@ -10,6 +10,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Speed up navigation to the other two pages: fetch them into the browser cache in the background -->
+<link rel="prefetch" href="dashboard.html">
+<link rel="prefetch" href="student_search.html">
+<!-- Warm up connections to the CDNs this page and the linked pages depend on -->
+<link rel="preconnect" href="https://unpkg.com">
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://evbjulsahncllewwvlxp.supabase.co">
 <style>
   :root{
     --accent:#b9812f;
@@ -533,7 +541,7 @@
   </div>
 
   <div class="toolbar">
-    <button type="button" class="tool-btn" onclick="window.location.href='https://khoodeir.github.io/EduTrack-AI/student_search.html'">🔍 Search Student</button>
+    <button type="button" class="tool-btn" onclick="window.location.href='student_search.html'">🔍 Search Student</button>
     <button type="button" class="tool-btn" onclick="openDashboardGate()">📊 Dashboard</button>
   </div>
 
@@ -690,7 +698,7 @@
      with access to the page source. For real security, protect the
      dashboard page itself (e.g. a login on khoodeir.github.io).
   */
-  const DASHBOARD_URL = "https://khoodeir.github.io/EduTrack-AI/dashboard";
+  const DASHBOARD_URL = "dashboard.html";
   const DASH_PW_KEY = "scanner_dashboard_pw_hash";
 
   // Small non-cryptographic hash — just avoids storing the password in plain text.
