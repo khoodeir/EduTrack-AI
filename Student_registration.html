@@ -55,6 +55,7 @@ h1{
 
 label{ display:flex; align-items:center; gap:4px; font-weight:600; font-size:13px; margin-bottom:9px; color:var(--gold-light); text-transform:uppercase; letter-spacing:0.6px; }
 label .req{ color:var(--error); text-transform:none; }
+label .note{ color:var(--muted); font-size:10.5px; font-weight:500; text-transform:none; letter-spacing:0.2px; }
 .field{ margin-bottom:22px; }
 
 input[type="text"], input[type="tel"], select{
@@ -150,28 +151,28 @@ button.submit:disabled{ opacity:0.5; cursor:not-allowed; box-shadow:none; }
 
   <form id="regForm" novalidate>
     <div class="field" id="fullNameField">
-      <label for="fullName">Full Name <span class="req">*</span></label>
+      <label for="fullName">Full Name</label>
       <input type="text" id="fullName" name="fullName" placeholder="Enter student's full name" required>
       <div class="hint">Letters only, no numbers or symbols</div>
       <div class="error-msg">Full name must contain letters only</div>
     </div>
 
     <div class="field" id="studentPhoneField">
-      <label for="studentPhone">Student Phone <span class="req">*</span></label>
+      <label for="studentPhone">Student Phone <span class="note">(Must have WhatsApp)</span></label>
       <input type="tel" id="studentPhone" name="studentPhone" inputmode="numeric" maxlength="11" placeholder="01xxxxxxxxx" required>
       <div class="hint">11 digits, starting with 01 (e.g. 01012345678)</div>
       <div class="error-msg">Enter a valid 11-digit number starting with 01</div>
     </div>
 
     <div class="field" id="parentPhoneField">
-      <label for="parentPhone">Parent Phone <span class="req">*</span></label>
+      <label for="parentPhone">Parent Phone</label>
       <input type="tel" id="parentPhone" name="parentPhone" inputmode="numeric" maxlength="11" placeholder="01xxxxxxxxx" required>
       <div class="hint">11 digits, starting with 01 (e.g. 01012345678)</div>
       <div class="error-msg">Enter a valid 11-digit number starting with 01</div>
     </div>
 
     <div class="field">
-      <label for="stage">Educational Stage <span class="req">*</span></label>
+      <label for="stage">Educational Stage</label>
       <select id="stage" name="stage" required>
         <option value="" disabled selected>Select an option ...</option>
         <option value="Secondary">Secondary</option>
@@ -179,7 +180,7 @@ button.submit:disabled{ opacity:0.5; cursor:not-allowed; box-shadow:none; }
     </div>
 
     <div class="field">
-      <label for="grade">Grade <span class="req">*</span></label>
+      <label for="grade">Grade</label>
       <select id="grade" name="grade" required>
         <option value="" disabled selected>Select an option ...</option>
         <option value="First Grade">First Grade</option>
