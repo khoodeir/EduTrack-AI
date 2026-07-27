@@ -533,7 +533,7 @@
   </div>
 
   <div class="toolbar">
-    <button type="button" class="tool-btn" onclick="openModal('searchModal')">🔍 Search Student</button>
+    <button type="button" class="tool-btn" onclick="window.location.href='https://khoodeir.github.io/EduTrack-AI/student_search.html'">🔍 Search Student</button>
     <button type="button" class="tool-btn" onclick="openDashboardGate()">📊 Dashboard</button>
   </div>
 
@@ -626,32 +626,6 @@
     <input type="color" id="setAccentColor" value="#b9812f">
 
     <button class="modal-btn" onclick="saveSettings()">Save Settings</button>
-  </div>
-</div>
-
-<!-- Search modal -->
-<div class="modal-overlay" id="searchModal">
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title">Search Student</div>
-      <button class="modal-close" onclick="closeSearchModal()">×</button>
-    </div>
-    <div class="search-type-toggle" id="searchTypeToggle">
-      <button type="button" class="search-type-btn active" data-type="name" onclick="setSearchType('name')">Name</button>
-      <button type="button" class="search-type-btn" data-type="id" onclick="setSearchType('id')">Student Number</button>
-      <button type="button" class="search-type-btn" data-type="qr" onclick="setSearchType('qr')">QR Code</button>
-    </div>
-    <input type="text" id="searchInput" placeholder="Student name…">
-    <div class="grade-lock-hint show" id="searchTypeHint" style="margin-bottom:12px;">Shows every student name containing what you type</div>
-    <div class="search-qr-frame" id="searchQrFrame">
-      <div id="searchReader"></div>
-      <div class="search-qr-placeholder" id="searchQrPlaceholder">
-        <div class="icon">📷</div>
-        <div id="searchQrPlaceholderText">Starting camera…</div>
-      </div>
-    </div>
-    <button class="modal-btn" id="searchActionBtn" onclick="handleSearchAction()">Search</button>
-    <div class="report-result" id="searchResult"></div>
   </div>
 </div>
 
@@ -885,16 +859,6 @@
   let history = [];
   const HISTORY_LIMIT = 8;
 
-  // Search feature variables
-  let searchType = "name";
-  let searchScanner = null;
-  let searchScannerRunning = false;
-  const SEARCH_PLACEHOLDERS = {
-    name: "Student name…",
-    id: "Student number…",
-    qr: ""
-  };
-
   // Session state — attendance scanning is gated behind an active session.
   // Payment scanning is allowed to run even without a session (see canScan()).
   let sessionActive = false;
@@ -960,14 +924,9 @@
   /* ---------- Modals ---------- */
   function openModal(id){ document.getElementById(id).classList.add('open'); }
   function closeModal(id){ document.getElementById(id).classList.remove('open'); }
-  function closeSearchModal(){
-    stopSearchScanner();
-    closeModal('searchModal');
-  }
   document.querySelectorAll('.modal-overlay').forEach(ov=>{
     ov.addEventListener('click', e=>{
       if(e.target === ov){
-        if(ov.id === 'searchModal') stopSearchScanner();
         ov.classList.remove('open');
       }
     });
@@ -1389,210 +1348,6 @@
     );
     scanner.render(onScanSuccess, onScanFailure);
     scannerRunning = true;
-  }
-
-  /* ---------- Search ---------- */
-  function setSearchType(type){
-    const previousType = searchType;
-    searchType = type;
-    document.querySelectorAll("#searchTypeToggle .search-type-btn").forEach(btn=>{
-      btn.classList.toggle("active", btn.dataset.type === type);
-    });
-    document.getElementById("searchResult").classList.remove("show");
-    searchResultsCache = [];
-
-    if(previousType === "qr" && type !== "qr"){
-      stopSearchScanner();
-    }
-
-    const input = document.getElementById("searchInput");
-    const qrFrame = document.getElementById("searchQrFrame");
-    const actionBtn = document.getElementById("searchActionBtn");
-    const hintEl = document.getElementById("searchTypeHint");
-
-    if(type === "qr"){
-      input.style.display = "none";
-      input.value = "";
-      qrFrame.classList.add("active");
-      actionBtn.textContent = "🔄 Rescan";
-      hintEl.textContent = "";
-      startSearchScanner();
-    } else {
-      input.style.display = "";
-      input.placeholder = SEARCH_PLACEHOLDERS[type];
-      input.value = "";
-      qrFrame.classList.remove("active");
-      actionBtn.textContent = "Search";
-      hintEl.textContent = type === "id"
-        ? "Shows every student number starting with what you type"
-        : "Shows every student name containing what you type";
-    }
-  }
-
-  function handleSearchAction(){
-    if(searchType === "qr"){
-      startSearchScanner();
-    } else {
-      runSearch();
-    }
-  }
-
-  function startSearchScanner(){
-    const placeholder = document.getElementById("searchQrPlaceholder");
-    const placeholderText = document.getElementById("searchQrPlaceholderText");
-    const readerEl = document.getElementById("searchReader");
-
-    stopSearchScanner(); // make sure any previous instance is cleared first
-
-    placeholderText.textContent = "Starting camera…";
-    placeholder.classList.remove("hidden");
-    readerEl.innerHTML = "";
-
-    searchScanner = new Html5Qrcode("searchReader");
-
-    Html5Qrcode.getCameras()
-      .then(cameras => {
-        if(!cameras || !cameras.length){
-          placeholderText.textContent = "No camera found on this device";
-          return;
-        }
-        const back = cameras.find(c => /back|rear/i.test(c.label || ""));
-        const cameraId = (back || cameras[0]).id;
-
-        return searchScanner.start(
-          cameraId,
-          { fps: 10, qrbox: 220 },
-          (decodedText) => {
-            document.getElementById("searchInput").value = decodedText;
-            stopSearchScanner();
-            runSearch();
-          },
-          () => {}
-        ).then(()=>{
-          searchScannerRunning = true;
-          placeholder.classList.add("hidden");
-        });
-      })
-      .catch(()=>{
-        placeholderText.textContent = "Can't access the camera";
-      });
-  }
-
-  function stopSearchScanner(){
-    if(searchScanner && searchScannerRunning){
-      searchScannerRunning = false;
-      searchScanner.stop().then(()=>{
-        searchScanner.clear();
-      }).catch(()=>{});
-    }
-  }
-
-  let searchResultsCache = [];
-
-  function runSearch(){
-    const query = document.getElementById("searchInput").value.trim();
-    const resultEl = document.getElementById("searchResult");
-    if(!query){
-      resultEl.classList.add("show");
-      resultEl.innerHTML = `Type a ${searchType === "qr" ? "QR code" : searchType === "id" ? "student number" : "student name"} to search.`;
-      return;
-    }
-    resultEl.classList.add("show");
-    resultEl.innerHTML = `<div class="spinner" style="display:inline-block;margin-right:8px;vertical-align:middle;"></div>Searching…`;
-
-    fetch(WEBHOOKS.search, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "search", search_type: searchType, query, grade: currentGrade })
-    })
-    .then(async response => {
-      let data = {};
-      try{ data = await response.json(); }catch(e){}
-
-      // Accepts the new multi-match shape ({ students: [...] }) and also
-      // falls back to the older single-match shape ({ student: {...} })
-      // so nothing breaks if the n8n workflow hasn't been updated yet.
-      let students = [];
-      if(Array.isArray(data.students)) students = data.students;
-      else if(data.student) students = [data.student];
-
-      if(!data.success || students.length === 0){
-        searchResultsCache = [];
-        resultEl.innerHTML = data.message || "No student found.";
-        return;
-      }
-
-      searchResultsCache = students;
-
-      if(students.length === 1){
-        renderStudentDetail(students[0]);
-      } else {
-        renderSearchResultsList(students);
-      }
-    })
-    .catch(()=>{
-      resultEl.innerHTML = "Can't connect to n8n.";
-    });
-  }
-
-  function renderSearchResultsList(students){
-    const resultEl = document.getElementById("searchResult");
-    resultEl.classList.add("show");
-    resultEl.innerHTML = `
-      <div style="font-size:11px;color:var(--accent-2);text-transform:uppercase;letter-spacing:0.06em;font-weight:700;margin-bottom:8px;">
-        ${students.length} matches — tap one
-      </div>
-      <div class="report-list">
-        ${students.map((s, i) => `
-          <div class="report-item" onclick="selectSearchResult(${i})">
-            <span>${s.name ?? "—"}</span>
-            <span style="color:#b9ab93;font-size:12px;">${s.student_number ?? ""}</span>
-          </div>
-        `).join("")}
-      </div>
-    `;
-  }
-
-  function selectSearchResult(index){
-    const s = searchResultsCache[index];
-    if(s) renderStudentDetail(s);
-  }
-
-  function renderStudentDetail(s){
-    const resultEl = document.getElementById("searchResult");
-    resultEl.classList.add("show");
-
-    let attPct = s.attendance_percentage;
-    let absPct = s.absence_percentage;
-    if((attPct == null || absPct == null) && s.attendance_count != null && s.absence_count != null){
-      const total = Number(s.attendance_count) + Number(s.absence_count);
-      if(total > 0){
-        attPct = ((Number(s.attendance_count) / total) * 100).toFixed(0);
-        absPct = ((Number(s.absence_count) / total) * 100).toFixed(0);
-      }
-    }
-
-    const paymentRaw = String(s.payment_status ?? "").trim().toLowerCase();
-    const isPaid = paymentRaw === "paid" || paymentRaw === "true" || paymentRaw === "yes" || paymentRaw === "1" || s.payment_status === true;
-
-    const backBtn = searchResultsCache.length > 1
-      ? `<button type="button" class="link-btn" style="margin-top:10px;" onclick="renderSearchResultsList(searchResultsCache)">← Back to results</button>`
-      : "";
-
-    resultEl.innerHTML = `
-      <div style="font-size:15px;font-weight:700;color:var(--accent);margin-bottom:8px;">${s.name ?? ""}</div>
-      <div>Student Number: <b>${s.student_number ?? "–"}</b></div>
-      <div>Parent Number: <b>${s.guardian_phone ?? s.parent_phone ?? "–"}</b></div>
-      <div class="result-divider"></div>
-      <div>Attendance Rate: <b>${attPct != null ? attPct + "%" : "–"}</b></div>
-      <div>Absence Rate: <b>${absPct != null ? absPct + "%" : "–"}</b></div>
-      <div>Times Present: <b>${s.attendance_count ?? "–"}</b></div>
-      <div>Times Absent: <b>${s.absence_count ?? "–"}</b></div>
-      <div class="result-divider"></div>
-      <div>Payment Status: <span class="chip ${isPaid ? 'paid' : 'unpaid'}">${isPaid ? 'Paid' : 'Not Paid'}</span></div>
-      <div>Last Attendance: <b>${s.last_attendance ?? "–"}</b></div>
-      ${backBtn}
-    `;
   }
 
   applySettings();
