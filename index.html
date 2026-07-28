@@ -1107,7 +1107,7 @@
       countdownEl.textContent = Math.max(remaining, 0);
       if(remaining <= 0){
         clearInterval(timer);
-        overlay.style.display = 'none';
+        window.location.reload();
       }
     }, 1000);
   }
@@ -1333,52 +1333,24 @@
       return;
     }
 
-    sessionActive = false;
-    activeSessionRow = null;
-    if(sessionTimerInterval){ clearInterval(sessionTimerInterval); sessionTimerInterval = null; }
-    if(resumeTimer){ clearTimeout(resumeTimer); resumeTimer = null; }
-
     stopScanner();
-    sending = false;
 
-    const frame = document.getElementById("scanFrame");
-    if(canScan()){
-      document.getElementById("cooldownBadge").classList.remove("show");
-    } else {
-      frame.classList.add("session-off");
-      document.getElementById("reader").innerHTML = "";
-      document.getElementById("cooldownBadge").classList.remove("show");
-      setStatus("Session ended — start a new session to resume scanning", "wait");
-    }
-    renderSessionBar();
+    try{
+      await fetch(WEBHOOKS.session, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "session_end",
+          grade: endedGrade,
+          grade_label: GRADE_LABELS[endedGrade],
+          mode: endedMode,
+          ended_by: currentUser?.email || 'unknown',
+          timestamp: new Date().toISOString()
+        })
+      });
+    }catch(e){}
 
-    document.getElementById("gradeLevel").disabled = false;
-    document.getElementById("gradeLockHint").classList.remove("show");
-    document.getElementById("gradeLockOverlay").classList.remove("show");
-
-    currentGrade = settings.defaultGrade;
-    document.getElementById("gradeLevel").value = settings.defaultGrade;
-    sessionStartTime = null;
-
-    fetch(WEBHOOKS.session, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "session_end",
-        grade: endedGrade,
-        grade_label: GRADE_LABELS[endedGrade],
-        mode: endedMode,
-        ended_by: currentUser?.email || 'unknown',
-        timestamp: new Date().toISOString()
-      })
-    }).catch(()=>{});
-
-    if(canScan()){
-      startScanner();
-    }
-
-    sessionEndInProgress = false;
-    resumeSessionSync();
+    window.location.reload();
   }
 
   function setMode(mode){
@@ -1678,6 +1650,18 @@
   renderSessionBar();
 
   initAuth();
+
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.visibilityState === 'visible' && currentUser){
+      refreshSessionState();
+    }
+  });
+
+  window.addEventListener('pageshow', (e)=>{
+    if(e.persisted && currentUser){
+      refreshSessionState();
+    }
+  });
 
   document.addEventListener('DOMContentLoaded', ()=>{
     const overlay = document.getElementById('authOverlay');
