@@ -123,6 +123,7 @@
   }
   .start-session-btn:hover{ transform:translateY(-1px); box-shadow:0 6px 18px rgba(185,129,47,0.32); filter:brightness(1.08); }
   .start-session-btn:active{ transform:translateY(0); }
+  .start-session-btn:disabled{ opacity:0.65; cursor:not-allowed; transform:none; }
 
   .session-active-card{
     display:flex; align-items:center; justify-content:space-between; gap:10px;
@@ -517,12 +518,67 @@
   @media (prefers-reduced-motion: reduce){
     .scan-line, .dot, .result-check, .spinner, .session-pulse, .container{ animation:none !important; }
   }
+
+  /* ================= Auth overlay ================= */
+  .auth-overlay{
+    position:fixed; inset:0; z-index:100;
+    display:flex; align-items:center; justify-content:center;
+    padding:20px;
+    background:
+      radial-gradient(circle at 15% 10%, rgba(185,129,47,0.10), transparent 45%),
+      radial-gradient(circle at 85% 90%, rgba(185,129,47,0.08), transparent 45%),
+      linear-gradient(160deg, var(--cream-bg-1), var(--cream-bg-2));
+  }
+  .auth-card{
+    width:100%; max-width:400px;
+    background:var(--card);
+    border:1px solid var(--glass-border);
+    border-radius:22px;
+    padding:40px 32px 32px;
+    text-align:center;
+    box-shadow:0 20px 50px rgba(120,90,40,0.10);
+    animation:containerIn .4s ease;
+  }
+  .auth-card .grade-field{ margin-bottom:14px; }
+  .auth-card input[type="email"], .auth-card input[type="password"]{
+    width:100%; padding:11px 12px;
+    background:#ffffff; border:1px solid var(--glass-border);
+    border-radius:10px; color:var(--ink);
+    font-family:'Inter',sans-serif; font-size:14px; outline:none;
+  }
+  .auth-card input:focus{ border-color:var(--accent-2); }
+  .auth-subtitle{ font-size:13px; color:var(--muted); margin-bottom:22px; }
+
+  /* ================= Session-ended overlay ================= */
+  .session-ended-overlay{
+    position:fixed; inset:0; z-index:150; display:none;
+    align-items:center; justify-content:center; padding:20px;
+    background:rgba(44,33,22,0.55);
+  }
+  .session-ended-card{
+    width:100%; max-width:360px; text-align:center;
+    background:var(--card); border:1px solid var(--glass-border);
+    border-radius:20px; padding:32px 26px;
+    box-shadow:0 20px 50px rgba(20,15,10,0.3);
+  }
+  .session-ended-icon{ font-size:34px; margin-bottom:12px; }
+  .session-ended-title{
+    font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:16px;
+    color:var(--accent-2); margin-bottom:8px;
+  }
+  .session-ended-text{ font-size:13px; color:var(--muted); line-height:1.6; }
+  .session-ended-countdown{
+    margin-top:14px; font-size:12px; color:#b9ab93;
+  }
+
+  #logoutBtn{ left:18px; }
 </style>
 </head>
 <body>
 
-<div class="container">
+<div class="container" id="mainContainer" style="display:none;">
   <button type="button" class="icon-btn" id="settingsBtn" onclick="openModal('settingsModal')" title="Settings">⚙️</button>
+  <button type="button" class="icon-btn" id="logoutBtn" onclick="handleLogout()" title="Log out">🚪</button>
 
   <div class="icon-circle">
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -608,6 +664,42 @@
   <div class="footer">Powered by Milestones Group</div>
 </div>
 
+<!-- Auth / login overlay — shown before the scanner is accessible -->
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-card">
+    <div class="icon-circle">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 3L1 8l11 5 9-4.09V17h2V8L12 3z" fill="#2c2116"/>
+        <path d="M5 10.18V14c0 1.86 3.13 4 7 4s7-2.14 7-4v-3.82l-7 3.18-7-3.18z" fill="#2c2116"/>
+      </svg>
+    </div>
+    <div class="eyebrow">Sign in</div>
+    <h1 style="font-size:26px;">Attendance Scanner</h1>
+    <div class="auth-subtitle">Sign in with your staff account to open the scanner</div>
+
+    <div class="grade-field">
+      <label for="authEmail">Email</label>
+      <input type="email" id="authEmail" placeholder="you@center.com" autocomplete="username">
+    </div>
+    <div class="grade-field">
+      <label for="authPassword">Password</label>
+      <input type="password" id="authPassword" placeholder="Enter password" autocomplete="current-password">
+    </div>
+    <div class="modal-error" id="authError"></div>
+    <button type="button" class="start-session-btn" id="authLoginBtn" onclick="handleLogin()">🔐 Log In</button>
+  </div>
+</div>
+
+<!-- Shown when another user ends the shared session while this client is connected -->
+<div class="session-ended-overlay" id="sessionEndedOverlay">
+  <div class="session-ended-card">
+    <div class="session-ended-icon">🔴</div>
+    <div class="session-ended-title">Session Ended</div>
+    <div class="session-ended-text" id="sessionEndedText">The attendance session has been ended by another user.</div>
+    <div class="session-ended-countdown">Returning to login in <span id="sessionEndedCountdown">5</span>s…</div>
+  </div>
+</div>
+
 <div class="toast" id="toastMsg"></div>
 
 <!-- Settings modal -->
@@ -685,6 +777,69 @@
     search:     "https://helmet-handrail-skipper.ngrok-free.dev/webhook/Search Management",
     session:    "https://helmet-handrail-skipper.ngrok-free.dev/webhook/Attendance Session Manager"
   };
+
+  /* ============================================================
+     SUPABASE — shared multi-user auth + shared session state
+     ============================================================
+     Supabase is used for two things, both of which need a single shared
+     source of truth across every device instead of localStorage:
+       1. Auth — real accounts (email + password), checked server-side by
+          Supabase Auth. Create staff accounts from your Supabase dashboard
+          under Authentication > Users (or via the admin API). This replaces
+          any client-side password check, which can't be trusted for real
+          multi-user security.
+       2. A shared `attendance_sessions` table that every open tab/device
+          reads from and writes to, so "is there an active session right
+          now" has one true answer no matter which device asks.
+
+     >>> REPLACE SUPABASE_ANON_KEY BELOW with your project's anon/public
+     >>> key (Project Settings > API). SUPABASE_URL already matches the
+     >>> project this page preconnects to.
+
+     Run this once in the Supabase SQL editor to create the table and make
+     sure only one session can ever be "active" at a time (a partial unique
+     index means a second concurrent INSERT with status='active' fails at
+     the database level, so two teachers tapping "Start Session" at the
+     same instant can't both create a session):
+
+       create table public.attendance_sessions (
+         id bigint generated always as identity primary key,
+         status text not null default 'ended' check (status in ('active','ended')),
+         started_by text,
+         start_time timestamptz,
+         ended_by text,
+         end_time timestamptz,
+         grade text,
+         mode text
+       );
+
+       create unique index one_active_session_idx
+         on public.attendance_sessions ((status)) where status = 'active';
+
+       alter table public.attendance_sessions enable row level security;
+
+       create policy "authenticated read" on public.attendance_sessions
+         for select using (auth.role() = 'authenticated');
+       create policy "authenticated insert" on public.attendance_sessions
+         for insert with check (auth.role() = 'authenticated');
+       create policy "authenticated update" on public.attendance_sessions
+         for update using (auth.role() = 'authenticated');
+
+       -- Enable Realtime for instant sync (Database > Replication > turn on
+       -- for attendance_sessions). If you skip this, the page still works
+       -- via the 5-second polling fallback below.
+  */
+  const SUPABASE_URL = "https://evbjulsahncllewwvlxp.supabase.co";
+  const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY"; // TODO: put your real anon key here
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const SESSION_TABLE = "attendance_sessions";
+  const SESSION_POLL_MS = 5000;
+
+  let currentUser = null;          // Supabase auth user once logged in
+  let activeSessionRow = null;     // the current row from attendance_sessions, or null
+  let sessionPollInterval = null;
+  let realtimeChannel = null;
+  let sessionEndInProgress = false; // true only while *this* client is the one ending the session
 
   /* ============================================================
      DASHBOARD LINK — password-gated external link
@@ -843,6 +998,204 @@
     });
   });
 
+  /* ============================================================
+     AUTH — login screen gating the whole scanner
+     ============================================================ */
+  function showAuthOverlay(){
+    document.getElementById('authOverlay').style.display = 'flex';
+    document.getElementById('mainContainer').style.display = 'none';
+  }
+
+  function hideAuthOverlay(){
+    document.getElementById('authOverlay').style.display = 'none';
+    document.getElementById('mainContainer').style.display = '';
+  }
+
+  async function initAuth(){
+    try{
+      const { data, error } = await supabaseClient.auth.getSession();
+      if(!error && data && data.session && data.session.user){
+        currentUser = data.session.user;
+        await onAuthenticated();
+        return;
+      }
+    }catch(e){
+      console.error(e);
+    }
+    showAuthOverlay();
+  }
+
+  async function handleLogin(){
+    const email = document.getElementById('authEmail').value.trim();
+    const password = document.getElementById('authPassword').value;
+    const errEl = document.getElementById('authError');
+    errEl.textContent = "";
+
+    if(!email || !password){
+      errEl.textContent = "Please enter your email and password";
+      return;
+    }
+
+    const btn = document.getElementById('authLoginBtn');
+    btn.disabled = true;
+    const originalLabel = btn.textContent;
+    btn.textContent = "Signing in…";
+
+    try{
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if(error || !data || !data.user){
+        errEl.textContent = "Invalid email or password";
+        return;
+      }
+      currentUser = data.user;
+      document.getElementById('authPassword').value = "";
+      await onAuthenticated();
+    }catch(e){
+      console.error(e);
+      errEl.textContent = "Can't reach the server — check your connection";
+    }finally{
+      btn.disabled = false;
+      btn.textContent = originalLabel;
+    }
+  }
+
+  async function handleLogout(){
+    cleanupRealtime();
+    try{ await supabaseClient.auth.signOut(); }catch(e){}
+    currentUser = null;
+    activeSessionRow = null;
+    // Don't touch the shared session itself on logout — other users may
+    // still be actively scanning against it.
+    document.getElementById('sessionEndedOverlay').style.display = 'none';
+    showAuthOverlay();
+  }
+
+  async function onAuthenticated(){
+    hideAuthOverlay();
+    await refreshSessionState();
+    subscribeToSessionChanges();
+    if(sessionPollInterval) clearInterval(sessionPollInterval);
+    sessionPollInterval = setInterval(refreshSessionState, SESSION_POLL_MS);
+  }
+
+  /* ============================================================
+     SHARED SESSION — synced via the attendance_sessions table
+     ============================================================ */
+  async function fetchActiveSession(){
+    const { data, error } = await supabaseClient
+      .from(SESSION_TABLE)
+      .select('*')
+      .eq('status', 'active')
+      .order('start_time', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if(error){
+      console.error(error);
+      return undefined; // undefined = "couldn't check", distinct from null = "no active session"
+    }
+    return data || null;
+  }
+
+  // Pulls the latest shared session state and reconciles the local UI with it.
+  // Called on login, on a realtime change notification, and on a polling timer.
+  async function refreshSessionState(){
+    const row = await fetchActiveSession();
+    if(row === undefined) return; // network hiccup — leave things as they are, try again next tick
+
+    const wasActive = sessionActive;
+
+    if(row){
+      activeSessionRow = row;
+      const joiningFresh = !wasActive;
+      sessionActive = true;
+      sessionStartTime = new Date(row.start_time).getTime();
+      currentGrade = row.grade || currentGrade;
+
+      if(joiningFresh){
+        document.getElementById("gradeLevel").value = currentGrade;
+        document.getElementById("gradeLevel").disabled = true;
+        document.getElementById("gradeLockHint").classList.add("show");
+        document.getElementById("gradeLockOverlay").classList.add("show");
+
+        renderSessionBar();
+        tickSessionTimer();
+        if(sessionTimerInterval) clearInterval(sessionTimerInterval);
+        sessionTimerInterval = setInterval(tickSessionTimer, 1000);
+
+        document.getElementById("scanFrame").classList.remove("session-off");
+        startScanner();
+      }
+    } else {
+      if(wasActive && !sessionEndInProgress){
+        // The session was active a moment ago and now isn't, but we didn't
+        // end it ourselves — someone else ended it.
+        handleSessionEndedRemotely();
+      }
+      activeSessionRow = null;
+      sessionActive = false;
+    }
+  }
+
+  function subscribeToSessionChanges(){
+    if(realtimeChannel) return;
+    realtimeChannel = supabaseClient
+      .channel('attendance_sessions_sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: SESSION_TABLE }, () => {
+        refreshSessionState();
+      })
+      .subscribe();
+  }
+
+  function cleanupRealtime(){
+    if(realtimeChannel){
+      supabaseClient.removeChannel(realtimeChannel);
+      realtimeChannel = null;
+    }
+    if(sessionPollInterval){
+      clearInterval(sessionPollInterval);
+      sessionPollInterval = null;
+    }
+  }
+
+  // Another user ended the shared session while we were connected to it.
+  function handleSessionEndedRemotely(){
+    stopScanner();
+    sending = false;
+    if(resumeTimer){ clearTimeout(resumeTimer); resumeTimer = null; }
+    if(sessionTimerInterval){ clearInterval(sessionTimerInterval); sessionTimerInterval = null; }
+
+    sessionActive = false;
+    activeSessionRow = null;
+    sessionStartTime = null;
+
+    document.getElementById("gradeLevel").disabled = false;
+    document.getElementById("gradeLockHint").classList.remove("show");
+    document.getElementById("gradeLockOverlay").classList.remove("show");
+
+    const frame = document.getElementById("scanFrame");
+    frame.classList.add("session-off");
+    document.getElementById("reader").innerHTML = "";
+    document.getElementById("cooldownBadge").classList.remove("show");
+
+    showSessionEndedOverlay();
+  }
+
+  function showSessionEndedOverlay(){
+    const overlay = document.getElementById('sessionEndedOverlay');
+    const countdownEl = document.getElementById('sessionEndedCountdown');
+    overlay.style.display = 'flex';
+    let remaining = 5;
+    countdownEl.textContent = remaining;
+    const timer = setInterval(()=>{
+      remaining -= 1;
+      countdownEl.textContent = Math.max(remaining, 0);
+      if(remaining <= 0){
+        clearInterval(timer);
+        handleLogout();
+      }
+    }, 1000);
+  }
+
   // How long a result card stays on screen before auto-resuming the camera.
   const RESULT_DISPLAY_MS = 4000;
 
@@ -869,11 +1222,11 @@
 
   // Session state — attendance scanning is gated behind an active session.
   // Payment scanning is allowed to run even without a session (see canScan()).
-  let sessionActive = localStorage.getItem("sessionActive") === "true";
-
-  let sessionStartTime = localStorage.getItem("sessionStartTime")
-  ? Number(localStorage.getItem("sessionStartTime"))
-  : null;
+  // The source of truth is the shared `attendance_sessions` table (see
+  // refreshSessionState() below), not localStorage — every logged-in device
+  // needs to agree on whether a session is running.
+  let sessionActive = false;
+  let sessionStartTime = null;
   let sessionTimerInterval = null;
 
   // Whether scanning is currently allowed: either a session is running,
@@ -980,13 +1333,50 @@
     el.textContent = formatElapsed(Date.now() - sessionStartTime);
   }
 
-  function startSession(){
+  async function startSession(){
     if(sessionActive) return;
+
+    const btn = document.getElementById('startSessionBtn');
+    if(btn){ btn.disabled = true; btn.textContent = "⏳ Starting…"; }
+
+    try{
+      // Re-check right before inserting — if another user's tab beat us to
+      // it in the last moment, join their session instead of racing them.
+      const existing = await fetchActiveSession();
+      if(existing){
+        await refreshSessionState();
+        return;
+      }
+
+      const { data, error } = await supabaseClient
+        .from(SESSION_TABLE)
+        .insert({
+          status: 'active',
+          started_by: currentUser?.email || 'unknown',
+          start_time: new Date().toISOString(),
+          grade: currentGrade,
+          mode: currentMode
+        })
+        .select()
+        .single();
+
+      if(error){
+        // Most likely the partial unique index rejected a second concurrent
+        // "active" row — someone else's Start Session tap won the race.
+        await refreshSessionState();
+        return;
+      }
+      activeSessionRow = data;
+    }catch(e){
+      console.error(e);
+      showToast("Couldn't start the session — check your connection");
+      return;
+    }finally{
+      if(btn){ btn.disabled = false; }
+    }
+
     sessionActive = true;
     sessionStartTime = Date.now();
-    localStorage.setItem("sessionActive", "true");
-    localStorage.setItem("sessionStartTime", sessionStartTime);
-    localStorage.setItem("sessionGrade", currentGrade);
     renderSessionBar();
     tickSessionTimer();
     if(sessionTimerInterval) clearInterval(sessionTimerInterval);
@@ -1008,17 +1398,41 @@
         grade: currentGrade,
         grade_label: GRADE_LABELS[currentGrade],
         mode: currentMode,
+        started_by: currentUser?.email || 'unknown',
         timestamp: new Date().toISOString()
       })
     }).catch(()=>{});
   }
 
-  function endSession(){
+  async function endSession(){
     if(!sessionActive) return;
+    if(!confirm("End the attendance session for everyone currently scanning?")) return;
+
+    sessionEndInProgress = true; // so our own refreshSessionState() doesn't treat this as "ended by someone else"
+
+    const endedGrade = currentGrade;
+    const endedMode = currentMode;
+
+    try{
+      if(activeSessionRow){
+        await supabaseClient
+          .from(SESSION_TABLE)
+          .update({
+            status: 'ended',
+            end_time: new Date().toISOString(),
+            ended_by: currentUser?.email || 'unknown'
+          })
+          .eq('id', activeSessionRow.id);
+      }
+    }catch(e){
+      console.error(e);
+      showToast("Couldn't reach the server to end the session — try again");
+      sessionEndInProgress = false;
+      return;
+    }
+
     sessionActive = false;
-    localStorage.removeItem("sessionActive");
-    localStorage.removeItem("sessionStartTime");
-    localStorage.removeItem("sessionGrade");
+    activeSessionRow = null;
     if(sessionTimerInterval){ clearInterval(sessionTimerInterval); sessionTimerInterval = null; }
     if(resumeTimer){ clearTimeout(resumeTimer); resumeTimer = null; }
 
@@ -1047,27 +1461,26 @@
     // so the default is what gets used at the start of every new session.
     currentGrade = settings.defaultGrade;
     document.getElementById("gradeLevel").value = settings.defaultGrade;
+    sessionStartTime = null;
 
     fetch(WEBHOOKS.session, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         action: "session_end",
-        grade: currentGrade,
-        grade_label: GRADE_LABELS[currentGrade],
-        mode: currentMode,
+        grade: endedGrade,
+        grade_label: GRADE_LABELS[endedGrade],
+        mode: endedMode,
+        ended_by: currentUser?.email || 'unknown',
         timestamp: new Date().toISOString()
       })
     }).catch(()=>{});
 
-    sessionStartTime = null;
-    localStorage.removeItem("sessionActive");
-    localStorage.removeItem("sessionStartTime");
-    localStorage.removeItem("sessionGrade");
-
     if(canScan()){
       startScanner();
     }
+
+    sessionEndInProgress = false;
   }
 
   /* ---------- Mode ---------- */
@@ -1273,7 +1686,16 @@
 
   /* ---------- Scanning ---------- */
   function onScanSuccess(decodedText){
-    if(sending || !canScan()) return;
+    if(sending) return;
+    if(!canScan()){
+      // Guards against a scan slipping through in the moment before the
+      // shared-session sync (realtime/poll) catches up with a session that
+      // just ended elsewhere.
+      setStatus("No active attendance session.", "error", false);
+      stopScanner();
+      armAutoResumeSimple();
+      return;
+    }
 
     const cooldownRemaining = isOnCooldown(decodedText);
     if(cooldownRemaining > 0){
@@ -1372,20 +1794,22 @@
 
   applySettings();
   renderSessionBar();
-  if (sessionActive) {
-    currentGrade = localStorage.getItem("sessionGrade") || currentGrade;
 
-    document.getElementById("gradeLevel").value = currentGrade;
-    document.getElementById("gradeLevel").disabled = true;
-    document.getElementById("gradeLockHint").classList.add("show");
-    document.getElementById("gradeLockOverlay").classList.add("show");
+  // Gate everything behind auth. Once logged in, onAuthenticated() pulls the
+  // shared session state from Supabase (fetchActiveSession/refreshSessionState)
+  // and — if a session is already running on another device — rejoins it and
+  // starts the scanner automatically, exactly like the old localStorage restore
+  // used to do, but shared across every logged-in device instead of one browser.
+  initAuth();
 
-    tickSessionTimer();
-    sessionTimerInterval = setInterval(tickSessionTimer, 1000);
-
-    document.getElementById("scanFrame").classList.remove("session-off");
-    startScanner();
-}
+  // Let Enter submit the login form.
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const overlay = document.getElementById('authOverlay');
+    if(!overlay) return;
+    overlay.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter') handleLogin();
+    });
+  });
 </script>
 </body>
 </html>
