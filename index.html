@@ -1166,10 +1166,14 @@
     document.getElementById("setAccentColor").value = settings.accentColor;
 
     if(!settingsInitialized){
-      document.getElementById("gradeLevel").value = settings.defaultGrade;
-      currentGrade = settings.defaultGrade;
-      settingsInitialized = true;
-    }
+  const savedGrade = localStorage.getItem("selectedGrade");
+
+  currentGrade = savedGrade || settings.defaultGrade;
+
+  document.getElementById("gradeLevel").value = currentGrade;
+
+  settingsInitialized = true;
+}
   }
 
   function saveSettings(){
@@ -1179,9 +1183,12 @@
     settings.accentColor = document.getElementById("setAccentColor").value;
     applySettings();
     if(!sessionActive){
-      document.getElementById("gradeLevel").value = settings.defaultGrade;
-      currentGrade = settings.defaultGrade;
-    }
+  const savedGrade = localStorage.getItem("selectedGrade");
+
+  currentGrade = savedGrade || settings.defaultGrade;
+
+  document.getElementById("gradeLevel").value = currentGrade;
+}
     closeModal('settingsModal');
   }
 
