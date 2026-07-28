@@ -678,7 +678,7 @@
     <div class="session-ended-icon">🔴</div>
     <div class="session-ended-title">Session Ended</div>
     <div class="session-ended-text" id="sessionEndedText">The attendance session has been ended by another user.</div>
-    <div class="session-ended-countdown">Returning to login in <span id="sessionEndedCountdown">5</span>s…</div>
+    <div class="session-ended-countdown">Returning to scanner in <span id="sessionEndedCountdown">5</span>s…</div>
   </div>
 </div>
 
@@ -767,6 +767,12 @@
   let sessionPollInterval = null;
   let realtimeChannel = null;
   let sessionEndInProgress = false;
+
+  function parseServerTimestamp(ts){
+    if(!ts) return null;
+    const hasTZ = /Z$|[+-]\d{2}:?\d{2}$/.test(ts);
+    return new Date(hasTZ ? ts : ts + 'Z').getTime();
+  }
 
   const DASHBOARD_URL = "dashboard.html";
   const DASH_PW_KEY = "scanner_dashboard_pw_hash";
@@ -1012,7 +1018,7 @@
       currentGrade = row.grade || currentGrade;
 
       if(joiningFresh){
-        sessionStartTime = new Date(row.start_time).getTime();
+        sessionStartTime = parseServerTimestamp(row.start_time);
 
         document.getElementById("gradeLevel").value = currentGrade;
         document.getElementById("gradeLevel").disabled = true;
@@ -1101,7 +1107,7 @@
       countdownEl.textContent = Math.max(remaining, 0);
       if(remaining <= 0){
         clearInterval(timer);
-        handleLogout();
+        overlay.style.display = 'none';
       }
     }, 1000);
   }
