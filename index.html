@@ -1121,6 +1121,12 @@
     accentColor: "#b9812f"
   };
 
+  const savedSettings = localStorage.getItem("scannerSettings");
+
+  if(savedSettings){
+     settings = JSON.parse(savedSettings);
+  }
+
   let currentMode = "attendance";
   let currentGrade = "first";
   let settingsInitialized = false;
@@ -1181,11 +1187,17 @@
     settings.defaultFee = document.getElementById("setDefaultFee").value;
     settings.defaultGrade = document.getElementById("setDefaultGrade").value;
     settings.accentColor = document.getElementById("setAccentColor").value;
+
+    localStorage.setItem("scannerSettings", JSON.stringify(settings));
     applySettings();
     if(!sessionActive){
   const savedGrade = localStorage.getItem("selectedGrade");
 
-  currentGrade = savedGrade || settings.defaultGrade;
+  if(savedGrade){
+    currentGrade = savedGrade;
+  }else{
+    currentGrade = settings.defaultGrade;
+  }
 
   document.getElementById("gradeLevel").value = currentGrade;
 }
@@ -1399,14 +1411,16 @@
     }
   }
 
-  function setGrade(grade){
-    if(sessionActive){
-      document.getElementById("gradeLevel").value = currentGrade;
-      notifyGradeLocked();
-      return;
-    }
-    currentGrade = grade;
+ function setGrade(grade){
+  if(sessionActive){
+    document.getElementById("gradeLevel").value = currentGrade;
+    notifyGradeLocked();
+    return;
   }
+
+  currentGrade = grade;
+  localStorage.setItem("selectedGrade", grade);
+}
 
   function beep(type){
     try{
