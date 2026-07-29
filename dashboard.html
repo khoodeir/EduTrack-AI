@@ -215,6 +215,8 @@
     flex-shrink:0; font-family:'Space Grotesk',sans-serif;
   }
   .val{ font-family:'Space Grotesk',sans-serif; font-weight:700; color:var(--ink); flex-shrink:0; }
+  .val.low{ color:var(--error); }
+  .val.high{ color:var(--success); }
   .phone-link{
     font-size:11px; color:var(--muted); text-decoration:none; display:inline-block;
     padding:3px 8px; border-radius:6px; background:rgba(185,129,47,0.07); transition:all .15s ease;
@@ -478,6 +480,17 @@
         <div class="list-card">
           <div class="section-title">Unpaid Students</div>
           <div id="unpaidList"></div>
+        </div>
+      </div>
+
+      <div class="list-grid">
+        <div class="list-card">
+          <div class="section-title">Top Exam Performers</div>
+          <div id="topExamList"></div>
+        </div>
+        <div class="list-card">
+          <div class="section-title">Needs Improvement</div>
+          <div id="lowExamList"></div>
         </div>
       </div>
 
@@ -838,7 +851,8 @@
     const perStudent = Object.keys(studentAgg).map(code => ({
       code,
       grade: studentAgg[code].grade,
-      avg: Math.round(studentAgg[code].sum / studentAgg[code].count)
+      avg: Math.round(studentAgg[code].sum / studentAgg[code].count),
+      count: studentAgg[code].count
     }));
 
     return { perExam, perStudent };
@@ -933,6 +947,7 @@
     renderExamDistChart();
     renderTopAttenders(students);
     renderUnpaidList(unpaidStudents);
+    renderExamPerformerLists();
     payFilterState = "all";
     document.querySelectorAll("#payFilter button").forEach(b => b.classList.toggle("active", b.dataset.f === "all"));
     document.getElementById("rosterSearch").value = "";
@@ -1144,6 +1159,60 @@
         ${s.studentPhone ? `<a class="phone-link" href="tel:${s.studentPhone}">${s.studentPhone}</a>` : `<span class="empty-note" style="padding:0;">—</span>`}
       </div>
     `).join("") + (unpaidStudents.length > 8 ? `<div class="empty-note">+${unpaidStudents.length - 8} more — see the table below</div>` : "");
+  }
+
+  /* ---------- Top / Lowest exam performers ----------
+     Ranked by each student's own average % across all their recorded
+     exam scores — scores are normalized against each exam's max_score
+     first, so an 18/20 and a 85/100 are compared fairly on the same scale. ---------- */
+  function renderExamPerformerLists(){
+    const gradesShown = currentGrade === "all" ? GRADES : [currentGrade];
+    const rows = (combined.examStudentAverages || []).filter(r => gradesShown.includes(r.grade));
+
+    const codeToStudent = {};
+    combined.students.forEach(s => { codeToStudent[s.qrCode] = s; });
+
+    const enriched = rows.map(r => {
+      const s = codeToStudent[r.code] || {};
+      return { avg: r.avg, count: r.count, grade: r.grade, name: s.name || r.code || "—" };
+    });
+
+    const topEl = document.getElementById("topExamList");
+    const lowEl = document.getElementById("lowExamList");
+
+    if(!enriched.length){
+      topEl.innerHTML = `<div class="empty-note">No exam scores yet</div>`;
+      lowEl.innerHTML = `<div class="empty-note">No exam scores yet</div>`;
+      return;
+    }
+
+    const examCountChip = (c) => `<span class="grade-chip" style="background:rgba(138,122,99,0.12); color:var(--muted);">${c} exam${c === 1 ? "" : "s"}</span>`;
+
+    const top = [...enriched].sort((a,b) => b.avg - a.avg || b.count - a.count).slice(0, 6);
+    topEl.innerHTML = top.map((s,i) => `
+      <div class="list-row">
+        <div class="list-name">
+          <span class="rank">${i+1}</span>
+          <span class="name">${s.name}</span>
+          ${currentGrade === "all" ? `<span class="grade-chip">${GRADE_LABELS[s.grade]}</span>` : ""}
+          ${examCountChip(s.count)}
+        </div>
+        <div class="val high">${s.avg}%</div>
+      </div>
+    `).join("");
+
+    const low = [...enriched].sort((a,b) => a.avg - b.avg || b.count - a.count).slice(0, 6);
+    lowEl.innerHTML = low.map((s,i) => `
+      <div class="list-row">
+        <div class="list-name">
+          <span class="rank">${i+1}</span>
+          <span class="name">${s.name}</span>
+          ${currentGrade === "all" ? `<span class="grade-chip">${GRADE_LABELS[s.grade]}</span>` : ""}
+          ${examCountChip(s.count)}
+        </div>
+        <div class="val low">${s.avg}%</div>
+      </div>
+    `).join("");
   }
 
   /* ---------- Roster table ---------- */
