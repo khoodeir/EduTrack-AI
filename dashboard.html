@@ -386,7 +386,7 @@
     <div class="tab" data-grade="second">Second Secondary</div>
     <div class="tab" data-grade="third">Third Secondary</div>
     <div class="tab history-tab" id="historyTab">Monthly History</div>
-    <div class="tab exams-tab" id="examsTab">الدرجات</div>
+    <div class="tab exams-tab" id="examsTab">Exam Grades</div>
   </div>
 
   <div class="tab-panel">
@@ -554,7 +554,7 @@
 
         <div class="chart-card">
           <div class="section-title">Month-by-Month Comparison</div>
-          <div class="hist-table-note">Each row is a saved snapshot. Change vs. shows the difference from the previous saved month. Use "مين مدفعش" to see who was unpaid that month.</div>
+          <div class="hist-table-note">Each row is a saved snapshot. Change vs. shows the difference from the previous saved month. Use "Who Hasn't Paid" to see who was unpaid that month.</div>
           <div class="table-wrap">
             <table>
               <thead>
@@ -566,7 +566,7 @@
                   <th>Revenue</th>
                   <th>Paid</th>
                   <th>Unpaid</th>
-                  <th>مين مدفعش</th>
+                  <th>Who Hasn't Paid</th>
                 </tr>
               </thead>
               <tbody id="histTableBody"></tbody>
@@ -579,7 +579,7 @@
 
     <div id="examsView" style="display:none;">
       <div class="state-msg show" id="examLoadingMsg">
-        <span class="spinner"></span> جارٍ تحميل الدرجات…
+        <span class="spinner"></span> Loading grades…
       </div>
       <div class="state-msg err" id="examErrorMsg"></div>
 
@@ -588,26 +588,26 @@
         <div class="hist-toolbar">
           <div class="left">
             <select class="hist-select" id="examGradeSelect" onchange="onExamGradeChange()">
-              <option value="first">الصف الأول الثانوي</option>
-              <option value="second">الصف الثاني الثانوي</option>
-              <option value="third">الصف الثالث الثانوي</option>
+              <option value="first">First Secondary</option>
+              <option value="second">Second Secondary</option>
+              <option value="third">Third Secondary</option>
             </select>
           </div>
-          <button class="save-snapshot-btn" onclick="addNewExam()">➕ إضافة امتحان جديد</button>
+          <button class="save-snapshot-btn" onclick="addNewExam()">➕ Add New Exam</button>
         </div>
 
         <div class="chart-card" id="examEntryPanel" style="display:none; margin-bottom:22px;">
           <div class="section-title" id="examEntryTitle"></div>
           <div id="examEntryBody"></div>
           <div style="display:flex; gap:10px; margin-top:14px;">
-            <button class="save-snapshot-btn" id="saveExamEntryBtn" onclick="saveScoreEntry()">💾 حفظ الدرجات</button>
-            <button class="ghost-btn" onclick="cancelScoreEntry()">إلغاء</button>
+            <button class="save-snapshot-btn" id="saveExamEntryBtn" onclick="saveScoreEntry()">💾 Save Grades</button>
+            <button class="ghost-btn" onclick="cancelScoreEntry()">Cancel</button>
           </div>
         </div>
 
         <div class="chart-card">
-          <div class="section-title">جدول الدرجات <span class="tag">دائم لا يُمسح شهريًا</span></div>
-          <div class="hist-table-note">كل امتحان جديد بيتحفظ كعمود منفصل، والدرجات القديمة بتفضل موجودة دايمًا حتى لو دخلت درجات امتحانات جديدة.</div>
+          <div class="section-title">Grades Table <span class="tag">Permanent — not cleared monthly</span></div>
+          <div class="hist-table-note">Each new exam is saved as a separate column, and old grades stay in place even after you add new exam scores.</div>
           <div class="table-wrap">
             <table>
               <thead id="examTableHead"></thead>
@@ -1156,6 +1156,26 @@
     return perGrade;
   }
 
+  async function saveSnapshotForMonth(year, month, perGrade){
+    const col = HIST_SCHEMA.col;
+    const rows = Object.keys(perGrade).map(g => ({
+      [col.year]: year,
+      [col.month]: month,
+      [col.grade]: g,
+      [col.students]: perGrade[g].studentsCount,
+      [col.attendanceRate]: perGrade[g].attendanceRate,
+      [col.revenue]: perGrade[g].revenue,
+      [col.paidCount]: perGrade[g].paidCount,
+      [col.unpaidCount]: perGrade[g].unpaidCount,
+      [col.collectionRate]: perGrade[g].collectionRate,
+      [col.unpaidStudents]: perGrade[g].unpaidList
+    }));
+    // Clear any previous snapshot for this month first, so saving twice just updates it.
+    await supa.from(HIST_SCHEMA.table).delete().eq(col.year, year).eq(col.month, month);
+    const { error } = await supa.from(HIST_SCHEMA.table).insert(rows);
+    if(error) throw error;
+  }
+
   async function saveCurrentMonthSnapshot(){
     const btns = document.querySelectorAll(".save-snapshot-btn");
     btns.forEach(b => { b.disabled = true; b.dataset.origText = b.textContent; b.textContent = "Saving…"; });
@@ -1163,25 +1183,7 @@
       const now = new Date();
       const year = now.getFullYear(), month = now.getMonth() + 1;
       const perGrade = await computeAllGradeSnapshots();
-      const col = HIST_SCHEMA.col;
-      const rows = Object.keys(perGrade).map(g => ({
-        [col.year]: year,
-        [col.month]: month,
-        [col.grade]: g,
-        [col.students]: perGrade[g].studentsCount,
-        [col.attendanceRate]: perGrade[g].attendanceRate,
-        [col.revenue]: perGrade[g].revenue,
-        [col.paidCount]: perGrade[g].paidCount,
-        [col.unpaidCount]: perGrade[g].unpaidCount,
-        [col.collectionRate]: perGrade[g].collectionRate,
-        [col.unpaidStudents]: perGrade[g].unpaidList
-      }));
-
-      // Clear any previous snapshot for this month first, so saving twice just updates it.
-      await supa.from(HIST_SCHEMA.table).delete().eq(col.year, year).eq(col.month, month);
-      const { error } = await supa.from(HIST_SCHEMA.table).insert(rows);
-      if(error) throw error;
-
+      await saveSnapshotForMonth(year, month, perGrade);
       await loadHistory();
     }catch(err){
       console.error(err);
@@ -1189,6 +1191,44 @@
         "\n\nMake sure a \"monthly_snapshots\" table exists with INSERT/DELETE/SELECT policies for the anon role, and has an \"unpaid_students\" jsonb column.");
     }finally{
       btns.forEach(b => { b.disabled = false; b.textContent = b.dataset.origText || "💾 Save Current Month"; });
+    }
+  }
+
+  /* ---------- Auto-backfill a missed previous month ----------
+     If the dashboard is opened in a new month and the previous
+     month was never saved, save it automatically using whatever
+     live data is available right now, so nothing is silently lost.
+     Note: this is a best-effort fallback — it can only reconstruct
+     last month's numbers from data that's still live when the page
+     is opened. If your attendance/payment tables get reset for the
+     new month before anyone opens the dashboard, the true numbers
+     for the missed month are already gone by then. For guaranteed
+     accuracy, still try to save each month before it ends (the
+     banner on the Monthly History tab reminds you to do this).
+  ---------------------------------------------------------------*/
+  async function autoBackfillMissedMonth(){
+    try{
+      const col = HIST_SCHEMA.col;
+      const now = new Date();
+      const curY = now.getFullYear(), curM = now.getMonth() + 1;
+      let prevM = curM - 1, prevY = curY;
+      if(prevM === 0){ prevM = 12; prevY -= 1; }
+
+      const { data, error } = await supa
+        .from(HIST_SCHEMA.table)
+        .select(`${col.year},${col.month}`)
+        .eq(col.year, prevY)
+        .eq(col.month, prevM)
+        .limit(1);
+      if(error) throw error; // table missing / no policy — just skip silently
+
+      if(data && data.length) return; // previous month already saved, nothing to do
+
+      const perGrade = await computeAllGradeSnapshots();
+      await saveSnapshotForMonth(prevY, prevM, perGrade);
+      console.info(`Auto-saved a snapshot for ${monthLabel(prevY, prevM)} because it hadn't been saved before the new month started.`);
+    }catch(err){
+      console.warn("Skipped auto-backfill of previous month:", err.message || err);
     }
   }
 
@@ -1350,7 +1390,7 @@
           <td>${fmtEGP(r[col.revenue])} ${deltaBadge(r[col.revenue], prev ? prev[col.revenue] : null, " EGP")}</td>
           <td>${r[col.paidCount]}</td>
           <td>${r[col.unpaidCount]}</td>
-          <td><button class="unpaid-link" onclick="showUnpaidModal(${origIdx})">👁 مين مدفعش</button></td>
+          <td><button class="unpaid-link" onclick="showUnpaidModal(${origIdx})">👁 Who Hasn't Paid</button></td>
         </tr>`;
     }).join("");
   }
@@ -1361,10 +1401,10 @@
     if(!row) return;
     const list = row[col.unpaidStudents] || [];
     document.getElementById("unpaidModalTitle").textContent =
-      `مين مدفعش – ${monthLabel(row[col.year], row[col.month])}`;
+      `Who Hasn't Paid – ${monthLabel(row[col.year], row[col.month])}`;
     const body = document.getElementById("unpaidModalBody");
     if(!list.length){
-      body.innerHTML = `<div class="empty-note">🎉 مفيش حد متأخر في الشهر ده (أو الشهر ده اتحفظ قبل ما ميزة "مين مدفعش" تتضاف)</div>`;
+      body.innerHTML = `<div class="empty-note">🎉 No one was unpaid this month (or this month was saved before the "Who Hasn't Paid" feature was added)</div>`;
     } else {
       body.innerHTML = list.map(s => `
         <div class="list-row">
@@ -1435,10 +1475,11 @@
     }catch(err){
       console.error(err);
       errorEl.innerHTML = `
-        <div style="font-weight:700;">تعذر تحميل الدرجات</div>
+        <div style="font-weight:700;">Couldn't load grades</div>
         <div style="font-size:12px; max-width:520px;">
           ${err.message || err}<br><br>
-          غالبًا جدول exam_grades_${examGrade}_secondary مش موجود في قاعدة البيانات لسه، أو مفيش صلاحية SELECT/INSERT لـ anon role.
+          This most likely means the exam_grades_${examGrade}_secondary table doesn't exist yet, or the anon role
+          doesn't have SELECT/INSERT permission for it.
         </div>`;
       errorEl.classList.add("show");
     }finally{
@@ -1452,13 +1493,13 @@
     const col = EXAM_SCHEMA.col;
 
     head.innerHTML = `<tr>
-      <th>الاسم</th>
+      <th>Name</th>
       ${examNames.map(n => `<th>${n}</th>`).join("")}
-      <th>المعدل</th>
+      <th>Average</th>
     </tr>`;
 
     if(!examStudents.length){
-      body.innerHTML = `<tr><td colspan="${examNames.length + 2}" style="text-align:center; color:var(--muted); padding:24px;">لا يوجد طلاب في هذا الصف</td></tr>`;
+      body.innerHTML = `<tr><td colspan="${examNames.length + 2}" style="text-align:center; color:var(--muted); padding:24px;">No students in this grade</td></tr>`;
       return;
     }
 
@@ -1479,17 +1520,17 @@
   }
 
   function addNewExam(){
-    const name = prompt("اسم الامتحان الجديد (مثال: امتحان الشهر الأول):");
+    const name = prompt("New exam name (e.g. Month 1 Exam):");
     if(!name || !name.trim()) return;
-    const maxScoreStr = prompt("الدرجة النهائية للامتحان:", "100");
+    const maxScoreStr = prompt("Maximum score for this exam:", "100");
     const maxScore = Number(maxScoreStr);
-    if(!maxScoreStr || isNaN(maxScore) || maxScore <= 0){ alert("درجة نهائية غير صحيحة"); return; }
+    if(!maxScoreStr || isNaN(maxScore) || maxScore <= 0){ alert("Invalid maximum score"); return; }
     openScoreEntry(name.trim(), maxScore);
   }
 
   function openScoreEntry(examName, maxScore){
     const panel = document.getElementById("examEntryPanel");
-    document.getElementById("examEntryTitle").textContent = `إدخال درجات: ${examName} (من ${maxScore})`;
+    document.getElementById("examEntryTitle").textContent = `Enter Grades: ${examName} (out of ${maxScore})`;
     document.getElementById("examEntryBody").innerHTML = examStudents.map(s => `
       <div class="list-row">
         <div class="list-name"><span class="name">${s.name || "—"}</span></div>
@@ -1524,22 +1565,23 @@
         [col.examDate]: new Date().toISOString().slice(0, 10)
       });
     });
-    if(!rows.length){ alert("محدش دخل درجة لسه"); return; }
+    if(!rows.length){ alert("No scores entered yet"); return; }
     const btn = document.getElementById("saveExamEntryBtn");
-    btn.disabled = true; btn.textContent = "جارٍ الحفظ…";
+    btn.disabled = true; btn.textContent = "Saving…";
     try{
       const { error } = await supa.from(EXAM_SCHEMA.table(examGrade)).insert(rows);
       if(error) throw error;
       cancelScoreEntry();
       await loadExamGrades();
     }catch(err){
-      alert("تعذر حفظ الدرجات: " + (err.message || err));
+      alert("Couldn't save grades: " + (err.message || err));
     }finally{
-      btn.disabled = false; btn.textContent = "💾 حفظ الدرجات";
+      btn.disabled = false; btn.textContent = "💾 Save Grades";
     }
   }
 
   loadDashboard();
+  autoBackfillMissedMonth();
 </script>
 </body>
 </html>
