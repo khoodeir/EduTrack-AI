@@ -184,6 +184,18 @@
   .delta-badge.up{ color:var(--success); }
   .delta-badge.down{ color:var(--error); }
   .delta-badge.flat{ color:var(--muted); }
+  .grade-list-row{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:11px 4px; border-bottom:1px solid var(--line); font-size:13px;
+  }
+  .grade-list-row:last-child{ border-bottom:none; }
+  .grade-list-row .exam-name{ font-weight:600; color:var(--ink); }
+  .grade-list-row .exam-score{ font-family:'Space Grotesk',sans-serif; font-weight:700; color:var(--ink); flex-shrink:0; display:flex; align-items:center; gap:8px; }
+  .grade-list-row .exam-pct{ font-size:11px; color:var(--gold-2); background:var(--gold-soft); padding:2px 8px; border-radius:999px; font-weight:700; }
+  .grades-avg-row{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:12px 4px 2px; margin-top:6px; border-top:2px solid var(--line); font-size:13px;
+  }
 
   @media (max-width:640px){
     .controls{ flex-direction:column; align-items:stretch; }
@@ -286,6 +298,20 @@
       <div class="chart-empty" id="studentTrendEmpty">No exam scores recorded yet for this student</div>
     </div>
     <div id="studentTrendSummary" style="margin-top:14px; font-size:12.5px; color:var(--muted); text-align:center;"></div>
+  </div>
+</div>
+
+<!-- Student plain grades list modal -->
+<div class="modal-overlay" id="studentGradesModalOverlay" onclick="if(event.target===this) closeStudentGradesModal()">
+  <div class="modal-box">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <div class="section-title" id="studentGradesTitle" style="margin-bottom:0;"></div>
+      <button class="modal-close" onclick="closeStudentGradesModal()">×</button>
+    </div>
+    <div class="state-msg show" id="gradesLoadingMsg">
+      <span class="spinner"></span> Loading exam scores…
+    </div>
+    <div id="studentGradesBody" style="display:none;"></div>
   </div>
 </div>
 
@@ -461,7 +487,10 @@
           <td>${s.parentPhone ? `<a class="phone-link" href="tel:${s.parentPhone}">${s.parentPhone}</a>` : "—"}</td>
           <td>${hasPaymentRecord ? `<span class="chip ${paid ? 'paid' : 'unpaid'}">${paid ? 'Paid' : 'Unpaid'}</span>` : "—"}</td>
           <td>${s.lastAttendance || "—"}</td>
-          <td><button class="trend-btn" onclick="showStudentTrend('${s.qrCode}','${s.grade}','${(s.name || "").replace(/'/g, "\\'")}')" title="Show exam score trend">📈</button></td>
+          <td style="display:flex; gap:6px;">
+            <button class="trend-btn" onclick="showStudentTrend('${s.qrCode}','${s.grade}','${(s.name || "").replace(/'/g, "\\'")}')" title="Show exam score trend chart">📈</button>
+            <button class="trend-btn" onclick="showStudentGrades('${s.qrCode}','${s.grade}','${(s.name || "").replace(/'/g, "\\'")}')" title="Show exam grades list">📋</button>
+          </td>
         </tr>`;
     }).join("");
   }
@@ -576,6 +605,85 @@
 
   function closeStudentTrendModal(){
     document.getElementById("studentTrendModalOverlay").classList.remove("show");
+  }
+
+  /* ---------- Student exam grades — plain list (no chart) ---------- */
+  async function showStudentGrades(qrCode, grade, name){
+    const overlay = document.getElementById("studentGradesModalOverlay");
+    const loadingEl = document.getElementById("gradesLoadingMsg");
+    const bodyEl = document.getElementById("studentGradesBody");
+
+    document.getElementById("studentGradesTitle").textContent = `${name || "Student"} — Grades`;
+    loadingEl.classList.add("show");
+    bodyEl.style.display = "none";
+    bodyEl.innerHTML = "";
+    overlay.classList.add("show");
+
+    try{
+      const ecol = EXAMS_SCHEMA.col;
+      const scol = SCORES_SCHEMA.col;
+
+      const { data: exams, error: examsErr } = await supa
+        .from(EXAMS_SCHEMA.table).select("*")
+        .eq(ecol.grade, grade)
+        .order(ecol.createdAt, { ascending: true });
+      if(examsErr) throw examsErr;
+
+      let scores = [];
+      if(exams && exams.length){
+        const ids = exams.map(e => e[ecol.id]);
+        const { data: scoreRows, error: scoresErr } = await supa
+          .from(SCORES_SCHEMA.table).select("*")
+          .in(scol.examId, ids)
+          .eq(scol.studentCode, qrCode);
+        if(scoresErr) throw scoresErr;
+        scores = scoreRows || [];
+      }
+
+      const rows = (exams || []).map(e => {
+        const row = scores.find(sc => sc[scol.examId] === e[ecol.id]);
+        const mx = Number(e[ecol.maxScore]) || 100;
+        if(!row) return { examName: e[ecol.name], max: e[ecol.maxScore], raw: null, pct: null };
+        const sc = Number(row[scol.score]);
+        return { examName: e[ecol.name], max: e[ecol.maxScore], raw: row[scol.score], pct: isNaN(sc) ? null : Math.round((sc / mx) * 100) };
+      });
+
+      loadingEl.classList.remove("show");
+      bodyEl.style.display = "block";
+
+      if(!rows.length){
+        bodyEl.innerHTML = `<div class="empty-note" style="text-align:center; color:var(--muted); padding:24px 0;">No exams recorded yet for this grade</div>`;
+        return;
+      }
+
+      const scored = rows.filter(r => r.pct != null);
+      const avg = scored.length ? Math.round(scored.reduce((a,b) => a + b.pct, 0) / scored.length) : null;
+
+      bodyEl.innerHTML =
+        rows.map(r => `
+          <div class="grade-list-row">
+            <span class="exam-name">${r.examName}</span>
+            <span class="exam-score">
+              ${r.raw != null ? `${r.raw} / ${r.max}` : `<span style="color:var(--muted); font-weight:600;">Not entered</span>`}
+              ${r.pct != null ? `<span class="exam-pct">${r.pct}%</span>` : ""}
+            </span>
+          </div>
+        `).join("") +
+        `<div class="grades-avg-row">
+          <span style="font-weight:700; color:var(--gold-2);">Average</span>
+          <span class="exam-score">${avg != null ? avg + "%" : "—"}</span>
+        </div>`;
+
+    }catch(err){
+      console.error(err);
+      loadingEl.classList.remove("show");
+      bodyEl.style.display = "block";
+      bodyEl.innerHTML = `<div style="color:var(--error); font-size:12.5px; text-align:center; padding:16px 0;">Couldn't load grades: ${err.message || err}</div>`;
+    }
+  }
+
+  function closeStudentGradesModal(){
+    document.getElementById("studentGradesModalOverlay").classList.remove("show");
   }
 
   loadData();
