@@ -273,6 +273,9 @@
   .tab.exams-tab::before{
     content:"📝 "; font-size:11px;
   }
+  .tab.exams-manage-tab::before{
+    content:"➕ "; font-size:11px;
+  }
   .hist-banner{
     display:none; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;
     background:var(--gold-soft); border:1px solid var(--line); border-radius:12px;
@@ -385,8 +388,9 @@
     <div class="tab" data-grade="first">First Secondary</div>
     <div class="tab" data-grade="second">Second Secondary</div>
     <div class="tab" data-grade="third">Third Secondary</div>
-    <div class="tab history-tab" id="historyTab">Monthly History</div>
     <div class="tab exams-tab" id="examsTab">Exam Grades</div>
+    <div class="tab exams-manage-tab" id="examsManageTab">Add Exam</div>
+    <div class="tab history-tab" id="historyTab">Monthly History</div>
   </div>
 
   <div class="tab-panel">
@@ -596,6 +600,40 @@
               <input type="text" id="examSearch" placeholder="Search by student name…" oninput="renderExamTable()">
             </div>
           </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="section-title">Grades Table <span class="tag">Permanent — not cleared monthly</span></div>
+          <div class="hist-table-note">Each exam is shown in its own column. To add a new exam or enter/edit scores, use the "Add Exam" tab.</div>
+          <div class="table-wrap">
+            <table>
+              <thead id="examTableHead"></thead>
+              <tbody id="examTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="examsManageView" style="display:none;">
+      <div class="state-msg show" id="examManageLoadingMsg">
+        <span class="spinner"></span> Loading grades…
+      </div>
+      <div class="state-msg err" id="examManageErrorMsg"></div>
+
+      <div class="content" id="examManageContent">
+
+        <div class="hist-toolbar">
+          <div class="left">
+            <select class="hist-select" id="examManageGradeSelect" onchange="onExamManageGradeChange()">
+              <option value="first">First Secondary</option>
+              <option value="second">Second Secondary</option>
+              <option value="third">Third Secondary</option>
+            </select>
+            <div class="search-box" style="min-width:200px;">
+              <input type="text" id="examManageSearch" placeholder="Search by student name…" oninput="renderExamManageTable()">
+            </div>
+          </div>
           <button class="save-snapshot-btn" onclick="openAddExamModal()">➕ Add Exam</button>
         </div>
 
@@ -609,12 +647,12 @@
         </div>
 
         <div class="chart-card">
-          <div class="section-title">Grades Table <span class="tag">Permanent — not cleared monthly</span></div>
+          <div class="section-title">Manage Grades <span class="tag">Enter scores & manage exams</span></div>
           <div class="hist-table-note">Each new exam is saved as a separate column, and old grades stay in place even after you add new exam scores.</div>
           <div class="table-wrap">
             <table>
-              <thead id="examTableHead"></thead>
-              <tbody id="examTableBody"></tbody>
+              <thead id="examManageTableHead"></thead>
+              <tbody id="examManageTableBody"></tbody>
             </table>
           </div>
         </div>
@@ -729,6 +767,7 @@
       document.getElementById("dashboardView").style.display = "";
       document.getElementById("historyView").style.display = "none";
       document.getElementById("examsView").style.display = "none";
+      document.getElementById("examsManageView").style.display = "none";
       loadDashboard();
     });
   });
@@ -739,6 +778,7 @@
     document.getElementById("dashboardView").style.display = "none";
     document.getElementById("historyView").style.display = "";
     document.getElementById("examsView").style.display = "none";
+    document.getElementById("examsManageView").style.display = "none";
     document.getElementById("histGradeSelect").value = historyGradeFilter;
     loadHistory();
   });
@@ -748,8 +788,20 @@
     document.getElementById("examsTab").classList.add("active");
     document.getElementById("dashboardView").style.display = "none";
     document.getElementById("historyView").style.display = "none";
+    document.getElementById("examsManageView").style.display = "none";
     document.getElementById("examsView").style.display = "";
     document.getElementById("examGradeSelect").value = examGrade;
+    loadExamGrades();
+  });
+
+  document.getElementById("examsManageTab").addEventListener("click", () => {
+    document.querySelectorAll("#gradeTabs .tab").forEach(t => t.classList.remove("active"));
+    document.getElementById("examsManageTab").classList.add("active");
+    document.getElementById("dashboardView").style.display = "none";
+    document.getElementById("historyView").style.display = "none";
+    document.getElementById("examsView").style.display = "none";
+    document.getElementById("examsManageView").style.display = "";
+    document.getElementById("examManageGradeSelect").value = examGrade;
     loadExamGrades();
   });
 
@@ -1491,6 +1543,11 @@
      `exams` — the grades table below generates its columns dynamically
      from whatever exams exist for the selected grade, so no schema
      change is needed each time a new exam is added.
+
+     This tab is now split into two:
+       - "Exam Grades" (#examsView) — read-only display of the table.
+       - "Add Exam" (#examsManageView) — add exams, enter/edit scores,
+         delete exams. Both share the same underlying data below.
      ============================================================ */
   const EXAMS_SCHEMA = {
     table: "exams",
@@ -1510,11 +1567,19 @@
     examGrade = document.getElementById("examGradeSelect").value;
     loadExamGrades();
   }
+  function onExamManageGradeChange(){
+    examGrade = document.getElementById("examManageGradeSelect").value;
+    loadExamGrades();
+  }
 
   async function loadExamGrades(){
-    const loadingEl = document.getElementById("examLoadingMsg");
-    const errorEl = document.getElementById("examErrorMsg");
-    const contentEl = document.getElementById("examContent");
+    const isManageView = document.getElementById("examsManageView").style.display !== "none";
+    const loadingId = isManageView ? "examManageLoadingMsg" : "examLoadingMsg";
+    const errorId = isManageView ? "examManageErrorMsg" : "examErrorMsg";
+    const contentId = isManageView ? "examManageContent" : "examContent";
+    const loadingEl = document.getElementById(loadingId);
+    const errorEl = document.getElementById(errorId);
+    const contentEl = document.getElementById(contentId);
     loadingEl.classList.add("show");
     errorEl.classList.remove("show");
     contentEl.classList.remove("show");
@@ -1540,6 +1605,7 @@
       examScores = scores;
 
       renderExamTable();
+      renderExamManageTable();
       contentEl.classList.add("show");
     }catch(err){
       console.error(err);
@@ -1556,9 +1622,58 @@
     }
   }
 
+  /* ---------- Read-only grades table (Exam Grades tab) ---------- */
   function renderExamTable(){
     const head = document.getElementById("examTableHead");
     const body = document.getElementById("examTableBody");
+    const ecol = EXAMS_SCHEMA.col;
+    const scol = SCORES_SCHEMA.col;
+
+    head.innerHTML = `<tr>
+      <th>Name</th>
+      ${examList.map(e => `<th>${e[ecol.name]}</th>`).join("")}
+      <th>Average</th>
+      <th>Trend</th>
+    </tr>`;
+
+    if(!examStudents.length){
+      body.innerHTML = `<tr><td colspan="${examList.length + 3}" style="text-align:center; color:var(--muted); padding:24px;">No students in this grade</td></tr>`;
+      return;
+    }
+
+    const q = (document.getElementById("examSearch")?.value || "").trim().toLowerCase();
+    const rowsToShow = q ? examStudents.filter(s => (s.name || "").toLowerCase().includes(q)) : examStudents;
+
+    if(!rowsToShow.length){
+      body.innerHTML = `<tr><td colspan="${examList.length + 3}" style="text-align:center; color:var(--muted); padding:24px;">No students match "${q}"</td></tr>`;
+      return;
+    }
+
+    body.innerHTML = rowsToShow.map(s => {
+      let sumPct = 0, cnt = 0;
+      const cells = examList.map(e => {
+        const row = examScores.find(sc => sc[scol.examId] === e[ecol.id] && sc[scol.studentCode] === s.qrCode);
+        if(!row){ return `<td style="color:var(--muted); text-align:center;">☐</td>`; }
+        const sc = Number(row[scol.score]);
+        const mx = Number(e[ecol.maxScore]) || 100;
+        if(!isNaN(sc)){ sumPct += (sc / mx) * 100; cnt++; }
+        return `<td>${row[scol.score]} / ${e[ecol.maxScore]}</td>`;
+      }).join("");
+      const avg = cnt ? Math.round(sumPct / cnt) : null;
+      return `<tr>
+        <td style="font-weight:600;">${s.name || "—"}</td>
+        ${cells}
+        <td>${avg != null ? avg + "%" : "—"}</td>
+        <td><button class="unpaid-link" onclick="showStudentTrend('${s.qrCode}')" title="Show score trend">📈</button></td>
+      </tr>`;
+    }).join("");
+  }
+
+  /* ---------- Manage grades table (Add Exam tab) ---------- */
+  function renderExamManageTable(){
+    const head = document.getElementById("examManageTableHead");
+    const body = document.getElementById("examManageTableBody");
+    if(!head || !body) return;
     const ecol = EXAMS_SCHEMA.col;
     const scol = SCORES_SCHEMA.col;
 
@@ -1579,7 +1694,7 @@
       return;
     }
 
-    const q = (document.getElementById("examSearch")?.value || "").trim().toLowerCase();
+    const q = (document.getElementById("examManageSearch")?.value || "").trim().toLowerCase();
     const rowsToShow = q ? examStudents.filter(s => (s.name || "").toLowerCase().includes(q)) : examStudents;
 
     if(!rowsToShow.length){
@@ -1752,6 +1867,7 @@
 
       closeAddExamModal();
       examGrade = grade;
+      document.getElementById("examManageGradeSelect").value = grade;
       document.getElementById("examGradeSelect").value = grade;
       await loadExamGrades();
 
