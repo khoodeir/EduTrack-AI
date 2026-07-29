@@ -6,6 +6,8 @@
 <title>Live Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
@@ -504,6 +506,7 @@
             <button data-f="paid" onclick="setPayFilter('paid')">Paid</button>
             <button data-f="unpaid" onclick="setPayFilter('unpaid')">Unpaid</button>
           </div>
+          <button class="ghost-btn" id="gradeReportBtn" onclick="generateGradeReport()">📄 Grade Report (PDF)</button>
         </div>
         <div class="table-wrap">
           <table>
@@ -518,6 +521,7 @@
                 <th>Parent Phone</th>
                 <th>Payment</th>
                 <th>Last Attendance</th>
+                <th>Report</th>
               </tr>
             </thead>
             <tbody id="rosterBody"></tbody>
@@ -554,6 +558,7 @@
             </select>
           </div>
           <button class="save-snapshot-btn" id="saveSnapshotBtn" onclick="saveCurrentMonthSnapshot()">💾 Save Current Month</button>
+          <button class="ghost-btn" onclick="generateHistoryMonthReport()">📄 Download PDF (Latest Month)</button>
         </div>
 
         <div class="delta-cards" id="deltaCards"></div>
@@ -1236,7 +1241,7 @@
 
     const body = document.getElementById("rosterBody");
     if(!rows.length){
-      body.innerHTML = `<tr><td colspan="9" style="text-align:center; color:var(--muted); padding:24px;">No matching results</td></tr>`;
+      body.innerHTML = `<tr><td colspan="10" style="text-align:center; color:var(--muted); padding:24px;">No matching results</td></tr>`;
       return;
     }
 
@@ -1257,6 +1262,7 @@
           <td>${s.parentPhone ? `<a class="phone-link" href="tel:${s.parentPhone}">${s.parentPhone}</a>` : "—"}</td>
           <td>${hasPaymentRecord ? `<span class="chip ${paid ? 'paid' : 'unpaid'}">${paid ? 'Paid' : 'Unpaid'}</span>` : "—"}</td>
           <td>${s.lastAttendance || "—"}</td>
+          <td><button class="unpaid-link" onclick="generateStudentReport('${s.qrCode}')" title="Download PDF report">📄</button></td>
         </tr>`;
     }).join("");
   }
@@ -1809,6 +1815,285 @@
 
   function closeStudentTrendModal(){
     document.getElementById("studentTrendModalOverlay").classList.remove("show");
+  }
+
+  /* ============================================================
+     PDF REPORTS
+     Uses jsPDF + jspdf-autotable (loaded from cdnjs, see <head>).
+     Three report types:
+       - generateStudentReport(qrCode)   → single student, from live data
+       - generateGradeReport()           → whole grade currently shown on the dashboard, from live data
+       - generateHistoryMonthReport()    → a saved month from the Monthly History tab
+     "Monthly" reports reflect whatever data is live/saved at the moment
+     you generate them — same caveat as monthly_snapshots: generate/save
+     before the month rolls over if you want an accurate archival copy.
+     ============================================================ */
+  const PDF_COLORS = {
+    gold: [185,129,47], gold2: [165,112,31], ink: [44,33,22],
+    success: [46,125,82], error: [163,52,42], muted: [138,122,99]
+  };
+  const pdfLibReady = () => typeof window.jspdf !== "undefined";
+
+  function pdfHeader(doc, title, subtitle){
+    const c = PDF_COLORS.gold2;
+    doc.setFillColor(c[0], c[1], c[2]);
+    doc.rect(0, 0, 210, 32, "F");
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(18);
+    doc.text(title, 14, 16);
+    doc.setFontSize(10);
+    doc.text(subtitle, 14, 24);
+  }
+
+  function pdfFooterNote(doc, text){
+    doc.setFontSize(8);
+    doc.setTextColor(PDF_COLORS.muted[0], PDF_COLORS.muted[1], PDF_COLORS.muted[2]);
+    doc.text(text, 14, 290);
+  }
+
+  async function fetchStudentExamScores(grade, qrCode){
+    const ecol = EXAMS_SCHEMA.col, scol = SCORES_SCHEMA.col;
+    try{
+      const { data: exams, error: examsErr } = await supa
+        .from(EXAMS_SCHEMA.table).select("*")
+        .eq(ecol.grade, grade).order(ecol.createdAt, { ascending: true });
+      if(examsErr) throw examsErr;
+      const examRows = exams || [];
+      if(!examRows.length) return [];
+
+      const ids = examRows.map(e => e[ecol.id]);
+      const { data: scores, error: scoresErr } = await supa
+        .from(SCORES_SCHEMA.table).select("*").in(scol.examId, ids).eq(scol.studentCode, qrCode);
+      const scoreRows = scoresErr ? [] : (scores || []);
+
+      return examRows.map(e => {
+        const row = scoreRows.find(s => s[scol.examId] === e[ecol.id]);
+        return { name: e[ecol.name], maxScore: e[ecol.maxScore], score: row ? row[scol.score] : null };
+      });
+    }catch(err){
+      return []; // exams tables missing / no policy — report just shows "no exams" section
+    }
+  }
+
+  async function generateStudentReport(qrCode){
+    if(!pdfLibReady()){ alert("The PDF library failed to load — check your connection and try again."); return; }
+    const student = combined.students.find(s => s.qrCode === qrCode);
+    if(!student){ alert("Couldn't find this student's data — try refreshing the dashboard first."); return; }
+
+    const examRows = await fetchStudentExamScores(student.grade, qrCode);
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    pdfHeader(doc, "Student Report", `Generated ${new Date().toLocaleString("en-US")}`);
+
+    doc.setTextColor(PDF_COLORS.ink[0], PDF_COLORS.ink[1], PDF_COLORS.ink[2]);
+    doc.setFontSize(14);
+    doc.text(student.name || "—", 14, 44);
+    doc.setFontSize(10);
+    doc.setTextColor(PDF_COLORS.muted[0], PDF_COLORS.muted[1], PDF_COLORS.muted[2]);
+    doc.text(GRADE_LABELS[student.grade] || "—", 14, 50);
+
+    const attRate = pct(student.attendanceCount, student.absenceCount);
+    const paid = isPaid(student.paymentStatus);
+    const hasPaymentRecord = student.paymentStatus !== "";
+
+    doc.autoTable({
+      startY: 58,
+      theme: "grid",
+      head: [["Field", "Value"]],
+      body: [
+        ["Student Phone", student.studentPhone || "—"],
+        ["Parent Phone", student.parentPhone || "—"],
+        ["Attendance", `${student.attendanceCount} present / ${student.absenceCount} absent${attRate != null ? ` (${attRate}%)` : ""}`],
+        ["Last Attendance", student.lastAttendance || "—"],
+        ["Payment Status", hasPaymentRecord ? (paid ? "Paid" : "Unpaid") : "No record"],
+        ["Amount Paid", fmtEGP(student.amountPaid)],
+        ["Last Payment Date", student.lastPaymentDate || "—"]
+      ],
+      headStyles: { fillColor: PDF_COLORS.gold, textColor: 255 },
+      styles: { fontSize: 10, cellPadding: 4 },
+      margin: { left: 14, right: 14 }
+    });
+
+    let y = doc.lastAutoTable.finalY + 10;
+
+    if(examRows.length){
+      doc.setFontSize(12);
+      doc.setTextColor(PDF_COLORS.ink[0], PDF_COLORS.ink[1], PDF_COLORS.ink[2]);
+      doc.text("Exam Scores", 14, y);
+      y += 4;
+
+      let sumPct = 0, cnt = 0;
+      const body = examRows.map(e => {
+        if(e.score == null) return [e.name, "—", `${e.maxScore}`, "—"];
+        const p = Math.round((Number(e.score) / (Number(e.maxScore) || 100)) * 100);
+        sumPct += p; cnt++;
+        return [e.name, e.score, e.maxScore, `${p}%`];
+      });
+      const avg = cnt ? Math.round(sumPct / cnt) : null;
+
+      doc.autoTable({
+        startY: y,
+        theme: "grid",
+        head: [["Exam", "Score", "Out of", "Percentage"]],
+        body,
+        headStyles: { fillColor: PDF_COLORS.gold, textColor: 255 },
+        styles: { fontSize: 10, cellPadding: 4 },
+        margin: { left: 14, right: 14 }
+      });
+
+      y = doc.lastAutoTable.finalY + 8;
+      const avgColor = avg != null && avg >= 60 ? PDF_COLORS.success : PDF_COLORS.error;
+      doc.setFontSize(11);
+      doc.setTextColor(avgColor[0], avgColor[1], avgColor[2]);
+      doc.text(`Overall Average: ${avg != null ? avg + "%" : "—"}`, 14, y);
+      y += 10;
+    } else {
+      doc.setFontSize(10);
+      doc.setTextColor(PDF_COLORS.muted[0], PDF_COLORS.muted[1], PDF_COLORS.muted[2]);
+      doc.text("No exam scores recorded for this student yet.", 14, y);
+      y += 10;
+    }
+
+    pdfFooterNote(doc, "Generated from Live Dashboard — data reflects the moment this report was created.");
+    doc.save(`${(student.name || "student").trim().replace(/\s+/g, "_")}_report.pdf`);
+  }
+
+  function generateGradeReport(){
+    if(!pdfLibReady()){ alert("The PDF library failed to load — check your connection and try again."); return; }
+    const students = combined.students;
+    if(!students.length){ alert("No student data loaded yet — try refreshing the dashboard first."); return; }
+
+    const gradeLabel = currentGrade === "all" ? "All Grades" : GRADE_LABELS[currentGrade];
+    const kpis = computeKpis(students);
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    pdfHeader(doc, "Grade Report", `${gradeLabel} — Generated ${new Date().toLocaleString("en-US")}`);
+
+    doc.autoTable({
+      startY: 40,
+      theme: "grid",
+      head: [["Metric", "Value"]],
+      body: [
+        ["Total Students", kpis.studentsCount],
+        ["Attendance Rate", `${kpis.attendanceRate}%`],
+        ["Revenue Collected", fmtEGP(kpis.revenue)],
+        ["Paid", kpis.paidCount],
+        ["Unpaid", kpis.unpaidCount],
+        ["Collection Rate", `${kpis.collectionRate}%`]
+      ],
+      headStyles: { fillColor: PDF_COLORS.gold, textColor: 255 },
+      styles: { fontSize: 10, cellPadding: 4 },
+      margin: { left: 14, right: 14 }
+    });
+
+    let y = doc.lastAutoTable.finalY + 10;
+    if(y > 250){ doc.addPage(); y = 20; }
+    doc.setFontSize(12);
+    doc.setTextColor(PDF_COLORS.ink[0], PDF_COLORS.ink[1], PDF_COLORS.ink[2]);
+    doc.text("Student Roster", 14, y);
+    y += 4;
+
+    const rosterBody = students.map(s => {
+      const p = pct(s.attendanceCount, s.absenceCount);
+      const paymentLabel = s.paymentStatus !== "" ? (isPaid(s.paymentStatus) ? "Paid" : "Unpaid") : "—";
+      return [s.name || "—", GRADE_LABELS[s.grade] || "—", p != null ? `${p}%` : "—", paymentLabel];
+    });
+    doc.autoTable({
+      startY: y,
+      theme: "grid",
+      head: [["Name", "Grade", "Attendance", "Payment"]],
+      body: rosterBody,
+      headStyles: { fillColor: PDF_COLORS.gold2, textColor: 255 },
+      styles: { fontSize: 9, cellPadding: 3 },
+      margin: { left: 14, right: 14 }
+    });
+
+    y = doc.lastAutoTable.finalY + 10;
+    const gradesShown = currentGrade === "all" ? GRADES : [currentGrade];
+    const examRows = [];
+    gradesShown.forEach(g => {
+      (combined.examAverages[g] || []).forEach(e => {
+        examRows.push([GRADE_LABELS[g], e.name, e.avg != null ? `${e.avg}%` : "—"]);
+      });
+    });
+
+    if(examRows.length){
+      if(y > 250){ doc.addPage(); y = 20; }
+      doc.setFontSize(12);
+      doc.setTextColor(PDF_COLORS.ink[0], PDF_COLORS.ink[1], PDF_COLORS.ink[2]);
+      doc.text("Exam Averages", 14, y);
+      y += 4;
+      doc.autoTable({
+        startY: y,
+        theme: "grid",
+        head: [["Grade", "Exam", "Average"]],
+        body: examRows,
+        headStyles: { fillColor: PDF_COLORS.gold, textColor: 255 },
+        styles: { fontSize: 9, cellPadding: 3 },
+        margin: { left: 14, right: 14 }
+      });
+    }
+
+    doc.save(`grade_report_${currentGrade}_${new Date().toISOString().slice(0,10)}.pdf`);
+  }
+
+  function generateHistoryMonthReport(){
+    if(!pdfLibReady()){ alert("The PDF library failed to load — check your connection and try again."); return; }
+    if(!currentHistRows.length){ alert("No saved monthly snapshot yet for this grade — save a month first using the button above."); return; }
+
+    const col = HIST_SCHEMA.col;
+    const row = currentHistRows[currentHistRows.length - 1];
+    const prev = currentHistRows.length > 1 ? currentHistRows[currentHistRows.length - 2] : null;
+    const gradeLabel = historyGradeFilter === "all" ? "All Grades" : GRADE_LABELS[historyGradeFilter];
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    pdfHeader(doc, "Monthly Report", `${gradeLabel} — ${monthLabel(row[col.year], row[col.month])}`);
+
+    doc.autoTable({
+      startY: 40,
+      theme: "grid",
+      head: [["Metric", "This Month", prev ? "Change vs Last Month" : ""]],
+      body: [
+        ["Students", row[col.students], prev ? (row[col.students] - prev[col.students]) : "—"],
+        ["Attendance Rate", `${row[col.attendanceRate]}%`, prev ? `${row[col.attendanceRate] - prev[col.attendanceRate]}%` : "—"],
+        ["Collection Rate", `${row[col.collectionRate]}%`, prev ? `${row[col.collectionRate] - prev[col.collectionRate]}%` : "—"],
+        ["Revenue", fmtEGP(row[col.revenue]), prev ? fmtEGP(row[col.revenue] - prev[col.revenue]) : "—"],
+        ["Paid", row[col.paidCount], "—"],
+        ["Unpaid", row[col.unpaidCount], "—"]
+      ],
+      headStyles: { fillColor: PDF_COLORS.gold, textColor: 255 },
+      styles: { fontSize: 10, cellPadding: 4 },
+      margin: { left: 14, right: 14 }
+    });
+
+    let y = doc.lastAutoTable.finalY + 10;
+    doc.setFontSize(12);
+    doc.setTextColor(PDF_COLORS.ink[0], PDF_COLORS.ink[1], PDF_COLORS.ink[2]);
+    doc.text("Who Hasn't Paid", 14, y);
+    y += 4;
+
+    const unpaidList = row[col.unpaidStudents] || [];
+    if(unpaidList.length){
+      doc.autoTable({
+        startY: y,
+        theme: "grid",
+        head: [["Name", "Student Phone"]],
+        body: unpaidList.map(s => [s.name || "—", s.studentPhone || "—"]),
+        headStyles: { fillColor: PDF_COLORS.error, textColor: 255 },
+        styles: { fontSize: 9, cellPadding: 3 },
+        margin: { left: 14, right: 14 }
+      });
+    } else {
+      doc.setFontSize(10);
+      doc.setTextColor(PDF_COLORS.muted[0], PDF_COLORS.muted[1], PDF_COLORS.muted[2]);
+      doc.text("Everyone paid this month.", 14, y);
+    }
+
+    pdfFooterNote(doc, "Generated from the Monthly History tab of the Live Dashboard.");
+    doc.save(`monthly_report_${historyGradeFilter}_${row[col.year]}_${row[col.month]}.pdf`);
   }
 
   loadDashboard();
