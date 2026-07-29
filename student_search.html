@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Student Search</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
@@ -147,9 +148,42 @@
     font-size:9.5px; font-weight:700; color:var(--gold-2); background:rgba(185,129,47,0.12);
     padding:2px 7px; border-radius:999px;
   }
+  .trend-btn{
+    border:none; background:rgba(185,129,47,0.1); color:var(--gold-2); cursor:pointer;
+    font-family:'Inter',sans-serif; font-weight:700; font-size:13px; padding:6px 11px; border-radius:8px;
+    transition:all .15s ease;
+  }
+  .trend-btn:hover{ background:var(--gold-soft); }
 
   .footer-note{ text-align:center; font-size:11.5px; color:var(--muted); margin-top:24px; display:flex; align-items:center; justify-content:center; gap:7px; }
   .footer-note::before{ content:"🔒"; font-size:11px; }
+
+  /* ===== Modal ===== */
+  .modal-overlay{
+    display:none; position:fixed; inset:0; background:rgba(44,33,22,0.45); z-index:80;
+    align-items:center; justify-content:center; padding:20px;
+  }
+  .modal-overlay.show{ display:flex; }
+  .modal-box{
+    background:var(--card); border-radius:16px; max-width:560px; width:100%; max-height:80vh;
+    overflow:auto; padding:22px; box-shadow:var(--shadow-lg); border:1px solid var(--line);
+  }
+  .modal-close{ border:none; background:none; font-size:22px; cursor:pointer; color:var(--muted); line-height:1; }
+  .modal-close:hover{ color:var(--ink); }
+  .section-title{
+    display:flex; align-items:center; gap:9px;
+    font-family:'Cormorant Garamond',serif; font-weight:700; font-size:18px; color:var(--gold-2);
+  }
+  .chart-box{ position:relative; height:260px; }
+  .chart-empty{
+    position:absolute; inset:0; display:none; align-items:center; justify-content:center;
+    color:var(--muted); font-size:12.5px; text-align:center; padding:0 20px;
+  }
+  .chart-empty.show{ display:flex; }
+  .delta-badge{ font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:3px; }
+  .delta-badge.up{ color:var(--success); }
+  .delta-badge.down{ color:var(--error); }
+  .delta-badge.flat{ color:var(--muted); }
 
   @media (max-width:640px){
     .controls{ flex-direction:column; align-items:stretch; }
@@ -226,6 +260,7 @@
               <th>Parent Phone</th>
               <th>Payment</th>
               <th>Last Attendance</th>
+              <th>Trend</th>
             </tr>
           </thead>
           <tbody id="resultsBody"></tbody>
@@ -234,6 +269,24 @@
     </div>
   </div>
   <div class="footer-note">Data is read live from Supabase using a read-only anon key</div>
+</div>
+
+<!-- Student exam trend modal -->
+<div class="modal-overlay" id="studentTrendModalOverlay" onclick="if(event.target===this) closeStudentTrendModal()">
+  <div class="modal-box">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <div class="section-title" id="studentTrendTitle" style="margin-bottom:0;"></div>
+      <button class="modal-close" onclick="closeStudentTrendModal()">×</button>
+    </div>
+    <div class="state-msg show" id="trendLoadingMsg">
+      <span class="spinner"></span> Loading exam scores…
+    </div>
+    <div class="chart-box" style="display:none;" id="trendChartWrap">
+      <canvas id="studentTrendChart"></canvas>
+      <div class="chart-empty" id="studentTrendEmpty">No exam scores recorded yet for this student</div>
+    </div>
+    <div id="studentTrendSummary" style="margin-top:14px; font-size:12.5px; color:var(--muted); text-align:center;"></div>
+  </div>
 </div>
 
 <script>
@@ -259,6 +312,16 @@
       paymentStatus: "payment_status",
       lastPaymentDate: "last_payment_date"
     }
+  };
+
+  // Same shared exam tables used by the dashboard's "Exam Grades" tab.
+  const EXAMS_SCHEMA = {
+    table: "exams",
+    col: { id: "id", name: "exam_name", maxScore: "max_score", grade: "grade", createdAt: "created_at" }
+  };
+  const SCORES_SCHEMA = {
+    table: "exam_scores",
+    col: { id: "id", examId: "exam_id", studentCode: "student_code", score: "score" }
   };
 
   const GRADE_LABELS = { first: "First Secondary", second: "Second Secondary", third: "Third Secondary" };
@@ -377,7 +440,7 @@
 
     const body = document.getElementById("resultsBody");
     if(!rows.length){
-      body.innerHTML = `<tr><td colspan="9" style="text-align:center; color:var(--muted); padding:24px;">No matching results</td></tr>`;
+      body.innerHTML = `<tr><td colspan="10" style="text-align:center; color:var(--muted); padding:24px;">No matching results</td></tr>`;
       return;
     }
 
@@ -398,8 +461,121 @@
           <td>${s.parentPhone ? `<a class="phone-link" href="tel:${s.parentPhone}">${s.parentPhone}</a>` : "—"}</td>
           <td>${hasPaymentRecord ? `<span class="chip ${paid ? 'paid' : 'unpaid'}">${paid ? 'Paid' : 'Unpaid'}</span>` : "—"}</td>
           <td>${s.lastAttendance || "—"}</td>
+          <td><button class="trend-btn" onclick="showStudentTrend('${s.qrCode}','${s.grade}','${(s.name || "").replace(/'/g, "\\'")}')" title="Show exam score trend">📈</button></td>
         </tr>`;
     }).join("");
+  }
+
+  /* ---------- Student exam-score trend ---------- */
+  let studentTrendChartInstance = null;
+
+  async function showStudentTrend(qrCode, grade, name){
+    const overlay = document.getElementById("studentTrendModalOverlay");
+    const loadingEl = document.getElementById("trendLoadingMsg");
+    const chartWrap = document.getElementById("trendChartWrap");
+    const canvas = document.getElementById("studentTrendChart");
+    const emptyEl = document.getElementById("studentTrendEmpty");
+    const summaryEl = document.getElementById("studentTrendSummary");
+
+    document.getElementById("studentTrendTitle").textContent = `${name || "Student"} — Score Trend`;
+    loadingEl.classList.add("show");
+    chartWrap.style.display = "none";
+    emptyEl.classList.remove("show");
+    summaryEl.textContent = "";
+    if(studentTrendChartInstance){ studentTrendChartInstance.destroy(); studentTrendChartInstance = null; }
+    overlay.classList.add("show");
+
+    try{
+      const ecol = EXAMS_SCHEMA.col;
+      const scol = SCORES_SCHEMA.col;
+
+      const { data: exams, error: examsErr } = await supa
+        .from(EXAMS_SCHEMA.table).select("*")
+        .eq(ecol.grade, grade)
+        .order(ecol.createdAt, { ascending: true });
+      if(examsErr) throw examsErr;
+
+      let scores = [];
+      if(exams && exams.length){
+        const ids = exams.map(e => e[ecol.id]);
+        const { data: scoreRows, error: scoresErr } = await supa
+          .from(SCORES_SCHEMA.table).select("*")
+          .in(scol.examId, ids)
+          .eq(scol.studentCode, qrCode);
+        if(scoresErr) throw scoresErr;
+        scores = scoreRows || [];
+      }
+
+      const points = (exams || []).map(e => {
+        const row = scores.find(sc => sc[scol.examId] === e[ecol.id]);
+        if(!row) return null;
+        const sc = Number(row[scol.score]);
+        const mx = Number(e[ecol.maxScore]) || 100;
+        if(isNaN(sc)) return null;
+        return { examName: e[ecol.name], pct: Math.round((sc / mx) * 100), raw: row[scol.score], max: e[ecol.maxScore] };
+      }).filter(p => p != null);
+
+      loadingEl.classList.remove("show");
+      chartWrap.style.display = "block";
+
+      if(points.length < 2){
+        canvas.style.display = "none";
+        emptyEl.textContent = points.length === 1
+          ? "Only one exam recorded so far — add another exam score to see a trend"
+          : "No exam scores recorded yet for this student";
+        emptyEl.classList.add("show");
+        return;
+      }
+
+      canvas.style.display = "block";
+      emptyEl.classList.remove("show");
+
+      studentTrendChartInstance = new Chart(canvas, {
+        type: "line",
+        data: {
+          labels: points.map(p => p.examName),
+          datasets: [{
+            label: "Score",
+            data: points.map(p => p.pct),
+            borderColor: "rgba(185,129,47,0.9)",
+            backgroundColor: "rgba(185,129,47,0.15)",
+            fill: true, tension: 0.3, pointRadius: 4, pointBackgroundColor: "rgba(185,129,47,1)"
+          }]
+        },
+        options: {
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: c => {
+              const p = points[c.dataIndex];
+              return `${p.raw} / ${p.max} (${p.pct}%)`;
+            } } }
+          },
+          scales: {
+            y: { beginAtZero: true, max: 100, ticks: { callback: v => v + "%", font: { size: 10 } }, grid: { color: "rgba(185,129,47,0.08)" } },
+            x: { ticks: { font: { size: 10 } }, grid: { display: false } }
+          }
+        }
+      });
+
+      const first = points[0].pct, last = points[points.length - 1].pct;
+      const diff = last - first;
+      if(diff > 0) summaryEl.innerHTML = `<span class="delta-badge up">▲ Improved by ${diff}%</span> from "${points[0].examName}" to "${points[points.length-1].examName}"`;
+      else if(diff < 0) summaryEl.innerHTML = `<span class="delta-badge down">▼ Dropped by ${Math.abs(diff)}%</span> from "${points[0].examName}" to "${points[points.length-1].examName}"`;
+      else summaryEl.innerHTML = `<span class="delta-badge flat">— No change</span> from "${points[0].examName}" to "${points[points.length-1].examName}"`;
+
+    }catch(err){
+      console.error(err);
+      loadingEl.classList.remove("show");
+      chartWrap.style.display = "block";
+      canvas.style.display = "none";
+      emptyEl.textContent = "Couldn't load exam scores: " + (err.message || err);
+      emptyEl.classList.add("show");
+    }
+  }
+
+  function closeStudentTrendModal(){
+    document.getElementById("studentTrendModalOverlay").classList.remove("show");
   }
 
   loadData();
