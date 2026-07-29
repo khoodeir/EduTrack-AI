@@ -593,7 +593,7 @@
               <option value="third">Third Secondary</option>
             </select>
           </div>
-          <button class="save-snapshot-btn" onclick="addNewExam()">➕ Add New Exam</button>
+          <button class="save-snapshot-btn" onclick="openAddExamModal()">➕ Add Exam</button>
         </div>
 
         <div class="chart-card" id="examEntryPanel" style="display:none; margin-bottom:22px;">
@@ -631,6 +631,35 @@
       <button class="modal-close" onclick="closeUnpaidModal()">×</button>
     </div>
     <div id="unpaidModalBody"></div>
+  </div>
+</div>
+
+<!-- Add exam modal -->
+<div class="modal-overlay" id="addExamModalOverlay" onclick="if(event.target===this) closeAddExamModal()">
+  <div class="modal-box">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <div class="section-title" style="margin-bottom:0;">Add Exam</div>
+      <button class="modal-close" onclick="closeAddExamModal()">×</button>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:14px;">
+      <div>
+        <div class="kpi-label" style="margin-bottom:6px;">Exam Name</div>
+        <input type="text" id="examNameInput" class="hist-select" style="width:100%;" placeholder="e.g. Quiz 1">
+      </div>
+      <div>
+        <div class="kpi-label" style="margin-bottom:6px;">Maximum Score</div>
+        <input type="number" id="examMaxScoreInput" class="hist-select" style="width:100%;" value="100" min="1" step="1">
+      </div>
+      <div>
+        <div class="kpi-label" style="margin-bottom:6px;">Grade</div>
+        <select id="examGradeInput" class="hist-select" style="width:100%;">
+          <option value="first">First Secondary</option>
+          <option value="second">Second Secondary</option>
+          <option value="third">Third Secondary</option>
+        </select>
+      </div>
+      <button class="save-snapshot-btn" id="saveNewExamBtn" onclick="saveNewExam()" style="justify-content:center;">Save</button>
+    </div>
   </div>
 </div>
 
@@ -1420,26 +1449,44 @@
   }
 
   /* ============================================================
-     EXAM GRADES (permanent — never cleared, one new column per exam)
-     Needs a table per grade: exam_grades_{grade}_secondary
-     Suggested columns:
-       id bigint generated always as identity primary key,
-       qr_code text not null,
-       exam_name text not null,
-       max_score numeric not null default 100,
-       score numeric not null,
-       exam_date date not null default current_date,
-       created_at timestamptz default now()
+     EXAM GRADES (dynamic columns, driven by an "exams" table)
+     Needs two shared tables in Supabase (not one per grade):
+
+       create table exams (
+         id bigint generated always as identity primary key,
+         exam_name text not null,
+         max_score numeric not null default 100,
+         grade text not null,              -- 'first' | 'second' | 'third'
+         created_at timestamptz default now()
+       );
+
+       create table exam_scores (
+         id bigint generated always as identity primary key,
+         exam_id bigint not null references exams(id) on delete cascade,
+         student_code text not null,       -- matches qr_code in the attendance tables
+         score numeric not null,
+         created_at timestamptz default now()
+       );
+
+     Both need SELECT + INSERT (+ DELETE, for re-saving scores) policies
+     for the anon role. Adding a new exam just inserts one row into
+     `exams` — the grades table below generates its columns dynamically
+     from whatever exams exist for the selected grade, so no schema
+     change is needed each time a new exam is added.
      ============================================================ */
-  const EXAM_SCHEMA = {
-    table: (g) => `exam_grades_${g}_secondary`,
-    col: { qrCode: "qr_code", examName: "exam_name", maxScore: "max_score", score: "score", examDate: "exam_date" }
+  const EXAMS_SCHEMA = {
+    table: "exams",
+    col: { id: "id", name: "exam_name", maxScore: "max_score", grade: "grade", createdAt: "created_at" }
+  };
+  const SCORES_SCHEMA = {
+    table: "exam_scores",
+    col: { id: "id", examId: "exam_id", studentCode: "student_code", score: "score" }
   };
 
   let examGrade = "first";
   let examStudents = [];
-  let examRows = [];
-  let examNames = [];
+  let examList = [];    // rows from `exams` for the selected grade
+  let examScores = [];  // rows from `exam_scores` for those exams
 
   function onExamGradeChange(){
     examGrade = document.getElementById("examGradeSelect").value;
@@ -1454,22 +1501,26 @@
     errorEl.classList.remove("show");
     contentEl.classList.remove("show");
     try{
-      const [students, { data: rows, error }] = await Promise.all([
+      const ecol = EXAMS_SCHEMA.col;
+      const [students, { data: exams, error: examsErr }] = await Promise.all([
         fetchGrade(examGrade),
-        supa.from(EXAM_SCHEMA.table(examGrade)).select("*")
+        supa.from(EXAMS_SCHEMA.table).select("*").eq(ecol.grade, examGrade).order(ecol.createdAt, { ascending: true })
       ]);
-      if(error) throw error;
+      if(examsErr) throw examsErr;
+
       examStudents = students;
-      examRows = rows || [];
-      const seen = new Set();
-      examNames = [];
-      examRows
-        .slice()
-        .sort((a,b) => new Date(a[EXAM_SCHEMA.col.examDate] || 0) - new Date(b[EXAM_SCHEMA.col.examDate] || 0))
-        .forEach(r => {
-          const n = r[EXAM_SCHEMA.col.examName];
-          if(!seen.has(n)){ seen.add(n); examNames.push(n); }
-        });
+      examList = exams || [];
+
+      let scores = [];
+      if(examList.length){
+        const scol = SCORES_SCHEMA.col;
+        const ids = examList.map(e => e[ecol.id]);
+        const { data: scoreRows, error: scoresErr } = await supa.from(SCORES_SCHEMA.table).select("*").in(scol.examId, ids);
+        if(scoresErr) throw scoresErr;
+        scores = scoreRows || [];
+      }
+      examScores = scores;
+
       renderExamTable();
       contentEl.classList.add("show");
     }catch(err){
@@ -1478,8 +1529,8 @@
         <div style="font-weight:700;">Couldn't load grades</div>
         <div style="font-size:12px; max-width:520px;">
           ${err.message || err}<br><br>
-          This most likely means the exam_grades_${examGrade}_secondary table doesn't exist yet, or the anon role
-          doesn't have SELECT/INSERT permission for it.
+          This most likely means the "exams" or "exam_scores" tables don't exist yet, or the anon role
+          doesn't have SELECT/INSERT permission for them. See the schema in the code comments above.
         </div>`;
       errorEl.classList.add("show");
     }finally{
@@ -1490,56 +1541,105 @@
   function renderExamTable(){
     const head = document.getElementById("examTableHead");
     const body = document.getElementById("examTableBody");
-    const col = EXAM_SCHEMA.col;
+    const ecol = EXAMS_SCHEMA.col;
+    const scol = SCORES_SCHEMA.col;
 
     head.innerHTML = `<tr>
       <th>Name</th>
-      ${examNames.map(n => `<th>${n}</th>`).join("")}
+      ${examList.map(e => `
+        <th>
+          ${e[ecol.name]}
+          <button class="unpaid-link" style="margin-inline-start:6px; padding:2px 8px;" onclick="openScoreEntryById(${e[ecol.id]})">✏️ Enter</button>
+        </th>`).join("")}
       <th>Average</th>
     </tr>`;
 
     if(!examStudents.length){
-      body.innerHTML = `<tr><td colspan="${examNames.length + 2}" style="text-align:center; color:var(--muted); padding:24px;">No students in this grade</td></tr>`;
+      body.innerHTML = `<tr><td colspan="${examList.length + 2}" style="text-align:center; color:var(--muted); padding:24px;">No students in this grade</td></tr>`;
       return;
     }
 
     body.innerHTML = examStudents.map(s => {
-      const rowsForStudent = examRows.filter(r => r[col.qrCode] === s.qrCode);
       let sumPct = 0, cnt = 0;
-      const cells = examNames.map(n => {
-        const r = rowsForStudent.find(x => x[col.examName] === n);
-        if(!r) return `<td style="color:var(--muted);">—</td>`;
-        const sc = Number(r[col.score]);
-        const mx = Number(r[col.maxScore]) || 100;
+      const cells = examList.map(e => {
+        const row = examScores.find(sc => sc[scol.examId] === e[ecol.id] && sc[scol.studentCode] === s.qrCode);
+        if(!row){ return `<td style="color:var(--muted); text-align:center;">☐</td>`; }
+        const sc = Number(row[scol.score]);
+        const mx = Number(e[ecol.maxScore]) || 100;
         if(!isNaN(sc)){ sumPct += (sc / mx) * 100; cnt++; }
-        return `<td>${r[col.score]} / ${r[col.maxScore]}</td>`;
+        return `<td>${row[scol.score]} / ${e[ecol.maxScore]}</td>`;
       }).join("");
       const avg = cnt ? Math.round(sumPct / cnt) : null;
       return `<tr><td style="font-weight:600;">${s.name || "—"}</td>${cells}<td>${avg != null ? avg + "%" : "—"}</td></tr>`;
     }).join("");
   }
 
-  function addNewExam(){
-    const name = prompt("New exam name (e.g. Month 1 Exam):");
-    if(!name || !name.trim()) return;
-    const maxScoreStr = prompt("Maximum score for this exam:", "100");
-    const maxScore = Number(maxScoreStr);
-    if(!maxScoreStr || isNaN(maxScore) || maxScore <= 0){ alert("Invalid maximum score"); return; }
-    openScoreEntry(name.trim(), maxScore);
+  /* ---------- Add Exam popup ---------- */
+  function openAddExamModal(){
+    document.getElementById("examNameInput").value = "";
+    document.getElementById("examMaxScoreInput").value = "100";
+    document.getElementById("examGradeInput").value = examGrade;
+    document.getElementById("addExamModalOverlay").classList.add("show");
+  }
+  function closeAddExamModal(){
+    document.getElementById("addExamModalOverlay").classList.remove("show");
   }
 
-  function openScoreEntry(examName, maxScore){
+  async function saveNewExam(){
+    const name = document.getElementById("examNameInput").value.trim();
+    const maxScore = Number(document.getElementById("examMaxScoreInput").value);
+    const grade = document.getElementById("examGradeInput").value;
+    if(!name){ alert("Please enter an exam name"); return; }
+    if(!maxScore || maxScore <= 0){ alert("Please enter a valid maximum score"); return; }
+
+    const btn = document.getElementById("saveNewExamBtn");
+    btn.disabled = true; btn.textContent = "Saving…";
+    try{
+      const ecol = EXAMS_SCHEMA.col;
+      const { data, error } = await supa.from(EXAMS_SCHEMA.table).insert([{
+        [ecol.name]: name, [ecol.maxScore]: maxScore, [ecol.grade]: grade
+      }]).select();
+      if(error) throw error;
+
+      closeAddExamModal();
+      examGrade = grade;
+      document.getElementById("examGradeSelect").value = grade;
+      await loadExamGrades();
+
+      // Jump straight into entering scores for the exam that was just created.
+      const newExam = data && data[0];
+      if(newExam) openScoreEntry(newExam);
+    }catch(err){
+      alert("Couldn't save the exam: " + (err.message || err) +
+        "\n\nMake sure an \"exams\" table exists with an INSERT/SELECT policy for the anon role.");
+    }finally{
+      btn.disabled = false; btn.textContent = "Save";
+    }
+  }
+
+  /* ---------- Score entry panel ---------- */
+  function openScoreEntryById(examId){
+    const ecol = EXAMS_SCHEMA.col;
+    const exam = examList.find(e => e[ecol.id] === examId);
+    if(exam) openScoreEntry(exam);
+  }
+
+  function openScoreEntry(exam){
+    const ecol = EXAMS_SCHEMA.col;
+    const scol = SCORES_SCHEMA.col;
+    const maxScore = exam[ecol.maxScore];
     const panel = document.getElementById("examEntryPanel");
-    document.getElementById("examEntryTitle").textContent = `Enter Grades: ${examName} (out of ${maxScore})`;
-    document.getElementById("examEntryBody").innerHTML = examStudents.map(s => `
+    document.getElementById("examEntryTitle").textContent = `Enter Grades: ${exam[ecol.name]} (out of ${maxScore})`;
+    document.getElementById("examEntryBody").innerHTML = examStudents.map(s => {
+      const existing = examScores.find(sc => sc[scol.examId] === exam[ecol.id] && sc[scol.studentCode] === s.qrCode);
+      return `
       <div class="list-row">
         <div class="list-name"><span class="name">${s.name || "—"}</span></div>
-        <input type="number" class="score-input" data-qr="${s.qrCode}" min="0" max="${maxScore}" step="0.5" placeholder="/ ${maxScore}">
-      </div>
-    `).join("");
+        <input type="number" class="score-input" data-code="${s.qrCode}" min="0" max="${maxScore}" step="0.5" placeholder="/ ${maxScore}" value="${existing ? existing[scol.score] : ''}">
+      </div>`;
+    }).join("");
     panel.style.display = "block";
-    panel.dataset.examName = examName;
-    panel.dataset.maxScore = maxScore;
+    panel.dataset.examId = exam[ecol.id];
     panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 
@@ -1549,28 +1649,30 @@
 
   async function saveScoreEntry(){
     const panel = document.getElementById("examEntryPanel");
-    const examName = panel.dataset.examName;
-    const maxScore = Number(panel.dataset.maxScore);
+    const examId = Number(panel.dataset.examId);
     const inputs = panel.querySelectorAll(".score-input");
-    const col = EXAM_SCHEMA.col;
+    const scol = SCORES_SCHEMA.col;
     const rows = [];
     inputs.forEach(inp => {
       const v = inp.value.trim();
       if(v === "") return;
       rows.push({
-        [col.qrCode]: inp.dataset.qr,
-        [col.examName]: examName,
-        [col.maxScore]: maxScore,
-        [col.score]: Number(v),
-        [col.examDate]: new Date().toISOString().slice(0, 10)
+        [scol.examId]: examId,
+        [scol.studentCode]: inp.dataset.code,
+        [scol.score]: Number(v)
       });
     });
-    if(!rows.length){ alert("No scores entered yet"); return; }
+
     const btn = document.getElementById("saveExamEntryBtn");
     btn.disabled = true; btn.textContent = "Saving…";
     try{
-      const { error } = await supa.from(EXAM_SCHEMA.table(examGrade)).insert(rows);
-      if(error) throw error;
+      // Clear any previous scores for this exam first, so re-saving just updates them
+      // (this also covers editing scores that were entered earlier).
+      await supa.from(SCORES_SCHEMA.table).delete().eq(scol.examId, examId);
+      if(rows.length){
+        const { error } = await supa.from(SCORES_SCHEMA.table).insert(rows);
+        if(error) throw error;
+      }
       cancelScoreEntry();
       await loadExamGrades();
     }catch(err){
