@@ -196,6 +196,8 @@
     display:flex; align-items:center; justify-content:space-between; gap:10px;
     padding:12px 4px 2px; margin-top:6px; border-top:2px solid var(--line); font-size:13px;
   }
+  .qr-wrap{ display:flex; flex-direction:column; align-items:center; gap:14px; padding:10px 0 4px; }
+  .qr-wrap img{ width:220px; height:220px; object-fit:contain; border:1px solid var(--line); border-radius:12px; background:#fff; padding:10px; }
 
   @media (max-width:640px){
     .controls{ flex-direction:column; align-items:stretch; }
@@ -272,7 +274,8 @@
               <th>Parent Phone</th>
               <th>Payment</th>
               <th>Last Attendance</th>
-              <th>Trend</th>
+              <th>Exams</th>
+              <th>Show QR</th>
             </tr>
           </thead>
           <tbody id="resultsBody"></tbody>
@@ -315,6 +318,20 @@
   </div>
 </div>
 
+<!-- Student QR code modal -->
+<div class="modal-overlay" id="studentQrModalOverlay" onclick="if(event.target===this) closeStudentQrModal()">
+  <div class="modal-box">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <div class="section-title" id="studentQrTitle" style="margin-bottom:0;"></div>
+      <button class="modal-close" onclick="closeStudentQrModal()">×</button>
+    </div>
+    <div class="state-msg show" id="qrLoadingMsg">
+      <span class="spinner"></span> Loading QR code…
+    </div>
+    <div id="studentQrBody" style="display:none;"></div>
+  </div>
+</div>
+
 <script>
   /* ============================================================
      SUPABASE CONNECTION — same database as the main dashboard
@@ -329,6 +346,7 @@
     col: {
       fullName: "full_name",
       qrCode: "qr_code",
+      qrUrl: "qr_url",
       studentPhone: "student_phone",
       parentPhone: "parent_phone",
       attendanceCount: "attendance_count",
@@ -385,6 +403,7 @@
         grade,
         name: a[col.fullName] ?? "",
         qrCode: a[col.qrCode] ?? "",
+        qrUrl: a[col.qrUrl] ?? "",
         studentPhone: a[col.studentPhone] ?? "",
         parentPhone: a[col.parentPhone] ?? "",
         attendanceCount: Number(a[col.attendanceCount] || 0),
@@ -466,7 +485,7 @@
 
     const body = document.getElementById("resultsBody");
     if(!rows.length){
-      body.innerHTML = `<tr><td colspan="10" style="text-align:center; color:var(--muted); padding:24px;">No matching results</td></tr>`;
+      body.innerHTML = `<tr><td colspan="11" style="text-align:center; color:var(--muted); padding:24px;">No matching results</td></tr>`;
       return;
     }
 
@@ -474,6 +493,8 @@
       const p = pct(s.attendanceCount, s.absenceCount);
       const paid = isPaid(s.paymentStatus);
       const hasPaymentRecord = s.paymentStatus !== "";
+      const safeName = (s.name || "").replace(/'/g, "\\'");
+      const safeQrUrl = (s.qrUrl || "").replace(/'/g, "\\'");
       return `
         <tr>
           <td style="font-weight:600;">${s.name || "—"}</td>
@@ -488,8 +509,11 @@
           <td>${hasPaymentRecord ? `<span class="chip ${paid ? 'paid' : 'unpaid'}">${paid ? 'Paid' : 'Unpaid'}</span>` : "—"}</td>
           <td>${s.lastAttendance || "—"}</td>
           <td style="display:flex; gap:6px;">
-            <button class="trend-btn" onclick="showStudentTrend('${s.qrCode}','${s.grade}','${(s.name || "").replace(/'/g, "\\'")}')" title="Show exam score trend chart">📈</button>
-            <button class="trend-btn" onclick="showStudentGrades('${s.qrCode}','${s.grade}','${(s.name || "").replace(/'/g, "\\'")}')" title="Show exam grades list">📋</button>
+            <button class="trend-btn" onclick="showStudentTrend('${s.qrCode}','${s.grade}','${safeName}')" title="Show exam scores">📈</button>
+            <button class="trend-btn" onclick="showStudentGrades('${s.qrCode}','${s.grade}','${safeName}')" title="Show exam scores list">📋</button>
+          </td>
+          <td>
+            <button class="trend-btn" onclick="showStudentQr('${safeQrUrl}','${safeName}')" title="Show QR code">🔳</button>
           </td>
         </tr>`;
     }).join("");
@@ -506,7 +530,7 @@
     const emptyEl = document.getElementById("studentTrendEmpty");
     const summaryEl = document.getElementById("studentTrendSummary");
 
-    document.getElementById("studentTrendTitle").textContent = `${name || "Student"} — Score Trend`;
+    document.getElementById("studentTrendTitle").textContent = `${name || "Student"} — Exams`;
     loadingEl.classList.add("show");
     chartWrap.style.display = "none";
     emptyEl.classList.remove("show");
@@ -684,6 +708,38 @@
 
   function closeStudentGradesModal(){
     document.getElementById("studentGradesModalOverlay").classList.remove("show");
+  }
+
+  /* ---------- Student QR code ---------- */
+  function showStudentQr(qrUrl, name){
+    const overlay = document.getElementById("studentQrModalOverlay");
+    const loadingEl = document.getElementById("qrLoadingMsg");
+    const bodyEl = document.getElementById("studentQrBody");
+
+    document.getElementById("studentQrTitle").textContent = `${name || "Student"} — QR Code`;
+    bodyEl.style.display = "none";
+    bodyEl.innerHTML = "";
+    loadingEl.classList.add("show");
+    overlay.classList.add("show");
+
+    if(!qrUrl){
+      loadingEl.classList.remove("show");
+      bodyEl.style.display = "block";
+      bodyEl.innerHTML = `<div style="text-align:center; color:var(--muted); padding:24px 0;">No QR code saved for this student</div>`;
+      return;
+    }
+
+    loadingEl.classList.remove("show");
+    bodyEl.style.display = "block";
+    bodyEl.innerHTML = `
+      <div class="qr-wrap">
+        <img src="${qrUrl}" alt="Student QR code" onerror="this.parentElement.innerHTML='<div style=&quot;color:var(--error); font-size:12.5px; text-align:center;&quot;>Couldn\\'t load the QR image</div>';">
+        <a class="scanner-btn" href="${qrUrl}" target="_blank" rel="noopener">Open Full Size</a>
+      </div>`;
+  }
+
+  function closeStudentQrModal(){
+    document.getElementById("studentQrModalOverlay").classList.remove("show");
   }
 
   loadData();
