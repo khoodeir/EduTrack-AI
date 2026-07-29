@@ -1550,6 +1550,7 @@
         <th>
           ${e[ecol.name]}
           <button class="unpaid-link" style="margin-inline-start:6px; padding:2px 8px;" onclick="openScoreEntryById(${e[ecol.id]})">✏️ Enter</button>
+          <button class="unpaid-link" style="margin-inline-start:4px; padding:2px 8px;" onclick="confirmDeleteExam(${e[ecol.id]})" title="Delete this exam">🗑</button>
         </th>`).join("")}
       <th>Average</th>
     </tr>`;
@@ -1572,6 +1573,36 @@
       const avg = cnt ? Math.round(sumPct / cnt) : null;
       return `<tr><td style="font-weight:600;">${s.name || "—"}</td>${cells}<td>${avg != null ? avg + "%" : "—"}</td></tr>`;
     }).join("");
+  }
+
+  /* ---------- Delete exam ---------- */
+  function confirmDeleteExam(examId){
+    const ecol = EXAMS_SCHEMA.col;
+    const exam = examList.find(e => e[ecol.id] === examId);
+    const name = exam ? exam[ecol.name] : "this exam";
+    const ok = confirm(`Are you sure you want to delete "${name}"?\n\nThis will permanently remove the exam and all student grades entered for it. This can't be undone.`);
+    if(ok) deleteExam(examId);
+  }
+
+  async function deleteExam(examId){
+    try{
+      const scol = SCORES_SCHEMA.col;
+      const ecol = EXAMS_SCHEMA.col;
+      // Delete scores first (in case there's no ON DELETE CASCADE set up on the FK).
+      await supa.from(SCORES_SCHEMA.table).delete().eq(scol.examId, examId);
+      const { error } = await supa.from(EXAMS_SCHEMA.table).delete().eq(ecol.id, examId);
+      if(error) throw error;
+
+      // If the score-entry panel was open for this exam, close it.
+      const panel = document.getElementById("examEntryPanel");
+      if(panel.dataset.examId && Number(panel.dataset.examId) === examId){
+        cancelScoreEntry();
+      }
+
+      await loadExamGrades();
+    }catch(err){
+      alert("Couldn't delete the exam: " + (err.message || err));
+    }
   }
 
   /* ---------- Add Exam popup ---------- */
