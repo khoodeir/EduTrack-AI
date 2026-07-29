@@ -453,11 +453,20 @@
         </div>
       </div>
 
-      <div class="chart-card" style="margin-bottom:28px;">
-        <div class="section-title">Average Exam Scores <span class="tag" id="examAvgSourceTag">exams</span></div>
-        <div class="chart-box" style="height:190px;">
-          <canvas id="examAvgChart"></canvas>
-          <div class="chart-empty" id="examAvgChartEmpty">No exam scores recorded yet</div>
+      <div class="two-col">
+        <div class="chart-card">
+          <div class="section-title">Average Exam Scores <span class="tag" id="examAvgSourceTag">exams</span></div>
+          <div class="chart-box" style="height:190px;">
+            <canvas id="examAvgChart"></canvas>
+            <div class="chart-empty" id="examAvgChartEmpty">No exam scores recorded yet</div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="section-title">Score Distribution <span class="tag">by student</span></div>
+          <div class="chart-box" style="height:190px;">
+            <canvas id="examDistChart"></canvas>
+            <div class="chart-empty" id="examDistChartEmpty">No exam scores recorded yet</div>
+          </div>
         </div>
       </div>
 
@@ -680,7 +689,7 @@
 
   let currentGrade = "all";
   let payFilterState = "all";
-  let combined = { students: [], statsRows: [], examAverages: {} }; // students = merged attendance+payment rows, tagged with grade
+  let combined = { students: [], statsRows: [], examAverages: {}, examStudentAverages: [] }; // students = merged attendance+payment rows, tagged with grade
   let charts = {};
 
   /* ---------- Tabs ---------- */
@@ -776,10 +785,16 @@
     }
   }
 
-  /* ---------- Exam averages (per exam, per grade) for the dashboard chart ---------- */
-  async function fetchExamAverages(grades){
+  /* ---------- Exam data for the dashboard charts ----------
+     Returns both:
+       perExam:   { grade: [{ name, avg }, ...] }               → for the trend chart
+       perStudent: [{ code, grade, avg }, ...]                  → for the distribution donut
+     One fetch of exams + exam_scores per grade feeds both charts. ---------- */
+  async function fetchExamData(grades){
     const ecol = EXAMS_SCHEMA.col, scol = SCORES_SCHEMA.col;
-    const out = {};
+    const perExam = {};
+    const studentAgg = {}; // code -> { grade, sum, count }
+
     await Promise.all(grades.map(async (g) => {
       try{
         const { data: exams, error: examsErr } = await supa
@@ -787,14 +802,14 @@
           .eq(ecol.grade, g).order(ecol.createdAt, { ascending: true });
         if(examsErr) throw examsErr;
         const examRows = exams || [];
-        if(!examRows.length){ out[g] = []; return; }
+        if(!examRows.length){ perExam[g] = []; return; }
 
         const ids = examRows.map(e => e[ecol.id]);
         const { data: scores, error: scoresErr } = await supa
           .from(SCORES_SCHEMA.table).select("*").in(scol.examId, ids);
         const scoreRows = scoresErr ? [] : (scores || []);
 
-        out[g] = examRows.map(e => {
+        perExam[g] = examRows.map(e => {
           const rel = scoreRows.filter(s => s[scol.examId] === e[ecol.id]);
           const pcts = rel
             .map(s => (Number(s[scol.score]) / (Number(e[ecol.maxScore]) || 100)) * 100)
@@ -802,11 +817,31 @@
           const avg = pcts.length ? Math.round(pcts.reduce((a,b) => a+b, 0) / pcts.length) : null;
           return { name: e[ecol.name], avg };
         });
+
+        const examById = {};
+        examRows.forEach(e => { examById[e[ecol.id]] = e; });
+        scoreRows.forEach(s => {
+          const exam = examById[s[scol.examId]];
+          if(!exam) return;
+          const p = (Number(s[scol.score]) / (Number(exam[ecol.maxScore]) || 100)) * 100;
+          if(isNaN(p)) return;
+          const code = s[scol.studentCode];
+          if(!studentAgg[code]) studentAgg[code] = { grade: g, sum: 0, count: 0 };
+          studentAgg[code].sum += p;
+          studentAgg[code].count += 1;
+        });
       }catch(err){
-        out[g] = []; // exams table missing / no policy — chart just shows its empty state
+        perExam[g] = []; // exams table missing / no policy — charts just show their empty state
       }
     }));
-    return out;
+
+    const perStudent = Object.keys(studentAgg).map(code => ({
+      code,
+      grade: studentAgg[code].grade,
+      avg: Math.round(studentAgg[code].sum / studentAgg[code].count)
+    }));
+
+    return { perExam, perStudent };
   }
 
   /* ---------- Main load ---------- */
@@ -825,7 +860,9 @@
       const gradesToFetch = currentGrade === "all" ? GRADES : [currentGrade];
       const results = await Promise.all(gradesToFetch.map(fetchGrade));
       combined.students = results.flat();
-      combined.examAverages = await fetchExamAverages(gradesToFetch);
+      const examData = await fetchExamData(gradesToFetch);
+      combined.examAverages = examData.perExam;
+      combined.examStudentAverages = examData.perStudent;
 
       renderAll();
       contentEl.classList.add("show");
@@ -893,6 +930,7 @@
     renderAttendanceByGradeChart(students);
     renderPaymentStatusChart(paidStudents.length, unpaidStudents.length);
     renderExamAvgChart();
+    renderExamDistChart();
     renderTopAttenders(students);
     renderUnpaidList(unpaidStudents);
     payFilterState = "all";
@@ -1036,6 +1074,42 @@
         }
       });
     }
+  }
+
+  function renderExamDistChart(){
+    const canvas = document.getElementById("examDistChart");
+    const emptyEl = document.getElementById("examDistChartEmpty");
+    destroyChart("examDist");
+    if(!chartLibReady()){ canvas.style.display="none"; emptyEl.textContent="Chart library failed to load — try refreshing"; emptyEl.classList.add("show"); return; }
+
+    const gradesShown = currentGrade === "all" ? GRADES : [currentGrade];
+    const rows = (combined.examStudentAverages || []).filter(r => gradesShown.includes(r.grade));
+    if(!rows.length){ canvas.style.display = "none"; emptyEl.classList.add("show"); return; }
+    canvas.style.display = "block"; emptyEl.classList.remove("show");
+
+    // Performance bands based on each student's own average across all their recorded exams.
+    const bands = [
+      { label: "Excellent (90-100%)", min: 90, max: 101, color: "rgba(46,125,82,0.75)" },
+      { label: "Good (75-89%)",       min: 75, max: 90,  color: "rgba(185,129,47,0.75)" },
+      { label: "Average (60-74%)",    min: 60, max: 75,  color: "rgba(165,112,31,0.55)" },
+      { label: "Needs Work (<60%)",   min: -1, max: 60,  color: "rgba(163,52,42,0.7)" }
+    ];
+    const counts = bands.map(b => rows.filter(r => r.avg >= b.min && r.avg < b.max).length);
+
+    charts.examDist = new Chart(canvas, {
+      type: "doughnut",
+      data: {
+        labels: bands.map(b => b.label),
+        datasets: [{ data: counts, backgroundColor: bands.map(b => b.color), borderWidth: 0 }]
+      },
+      options: {
+        maintainAspectRatio: false, cutout: "62%",
+        plugins: {
+          legend: { position: "bottom", labels: { font: { family: "Inter", size: 10.5 }, padding: 10, boxWidth: 11 } },
+          tooltip: { callbacks: { label: c => `${c.label.split(" (")[0]}: ${c.raw} student${c.raw === 1 ? "" : "s"}` } }
+        }
+      }
+    });
   }
 
   function renderTopAttenders(students){
