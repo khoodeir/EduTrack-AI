@@ -592,6 +592,9 @@
               <option value="second">Second Secondary</option>
               <option value="third">Third Secondary</option>
             </select>
+            <div class="search-box" style="min-width:200px;">
+              <input type="text" id="examSearch" placeholder="Search by student name…" oninput="renderExamTable()">
+            </div>
           </div>
           <button class="save-snapshot-btn" onclick="openAddExamModal()">➕ Add Exam</button>
         </div>
@@ -660,6 +663,21 @@
       </div>
       <button class="save-snapshot-btn" id="saveNewExamBtn" onclick="saveNewExam()" style="justify-content:center;">Save</button>
     </div>
+  </div>
+</div>
+
+<!-- Student trend modal -->
+<div class="modal-overlay" id="studentTrendModalOverlay" onclick="if(event.target===this) closeStudentTrendModal()">
+  <div class="modal-box" style="max-width:560px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <div class="section-title" id="studentTrendTitle" style="margin-bottom:0;"></div>
+      <button class="modal-close" onclick="closeStudentTrendModal()">×</button>
+    </div>
+    <div class="chart-box" style="height:260px;">
+      <canvas id="studentTrendChart"></canvas>
+      <div class="chart-empty" id="studentTrendEmpty">No exam scores recorded yet for this student</div>
+    </div>
+    <div id="studentTrendSummary" style="margin-top:14px; font-size:12.5px; color:var(--muted); text-align:center;"></div>
   </div>
 </div>
 
@@ -1553,14 +1571,23 @@
           <button class="unpaid-link" style="margin-inline-start:4px; padding:2px 8px;" onclick="confirmDeleteExam(${e[ecol.id]})" title="Delete this exam">🗑</button>
         </th>`).join("")}
       <th>Average</th>
+      <th>Trend</th>
     </tr>`;
 
     if(!examStudents.length){
-      body.innerHTML = `<tr><td colspan="${examList.length + 2}" style="text-align:center; color:var(--muted); padding:24px;">No students in this grade</td></tr>`;
+      body.innerHTML = `<tr><td colspan="${examList.length + 3}" style="text-align:center; color:var(--muted); padding:24px;">No students in this grade</td></tr>`;
       return;
     }
 
-    body.innerHTML = examStudents.map(s => {
+    const q = (document.getElementById("examSearch")?.value || "").trim().toLowerCase();
+    const rowsToShow = q ? examStudents.filter(s => (s.name || "").toLowerCase().includes(q)) : examStudents;
+
+    if(!rowsToShow.length){
+      body.innerHTML = `<tr><td colspan="${examList.length + 3}" style="text-align:center; color:var(--muted); padding:24px;">No students match "${q}"</td></tr>`;
+      return;
+    }
+
+    body.innerHTML = rowsToShow.map(s => {
       let sumPct = 0, cnt = 0;
       const cells = examList.map(e => {
         const row = examScores.find(sc => sc[scol.examId] === e[ecol.id] && sc[scol.studentCode] === s.qrCode);
@@ -1571,8 +1598,99 @@
         return `<td>${row[scol.score]} / ${e[ecol.maxScore]}</td>`;
       }).join("");
       const avg = cnt ? Math.round(sumPct / cnt) : null;
-      return `<tr><td style="font-weight:600;">${s.name || "—"}</td>${cells}<td>${avg != null ? avg + "%" : "—"}</td></tr>`;
+      return `<tr>
+        <td style="font-weight:600;">${s.name || "—"}</td>
+        ${cells}
+        <td>${avg != null ? avg + "%" : "—"}</td>
+        <td><button class="unpaid-link" onclick="showStudentTrend('${s.qrCode}')" title="Show score trend">📈</button></td>
+      </tr>`;
     }).join("");
+  }
+
+  /* ---------- Student trend chart ---------- */
+  let studentTrendChartInstance = null;
+
+  function showStudentTrend(qrCode){
+    const ecol = EXAMS_SCHEMA.col;
+    const scol = SCORES_SCHEMA.col;
+    const student = examStudents.find(s => s.qrCode === qrCode);
+    if(!student) return;
+
+    // examList is already ordered oldest -> newest (created_at ascending), so the
+    // trend line reads left-to-right in the order exams actually happened.
+    const points = examList.map(e => {
+      const row = examScores.find(sc => sc[scol.examId] === e[ecol.id] && sc[scol.studentCode] === qrCode);
+      if(!row) return null;
+      const sc = Number(row[scol.score]);
+      const mx = Number(e[ecol.maxScore]) || 100;
+      if(isNaN(sc)) return null;
+      return { examName: e[ecol.name], pct: Math.round((sc / mx) * 100), raw: row[scol.score], max: e[ecol.maxScore] };
+    }).filter(p => p != null);
+
+    document.getElementById("studentTrendTitle").textContent = `${student.name || "Student"} — Score Trend`;
+
+    const canvas = document.getElementById("studentTrendChart");
+    const emptyEl = document.getElementById("studentTrendEmpty");
+    const summaryEl = document.getElementById("studentTrendSummary");
+
+    if(studentTrendChartInstance){ studentTrendChartInstance.destroy(); studentTrendChartInstance = null; }
+
+    if(points.length < 2){
+      canvas.style.display = "none";
+      emptyEl.textContent = points.length === 1
+        ? "Only one exam recorded so far — add another exam score to see a trend"
+        : "No exam scores recorded yet for this student";
+      emptyEl.classList.add("show");
+      summaryEl.textContent = "";
+    } else if(!chartLibReady()){
+      canvas.style.display = "none";
+      emptyEl.textContent = "Chart library failed to load — try refreshing";
+      emptyEl.classList.add("show");
+      summaryEl.textContent = "";
+    } else {
+      canvas.style.display = "block";
+      emptyEl.classList.remove("show");
+
+      studentTrendChartInstance = new Chart(canvas, {
+        type: "line",
+        data: {
+          labels: points.map(p => p.examName),
+          datasets: [{
+            label: "Score",
+            data: points.map(p => p.pct),
+            borderColor: "rgba(185,129,47,0.9)",
+            backgroundColor: "rgba(185,129,47,0.15)",
+            fill: true, tension: 0.3, pointRadius: 4, pointBackgroundColor: "rgba(185,129,47,1)"
+          }]
+        },
+        options: {
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: c => {
+              const p = points[c.dataIndex];
+              return `${p.raw} / ${p.max} (${p.pct}%)`;
+            } } }
+          },
+          scales: {
+            y: { beginAtZero: true, max: 100, ticks: { callback: v => v + "%", font: { size: 10 } }, grid: { color: "rgba(185,129,47,0.08)" } },
+            x: { ticks: { font: { size: 10 } }, grid: { display: false } }
+          }
+        }
+      });
+
+      const first = points[0].pct, last = points[points.length - 1].pct;
+      const diff = last - first;
+      if(diff > 0) summaryEl.innerHTML = `<span class="delta-badge up">▲ Improved by ${diff}%</span> from "${points[0].examName}" to "${points[points.length-1].examName}"`;
+      else if(diff < 0) summaryEl.innerHTML = `<span class="delta-badge down">▼ Dropped by ${Math.abs(diff)}%</span> from "${points[0].examName}" to "${points[points.length-1].examName}"`;
+      else summaryEl.innerHTML = `<span class="delta-badge flat">— No change</span> from "${points[0].examName}" to "${points[points.length-1].examName}"`;
+    }
+
+    document.getElementById("studentTrendModalOverlay").classList.add("show");
+  }
+
+  function closeStudentTrendModal(){
+    document.getElementById("studentTrendModalOverlay").classList.remove("show");
   }
 
   /* ---------- Delete exam ---------- */
