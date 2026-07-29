@@ -1611,7 +1611,9 @@
       if(newExam) openScoreEntry(newExam);
     }catch(err){
       alert("Couldn't save the exam: " + (err.message || err) +
-        "\n\nMake sure an \"exams\" table exists with an INSERT/SELECT policy for the anon role.");
+        (err.hint ? "\nHint: " + err.hint : "") +
+        (err.details ? "\nDetails: " + err.details : "") +
+        "\n\nMake sure an \"exams\" table exists with SELECT/INSERT grants + policies for the anon role.");
     }finally{
       btn.disabled = false; btn.textContent = "Save";
     }
