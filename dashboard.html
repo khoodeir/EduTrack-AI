@@ -108,7 +108,7 @@
   .wrap{ max-width:1200px; margin:0 auto; }
 
   /* ===== Ledger tab grade switcher (signature element) ===== */
-  .tab-row{ display:flex; align-items:flex-end; margin-bottom:0; padding-inline-start:6px; }
+  .tab-row{ display:flex; align-items:flex-end; margin-bottom:0; padding-inline-start:6px; flex-wrap:wrap; }
   .tab{
     position:relative; cursor:pointer; user-select:none;
     padding:12px 25px 14px; margin-inline-end:-10px;
@@ -217,6 +217,7 @@
   .phone-link{
     font-size:11px; color:var(--muted); text-decoration:none; display:inline-block;
     padding:3px 8px; border-radius:6px; background:rgba(185,129,47,0.07); transition:all .15s ease;
+    cursor:pointer;
   }
   .phone-link:hover{ color:var(--gold-2); background:var(--gold-soft); }
   .empty-note{ text-align:center; color:var(--muted); font-size:12.5px; padding:20px 0; }
@@ -268,6 +269,10 @@
   .tab.history-tab::before{
     content:"🗂 "; font-size:11px;
   }
+  .tab.exams-tab{ margin-inline-start:8px; }
+  .tab.exams-tab::before{
+    content:"📝 "; font-size:11px;
+  }
   .hist-banner{
     display:none; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;
     background:var(--gold-soft); border:1px solid var(--line); border-radius:12px;
@@ -292,16 +297,49 @@
   }
   .save-snapshot-btn:hover{ filter:brightness(1.06); transform:translateY(-1px); }
   .save-snapshot-btn:disabled{ opacity:.6; cursor:default; transform:none; }
+  .ghost-btn{
+    padding:10px 18px; border-radius:9px; border:1px solid var(--line); background:var(--card);
+    color:var(--ink); font-family:'Inter',sans-serif; font-weight:700; font-size:12.5px; cursor:pointer;
+    transition:all .15s ease;
+  }
+  .ghost-btn:hover{ border-color:var(--gold); }
   .delta-cards{ display:grid; grid-template-columns:repeat(4,1fr); gap:13px; margin-bottom:28px; }
   .delta-badge{ font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:3px; margin-top:8px; }
   .delta-badge.up{ color:var(--success); }
   .delta-badge.down{ color:var(--error); }
   .delta-badge.flat{ color:var(--muted); }
   .hist-table-note{ font-size:11px; color:var(--muted); margin-bottom:12px; }
+  .unpaid-link{
+    border:none; background:rgba(163,52,42,0.08); color:var(--error); cursor:pointer;
+    font-family:'Inter',sans-serif; font-weight:700; font-size:11.5px; padding:6px 11px; border-radius:8px;
+    transition:all .15s ease;
+  }
+  .unpaid-link:hover{ background:var(--error-soft); }
+
+  /* ===== Exam grades tab ===== */
+  .score-input{
+    width:90px; padding:8px 10px; border-radius:8px; border:1px solid var(--line);
+    background:var(--card); font-family:'Space Grotesk',sans-serif; font-size:13px; color:var(--ink); outline:none;
+  }
+  .score-input:focus{ border-color:var(--gold); box-shadow:0 0 0 3px var(--gold-soft); }
+
+  /* ===== Modal ===== */
+  .modal-overlay{
+    display:none; position:fixed; inset:0; background:rgba(44,33,22,0.45); z-index:80;
+    align-items:center; justify-content:center; padding:20px;
+  }
+  .modal-overlay.show{ display:flex; }
+  .modal-box{
+    background:var(--card); border-radius:16px; max-width:440px; width:100%; max-height:80vh;
+    overflow:auto; padding:22px; box-shadow:var(--shadow-lg); border:1px solid var(--line);
+  }
+  .modal-close{ border:none; background:none; font-size:22px; cursor:pointer; color:var(--muted); line-height:1; }
+  .modal-close:hover{ color:var(--ink); }
 
   @media (max-width:900px){
     .kpi-grid{ grid-template-columns:repeat(2,1fr); }
     .two-col, .list-grid{ grid-template-columns:1fr; }
+    .delta-cards{ grid-template-columns:repeat(2,1fr); }
   }
   @media (prefers-reduced-motion: reduce){
     .refresh-btn .spin, .state-msg .spinner, .kpi-card, .kpi-card::before{ animation:none !important; transition:none !important; }
@@ -348,6 +386,7 @@
     <div class="tab" data-grade="second">Second Secondary</div>
     <div class="tab" data-grade="third">Third Secondary</div>
     <div class="tab history-tab" id="historyTab">Monthly History</div>
+    <div class="tab exams-tab" id="examsTab">الدرجات</div>
   </div>
 
   <div class="tab-panel">
@@ -515,7 +554,7 @@
 
         <div class="chart-card">
           <div class="section-title">Month-by-Month Comparison</div>
-          <div class="hist-table-note">Each row is a saved snapshot. Change vs. shows the difference from the previous saved month.</div>
+          <div class="hist-table-note">Each row is a saved snapshot. Change vs. shows the difference from the previous saved month. Use "مين مدفعش" to see who was unpaid that month.</div>
           <div class="table-wrap">
             <table>
               <thead>
@@ -527,6 +566,7 @@
                   <th>Revenue</th>
                   <th>Paid</th>
                   <th>Unpaid</th>
+                  <th>مين مدفعش</th>
                 </tr>
               </thead>
               <tbody id="histTableBody"></tbody>
@@ -537,9 +577,61 @@
       </div>
     </div>
 
+    <div id="examsView" style="display:none;">
+      <div class="state-msg show" id="examLoadingMsg">
+        <span class="spinner"></span> جارٍ تحميل الدرجات…
+      </div>
+      <div class="state-msg err" id="examErrorMsg"></div>
+
+      <div class="content" id="examContent">
+
+        <div class="hist-toolbar">
+          <div class="left">
+            <select class="hist-select" id="examGradeSelect" onchange="onExamGradeChange()">
+              <option value="first">الصف الأول الثانوي</option>
+              <option value="second">الصف الثاني الثانوي</option>
+              <option value="third">الصف الثالث الثانوي</option>
+            </select>
+          </div>
+          <button class="save-snapshot-btn" onclick="addNewExam()">➕ إضافة امتحان جديد</button>
+        </div>
+
+        <div class="chart-card" id="examEntryPanel" style="display:none; margin-bottom:22px;">
+          <div class="section-title" id="examEntryTitle"></div>
+          <div id="examEntryBody"></div>
+          <div style="display:flex; gap:10px; margin-top:14px;">
+            <button class="save-snapshot-btn" id="saveExamEntryBtn" onclick="saveScoreEntry()">💾 حفظ الدرجات</button>
+            <button class="ghost-btn" onclick="cancelScoreEntry()">إلغاء</button>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="section-title">جدول الدرجات <span class="tag">دائم لا يُمسح شهريًا</span></div>
+          <div class="hist-table-note">كل امتحان جديد بيتحفظ كعمود منفصل، والدرجات القديمة بتفضل موجودة دايمًا حتى لو دخلت درجات امتحانات جديدة.</div>
+          <div class="table-wrap">
+            <table>
+              <thead id="examTableHead"></thead>
+              <tbody id="examTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <div class="footer-note">Data is read live from Supabase using a read-only anon key</div>
+</div>
+
+<!-- Unpaid-this-month modal -->
+<div class="modal-overlay" id="unpaidModalOverlay" onclick="if(event.target===this) closeUnpaidModal()">
+  <div class="modal-box">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <div class="section-title" id="unpaidModalTitle" style="margin-bottom:0;"></div>
+      <button class="modal-close" onclick="closeUnpaidModal()">×</button>
+    </div>
+    <div id="unpaidModalBody"></div>
+  </div>
 </div>
 
 <script>
@@ -589,6 +681,7 @@
       currentGrade = tab.dataset.grade;
       document.getElementById("dashboardView").style.display = "";
       document.getElementById("historyView").style.display = "none";
+      document.getElementById("examsView").style.display = "none";
       loadDashboard();
     });
   });
@@ -598,8 +691,19 @@
     document.getElementById("historyTab").classList.add("active");
     document.getElementById("dashboardView").style.display = "none";
     document.getElementById("historyView").style.display = "";
+    document.getElementById("examsView").style.display = "none";
     document.getElementById("histGradeSelect").value = historyGradeFilter;
     loadHistory();
+  });
+
+  document.getElementById("examsTab").addEventListener("click", () => {
+    document.querySelectorAll("#gradeTabs .tab").forEach(t => t.classList.remove("active"));
+    document.getElementById("examsTab").classList.add("active");
+    document.getElementById("dashboardView").style.display = "none";
+    document.getElementById("historyView").style.display = "none";
+    document.getElementById("examsView").style.display = "";
+    document.getElementById("examGradeSelect").value = examGrade;
+    loadExamGrades();
   });
 
   function setPayFilter(f){
@@ -995,7 +1099,8 @@
        year int, month int, grade text,
        students_count int, attendance_rate numeric,
        total_revenue numeric, paid_count int, unpaid_count int,
-       collection_rate numeric, created_at timestamptz default now()
+       collection_rate numeric, unpaid_students jsonb default '[]',
+       created_at timestamptz default now()
      ============================================================ */
   const HIST_SCHEMA = {
     table: "monthly_snapshots",
@@ -1008,13 +1113,15 @@
       revenue: "total_revenue",
       paidCount: "paid_count",
       unpaidCount: "unpaid_count",
-      collectionRate: "collection_rate"
+      collectionRate: "collection_rate",
+      unpaidStudents: "unpaid_students"
     }
   };
 
   let historyRows = [];
   let historyGradeFilter = "all";
   let histCharts = {};
+  let currentHistRows = [];
 
   function onHistGradeChange(){
     historyGradeFilter = document.getElementById("histGradeSelect").value;
@@ -1031,10 +1138,14 @@
     const attendanceRate = pcts.length ? Math.round(pcts.reduce((a,b)=>a+b,0) / pcts.length) : 0;
     const paid = students.filter(s => isPaid(s.paymentStatus));
     const withRecord = students.filter(s => s.paymentStatus !== "");
-    const unpaidCount = withRecord.length - paid.length;
+    const unpaidStudents = students.filter(s => !isPaid(s.paymentStatus) && s.paymentStatus !== "");
     const collectionRate = withRecord.length ? Math.round((paid.length / withRecord.length) * 100) : 0;
     const revenue = paid.reduce((sum, s) => sum + (s.amountPaid || 0), 0);
-    return { studentsCount, attendanceRate, revenue, paidCount: paid.length, unpaidCount, collectionRate };
+    return {
+      studentsCount, attendanceRate, revenue, paidCount: paid.length,
+      unpaidCount: unpaidStudents.length, collectionRate,
+      unpaidList: unpaidStudents.map(s => ({ name: s.name, studentPhone: s.studentPhone, parentPhone: s.parentPhone }))
+    };
   }
 
   async function computeAllGradeSnapshots(){
@@ -1062,7 +1173,8 @@
         [col.revenue]: perGrade[g].revenue,
         [col.paidCount]: perGrade[g].paidCount,
         [col.unpaidCount]: perGrade[g].unpaidCount,
-        [col.collectionRate]: perGrade[g].collectionRate
+        [col.collectionRate]: perGrade[g].collectionRate,
+        [col.unpaidStudents]: perGrade[g].unpaidList
       }));
 
       // Clear any previous snapshot for this month first, so saving twice just updates it.
@@ -1074,7 +1186,7 @@
     }catch(err){
       console.error(err);
       alert("Couldn't save this month's snapshot: " + (err.message || err) +
-        "\n\nMake sure a \"monthly_snapshots\" table exists with INSERT/DELETE/SELECT policies for the anon role.");
+        "\n\nMake sure a \"monthly_snapshots\" table exists with INSERT/DELETE/SELECT policies for the anon role, and has an \"unpaid_students\" jsonb column.");
     }finally{
       btns.forEach(b => { b.disabled = false; b.textContent = b.dataset.origText || "💾 Save Current Month"; });
     }
@@ -1219,13 +1331,16 @@
   function renderHistTable(rows){
     const col = HIST_SCHEMA.col;
     const body = document.getElementById("histTableBody");
+    currentHistRows = rows;
     if(!rows.length){
-      body.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--muted); padding:24px;">No saved months yet</td></tr>`;
+      body.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--muted); padding:24px;">No saved months yet</td></tr>`;
       return;
     }
-    body.innerHTML = rows.slice().reverse().map((r, idx) => {
+    const reversed = rows.slice().reverse();
+    body.innerHTML = reversed.map((r, idx) => {
       const olderRows = rows.slice(0, rows.length - 1 - idx);
       const prev = olderRows.length ? olderRows[olderRows.length - 1] : null;
+      const origIdx = rows.length - 1 - idx;
       return `
         <tr>
           <td style="font-weight:600;">${monthLabel(r[col.year], r[col.month])}</td>
@@ -1235,8 +1350,193 @@
           <td>${fmtEGP(r[col.revenue])} ${deltaBadge(r[col.revenue], prev ? prev[col.revenue] : null, " EGP")}</td>
           <td>${r[col.paidCount]}</td>
           <td>${r[col.unpaidCount]}</td>
+          <td><button class="unpaid-link" onclick="showUnpaidModal(${origIdx})">👁 مين مدفعش</button></td>
         </tr>`;
     }).join("");
+  }
+
+  function showUnpaidModal(origIdx){
+    const col = HIST_SCHEMA.col;
+    const row = currentHistRows[origIdx];
+    if(!row) return;
+    const list = row[col.unpaidStudents] || [];
+    document.getElementById("unpaidModalTitle").textContent =
+      `مين مدفعش – ${monthLabel(row[col.year], row[col.month])}`;
+    const body = document.getElementById("unpaidModalBody");
+    if(!list.length){
+      body.innerHTML = `<div class="empty-note">🎉 مفيش حد متأخر في الشهر ده (أو الشهر ده اتحفظ قبل ما ميزة "مين مدفعش" تتضاف)</div>`;
+    } else {
+      body.innerHTML = list.map(s => `
+        <div class="list-row">
+          <div class="list-name"><span class="name">${s.name || "—"}</span></div>
+          ${s.studentPhone ? `<a class="phone-link" href="tel:${s.studentPhone}">${s.studentPhone}</a>` : `<span class="empty-note" style="padding:0;">—</span>`}
+        </div>
+      `).join("");
+    }
+    document.getElementById("unpaidModalOverlay").classList.add("show");
+  }
+  function closeUnpaidModal(){
+    document.getElementById("unpaidModalOverlay").classList.remove("show");
+  }
+
+  /* ============================================================
+     EXAM GRADES (permanent — never cleared, one new column per exam)
+     Needs a table per grade: exam_grades_{grade}_secondary
+     Suggested columns:
+       id bigint generated always as identity primary key,
+       qr_code text not null,
+       exam_name text not null,
+       max_score numeric not null default 100,
+       score numeric not null,
+       exam_date date not null default current_date,
+       created_at timestamptz default now()
+     ============================================================ */
+  const EXAM_SCHEMA = {
+    table: (g) => `exam_grades_${g}_secondary`,
+    col: { qrCode: "qr_code", examName: "exam_name", maxScore: "max_score", score: "score", examDate: "exam_date" }
+  };
+
+  let examGrade = "first";
+  let examStudents = [];
+  let examRows = [];
+  let examNames = [];
+
+  function onExamGradeChange(){
+    examGrade = document.getElementById("examGradeSelect").value;
+    loadExamGrades();
+  }
+
+  async function loadExamGrades(){
+    const loadingEl = document.getElementById("examLoadingMsg");
+    const errorEl = document.getElementById("examErrorMsg");
+    const contentEl = document.getElementById("examContent");
+    loadingEl.classList.add("show");
+    errorEl.classList.remove("show");
+    contentEl.classList.remove("show");
+    try{
+      const [students, { data: rows, error }] = await Promise.all([
+        fetchGrade(examGrade),
+        supa.from(EXAM_SCHEMA.table(examGrade)).select("*")
+      ]);
+      if(error) throw error;
+      examStudents = students;
+      examRows = rows || [];
+      const seen = new Set();
+      examNames = [];
+      examRows
+        .slice()
+        .sort((a,b) => new Date(a[EXAM_SCHEMA.col.examDate] || 0) - new Date(b[EXAM_SCHEMA.col.examDate] || 0))
+        .forEach(r => {
+          const n = r[EXAM_SCHEMA.col.examName];
+          if(!seen.has(n)){ seen.add(n); examNames.push(n); }
+        });
+      renderExamTable();
+      contentEl.classList.add("show");
+    }catch(err){
+      console.error(err);
+      errorEl.innerHTML = `
+        <div style="font-weight:700;">تعذر تحميل الدرجات</div>
+        <div style="font-size:12px; max-width:520px;">
+          ${err.message || err}<br><br>
+          غالبًا جدول exam_grades_${examGrade}_secondary مش موجود في قاعدة البيانات لسه، أو مفيش صلاحية SELECT/INSERT لـ anon role.
+        </div>`;
+      errorEl.classList.add("show");
+    }finally{
+      loadingEl.classList.remove("show");
+    }
+  }
+
+  function renderExamTable(){
+    const head = document.getElementById("examTableHead");
+    const body = document.getElementById("examTableBody");
+    const col = EXAM_SCHEMA.col;
+
+    head.innerHTML = `<tr>
+      <th>الاسم</th>
+      ${examNames.map(n => `<th>${n}</th>`).join("")}
+      <th>المعدل</th>
+    </tr>`;
+
+    if(!examStudents.length){
+      body.innerHTML = `<tr><td colspan="${examNames.length + 2}" style="text-align:center; color:var(--muted); padding:24px;">لا يوجد طلاب في هذا الصف</td></tr>`;
+      return;
+    }
+
+    body.innerHTML = examStudents.map(s => {
+      const rowsForStudent = examRows.filter(r => r[col.qrCode] === s.qrCode);
+      let sumPct = 0, cnt = 0;
+      const cells = examNames.map(n => {
+        const r = rowsForStudent.find(x => x[col.examName] === n);
+        if(!r) return `<td style="color:var(--muted);">—</td>`;
+        const sc = Number(r[col.score]);
+        const mx = Number(r[col.maxScore]) || 100;
+        if(!isNaN(sc)){ sumPct += (sc / mx) * 100; cnt++; }
+        return `<td>${r[col.score]} / ${r[col.maxScore]}</td>`;
+      }).join("");
+      const avg = cnt ? Math.round(sumPct / cnt) : null;
+      return `<tr><td style="font-weight:600;">${s.name || "—"}</td>${cells}<td>${avg != null ? avg + "%" : "—"}</td></tr>`;
+    }).join("");
+  }
+
+  function addNewExam(){
+    const name = prompt("اسم الامتحان الجديد (مثال: امتحان الشهر الأول):");
+    if(!name || !name.trim()) return;
+    const maxScoreStr = prompt("الدرجة النهائية للامتحان:", "100");
+    const maxScore = Number(maxScoreStr);
+    if(!maxScoreStr || isNaN(maxScore) || maxScore <= 0){ alert("درجة نهائية غير صحيحة"); return; }
+    openScoreEntry(name.trim(), maxScore);
+  }
+
+  function openScoreEntry(examName, maxScore){
+    const panel = document.getElementById("examEntryPanel");
+    document.getElementById("examEntryTitle").textContent = `إدخال درجات: ${examName} (من ${maxScore})`;
+    document.getElementById("examEntryBody").innerHTML = examStudents.map(s => `
+      <div class="list-row">
+        <div class="list-name"><span class="name">${s.name || "—"}</span></div>
+        <input type="number" class="score-input" data-qr="${s.qrCode}" min="0" max="${maxScore}" step="0.5" placeholder="/ ${maxScore}">
+      </div>
+    `).join("");
+    panel.style.display = "block";
+    panel.dataset.examName = examName;
+    panel.dataset.maxScore = maxScore;
+    panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  function cancelScoreEntry(){
+    document.getElementById("examEntryPanel").style.display = "none";
+  }
+
+  async function saveScoreEntry(){
+    const panel = document.getElementById("examEntryPanel");
+    const examName = panel.dataset.examName;
+    const maxScore = Number(panel.dataset.maxScore);
+    const inputs = panel.querySelectorAll(".score-input");
+    const col = EXAM_SCHEMA.col;
+    const rows = [];
+    inputs.forEach(inp => {
+      const v = inp.value.trim();
+      if(v === "") return;
+      rows.push({
+        [col.qrCode]: inp.dataset.qr,
+        [col.examName]: examName,
+        [col.maxScore]: maxScore,
+        [col.score]: Number(v),
+        [col.examDate]: new Date().toISOString().slice(0, 10)
+      });
+    });
+    if(!rows.length){ alert("محدش دخل درجة لسه"); return; }
+    const btn = document.getElementById("saveExamEntryBtn");
+    btn.disabled = true; btn.textContent = "جارٍ الحفظ…";
+    try{
+      const { error } = await supa.from(EXAM_SCHEMA.table(examGrade)).insert(rows);
+      if(error) throw error;
+      cancelScoreEntry();
+      await loadExamGrades();
+    }catch(err){
+      alert("تعذر حفظ الدرجات: " + (err.message || err));
+    }finally{
+      btn.disabled = false; btn.textContent = "💾 حفظ الدرجات";
+    }
   }
 
   loadDashboard();
