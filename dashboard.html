@@ -454,10 +454,10 @@
       </div>
 
       <div class="chart-card" style="margin-bottom:28px;">
-        <div class="section-title">Monthly Revenue <span class="tag" id="revenueSourceTag">monthly_snapshots</span></div>
+        <div class="section-title">Average Exam Scores <span class="tag" id="examAvgSourceTag">exams</span></div>
         <div class="chart-box" style="height:190px;">
-          <canvas id="revenueChart"></canvas>
-          <div class="chart-empty" id="revChartEmpty">No monthly revenue recorded yet</div>
+          <canvas id="examAvgChart"></canvas>
+          <div class="chart-empty" id="examAvgChartEmpty">No exam scores recorded yet</div>
         </div>
       </div>
 
@@ -680,7 +680,7 @@
 
   let currentGrade = "all";
   let payFilterState = "all";
-  let combined = { students: [], statsRows: [] }; // students = merged attendance+payment rows, tagged with grade
+  let combined = { students: [], statsRows: [], examAverages: {} }; // students = merged attendance+payment rows, tagged with grade
   let charts = {};
 
   /* ---------- Tabs ---------- */
@@ -776,6 +776,39 @@
     }
   }
 
+  /* ---------- Exam averages (per exam, per grade) for the dashboard chart ---------- */
+  async function fetchExamAverages(grades){
+    const ecol = EXAMS_SCHEMA.col, scol = SCORES_SCHEMA.col;
+    const out = {};
+    await Promise.all(grades.map(async (g) => {
+      try{
+        const { data: exams, error: examsErr } = await supa
+          .from(EXAMS_SCHEMA.table).select("*")
+          .eq(ecol.grade, g).order(ecol.createdAt, { ascending: true });
+        if(examsErr) throw examsErr;
+        const examRows = exams || [];
+        if(!examRows.length){ out[g] = []; return; }
+
+        const ids = examRows.map(e => e[ecol.id]);
+        const { data: scores, error: scoresErr } = await supa
+          .from(SCORES_SCHEMA.table).select("*").in(scol.examId, ids);
+        const scoreRows = scoresErr ? [] : (scores || []);
+
+        out[g] = examRows.map(e => {
+          const rel = scoreRows.filter(s => s[scol.examId] === e[ecol.id]);
+          const pcts = rel
+            .map(s => (Number(s[scol.score]) / (Number(e[ecol.maxScore]) || 100)) * 100)
+            .filter(v => !isNaN(v));
+          const avg = pcts.length ? Math.round(pcts.reduce((a,b) => a+b, 0) / pcts.length) : null;
+          return { name: e[ecol.name], avg };
+        });
+      }catch(err){
+        out[g] = []; // exams table missing / no policy — chart just shows its empty state
+      }
+    }));
+    return out;
+  }
+
   /* ---------- Main load ---------- */
   async function loadDashboard(){
     const loadingEl = document.getElementById("loadingMsg");
@@ -792,7 +825,7 @@
       const gradesToFetch = currentGrade === "all" ? GRADES : [currentGrade];
       const results = await Promise.all(gradesToFetch.map(fetchGrade));
       combined.students = results.flat();
-      combined.statsRows = await fetchStats();
+      combined.examAverages = await fetchExamAverages(gradesToFetch);
 
       renderAll();
       contentEl.classList.add("show");
@@ -859,7 +892,7 @@
 
     renderAttendanceByGradeChart(students);
     renderPaymentStatusChart(paidStudents.length, unpaidStudents.length);
-    renderRevenueChart();
+    renderExamAvgChart();
     renderTopAttenders(students);
     renderUnpaidList(unpaidStudents);
     payFilterState = "all";
@@ -934,88 +967,70 @@
     });
   }
 
-  function renderRevenueChart(){
-    const canvas = document.getElementById("revenueChart");
-    const emptyEl = document.getElementById("revChartEmpty");
-    destroyChart("rev");
+  function renderExamAvgChart(){
+    const canvas = document.getElementById("examAvgChart");
+    const emptyEl = document.getElementById("examAvgChartEmpty");
+    destroyChart("examAvg");
     if(!chartLibReady()){ canvas.style.display="none"; emptyEl.textContent="Chart library failed to load — try refreshing"; emptyEl.classList.add("show"); return; }
-    const col = HIST_SCHEMA.col;
 
-    let rows = combined.statsRows || [];
-    if(currentGrade !== "all"){
-      rows = rows.filter(r => r[col.grade] === currentGrade);
-    } else {
-      // "all" totals are saved as their own row (grade = "all"); exclude them here
-      // so the grouped bars only sum the three real grades.
-      rows = rows.filter(r => r[col.grade] !== "all");
-    }
-    if(!rows.length){ canvas.style.display = "none"; emptyEl.classList.add("show"); return; }
+    const data = combined.examAverages || {};
+    const gradesShown = currentGrade === "all" ? GRADES : [currentGrade];
+    const anyData = gradesShown.some(g => (data[g] || []).some(e => e.avg != null));
+    if(!anyData){ canvas.style.display = "none"; emptyEl.classList.add("show"); return; }
+    canvas.style.display = "block"; emptyEl.classList.remove("show");
 
     if(currentGrade === "all"){
-      // Grouped bars: one column per grade, side by side, for each month.
-      const byGradeMonth = {}; // { grade: { "YYYY-MM": revenue } }
-      const monthKeys = new Set();
-      rows.forEach(r => {
-        const g = r[col.grade];
-        const key = `${r[col.year]}-${String(r[col.month]).padStart(2,"0")}`;
-        monthKeys.add(key);
-        byGradeMonth[g] = byGradeMonth[g] || {};
-        byGradeMonth[g][key] = (byGradeMonth[g][key] || 0) + (Number(r[col.revenue]) || 0);
-      });
-      const sortedMonths = Array.from(monthKeys).sort().slice(-6);
-      if(!sortedMonths.length){ canvas.style.display = "none"; emptyEl.classList.add("show"); return; }
+      // One line per grade, plotted by exam order (1st exam, 2nd exam, ...) since
+      // each grade can have a different set/number of exams.
+      const maxLen = Math.max(0, ...gradesShown.map(g => (data[g] || []).length));
+      const labels = Array.from({ length: maxLen }, (_, i) => `Exam ${i + 1}`);
 
-      canvas.style.display = "block"; emptyEl.classList.remove("show");
-      charts.rev = new Chart(canvas, {
-        type: "bar",
+      charts.examAvg = new Chart(canvas, {
+        type: "line",
         data: {
-          labels: sortedMonths,
-          datasets: GRADES.map(g => ({
+          labels,
+          datasets: gradesShown.map(g => ({
             label: GRADE_LABELS[g],
-            data: sortedMonths.map(k => (byGradeMonth[g] && byGradeMonth[g][k]) || 0),
+            data: (data[g] || []).map(e => e.avg),
+            borderColor: GRADE_COLORS[g],
             backgroundColor: GRADE_COLORS[g],
-            borderRadius: 5, maxBarThickness: 22
+            fill: false, tension: 0.3, spanGaps: true, pointRadius: 3
           }))
         },
         options: {
           maintainAspectRatio: false,
           plugins: {
             legend: { display: true, position: "bottom", labels: { font: { family: "Inter", size: 11 }, padding: 12 } },
-            tooltip: { callbacks: { label: c => `${c.dataset.label}: ${fmtEGP(c.raw)}` } }
+            tooltip: { callbacks: { label: c => {
+              const g = gradesShown[c.datasetIndex];
+              const ex = (data[g] || [])[c.dataIndex];
+              return `${GRADE_LABELS[g]} – ${ex ? ex.name : ""}: ${c.raw}%`;
+            } } }
           },
           scales: {
-            y: { beginAtZero: true, ticks: { font: { size: 10 } }, grid: { color: "rgba(185,129,47,0.08)" } },
+            y: { beginAtZero: true, max: 100, ticks: { callback: v => v + "%", font: { size: 10 } }, grid: { color: "rgba(185,129,47,0.08)" } },
             x: { ticks: { font: { size: 10 } }, grid: { display: false } }
           }
         }
       });
     } else {
-      // Single grade: one bar per month, as before.
-      const byKey = {};
-      rows.forEach(r => {
-        const key = `${r[col.year]}-${String(r[col.month]).padStart(2,"0")}`;
-        byKey[key] = (byKey[key] || 0) + (Number(r[col.revenue]) || 0);
-      });
-      const sortedKeys = Object.keys(byKey).sort().slice(-6);
-      if(!sortedKeys.length){ canvas.style.display = "none"; emptyEl.classList.add("show"); return; }
-
-      canvas.style.display = "block"; emptyEl.classList.remove("show");
-      charts.rev = new Chart(canvas, {
+      const rows = data[currentGrade] || [];
+      charts.examAvg = new Chart(canvas, {
         type: "bar",
         data: {
-          labels: sortedKeys,
+          labels: rows.map(e => e.name),
           datasets: [{
             label: GRADE_LABELS[currentGrade],
-            data: sortedKeys.map(k => byKey[k]),
+            data: rows.map(e => e.avg ?? 0),
             backgroundColor: GRADE_COLORS[currentGrade],
-            borderRadius: 5, maxBarThickness: 30
+            borderRadius: 5, maxBarThickness: 40
           }]
         },
         options: {
           maintainAspectRatio: false,
-          plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmtEGP(c.raw) } } },
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.raw}%` } } },
           scales: {
-            y: { beginAtZero: true, ticks: { font: { size: 10 } }, grid: { color: "rgba(185,129,47,0.08)" } },
+            y: { beginAtZero: true, max: 100, ticks: { callback: v => v + "%", font: { size: 10 } }, grid: { color: "rgba(185,129,47,0.08)" } },
             x: { ticks: { font: { size: 10 } }, grid: { display: false } }
           }
         }
