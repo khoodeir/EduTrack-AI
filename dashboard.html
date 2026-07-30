@@ -2601,8 +2601,8 @@
      PDF REPORTS
      ============================================================ */
   const PDF_COLORS = {
-    gold: [185,129,47], gold2: [165,112,31], ink: [44,33,22],
-    success: [46,125,82], error: [163,52,42], muted: [138,122,99]
+    gold: [154, 107, 67], gold2: [110, 74, 46], ink: [62, 44, 35],
+    success: [47, 158, 115], error: [196, 72, 90], muted: [138, 122, 112]
   };
   const pdfLibReady = () => typeof window.jspdf !== "undefined";
 
@@ -2683,7 +2683,7 @@
         ["Last Payment Date", student.lastPaymentDate || "—"]
       ],
       headStyles: { fillColor: PDF_COLORS.gold, textColor: 255 },
-      styles: { fontSize: 10, cellPadding: 4 },
+      styles: { fontSize: 10, cellPadding: 4, lineColor: [220, 207, 195], lineWidth: 0.1 },
       margin: { left: 14, right: 14 }
     });
 
@@ -2710,7 +2710,7 @@
         head: [["Exam", "Score", "Out of", "Percentage"]],
         body,
         headStyles: { fillColor: PDF_COLORS.gold, textColor: 255 },
-        styles: { fontSize: 10, cellPadding: 4 },
+        styles: { fontSize: 10, cellPadding: 4, lineColor: [220, 207, 195], lineWidth: 0.1 },
         margin: { left: 14, right: 14 }
       });
 
@@ -2756,7 +2756,7 @@
         ["Collection Rate", `${kpis.collectionRate}%`]
       ],
       headStyles: { fillColor: PDF_COLORS.gold, textColor: 255 },
-      styles: { fontSize: 10, cellPadding: 4 },
+      styles: { fontSize: 10, cellPadding: 4, lineColor: [220, 207, 195], lineWidth: 0.1 },
       margin: { left: 14, right: 14 }
     });
 
@@ -2778,7 +2778,7 @@
       head: [["Name", "Grade", "Attendance", "Payment"]],
       body: rosterBody,
       headStyles: { fillColor: PDF_COLORS.gold2, textColor: 255 },
-      styles: { fontSize: 9, cellPadding: 3 },
+      styles: { fontSize: 9, cellPadding: 3, lineColor: [220, 207, 195], lineWidth: 0.1 },
       margin: { left: 14, right: 14 }
     });
 
@@ -2803,7 +2803,7 @@
         head: [["Grade", "Exam", "Average"]],
         body: examRows,
         headStyles: { fillColor: PDF_COLORS.gold, textColor: 255 },
-        styles: { fontSize: 9, cellPadding: 3 },
+        styles: { fontSize: 9, cellPadding: 3, lineColor: [220, 207, 195], lineWidth: 0.1 },
         margin: { left: 14, right: 14 }
       });
     }
@@ -2837,7 +2837,7 @@
         ["Unpaid", row[col.unpaidCount], "—"]
       ],
       headStyles: { fillColor: PDF_COLORS.gold, textColor: 255 },
-      styles: { fontSize: 10, cellPadding: 4 },
+      styles: { fontSize: 10, cellPadding: 4, lineColor: [220, 207, 195], lineWidth: 0.1 },
       margin: { left: 14, right: 14 }
     });
 
@@ -2855,7 +2855,7 @@
         head: [["Name", "Student Phone"]],
         body: unpaidList.map(s => [s.name || "—", s.studentPhone || "—"]),
         headStyles: { fillColor: PDF_COLORS.error, textColor: 255 },
-        styles: { fontSize: 9, cellPadding: 3 },
+        styles: { fontSize: 9, cellPadding: 3, lineColor: [220, 207, 195], lineWidth: 0.1 },
         margin: { left: 14, right: 14 }
       });
     } else {
