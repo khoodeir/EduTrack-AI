@@ -27,6 +27,7 @@
     --ink-2:#d8cbb3;
     --paper:#2b241c;
     --card:#241e18;
+    --sidebar:#1c1712;
     --line:rgba(212,164,95,0.16);
     --gold:#d4a45f;
     --gold-2:#e3b876;
@@ -41,6 +42,8 @@
     --shadow-sm:0 1px 2px rgba(0,0,0,0.30);
     --shadow-md:0 8px 24px rgba(0,0,0,0.40);
     --shadow-lg:0 20px 50px rgba(0,0,0,0.50);
+    --radius-lg:22px;
+    --radius-md:16px;
   }
   *{ margin:0; padding:0; box-sizing:border-box; }
   html,body{ height:100%; }
@@ -52,49 +55,90 @@
       linear-gradient(160deg, var(--cream-bg-1), var(--cream-bg-2));
     color:var(--ink);
     min-height:100vh;
-    padding:32px 24px 64px;
   }
   .num{ font-family:'Space Grotesk',sans-serif; }
   .serif{ font-family:'Cormorant Garamond',serif; }
+  a{ color:inherit; }
+  button{ font-family:inherit; }
 
-  /* ===== Header ===== */
-  .topbar{
-    max-width:1200px; margin:0 auto 26px;
-    display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+  /* ============================================================
+     APP SHELL — fixed sidebar + scrollable main column
+     ============================================================ */
+  .app-shell{ display:flex; align-items:flex-start; min-height:100vh; }
+
+  /* ===== Sidebar ===== */
+  .sidebar{
+    width:264px; flex-shrink:0; position:sticky; top:0; height:100vh;
+    background:var(--sidebar); border-right:1px solid var(--line);
+    display:flex; flex-direction:column; padding:26px 18px 20px;
+    overflow-y:auto;
   }
-  .brand{ display:flex; align-items:center; gap:14px; }
-  .brand-mark{
-    width:46px; height:46px; border-radius:50%; flex-shrink:0;
-    background:var(--gold);
-    opacity:0.92;
+  .side-brand{ display:flex; align-items:center; gap:12px; padding:4px 8px 26px; }
+  .side-brand-mark{
+    width:42px; height:42px; border-radius:13px; flex-shrink:0;
+    background:linear-gradient(135deg, var(--gold-2), var(--gold));
     display:flex; align-items:center; justify-content:center;
-    box-shadow:0 8px 18px rgba(212,164,95,0.35);
+    box-shadow:0 6px 16px rgba(212,164,95,0.30);
   }
-  .brand-mark svg{ width:22px; height:22px; }
-  .brand-text{ text-align:left; }
-  .brand-eyebrow{
-    font-size:10.5px; letter-spacing:0.14em; text-transform:uppercase;
-    color:var(--gold); font-weight:700; margin-bottom:2px;
+  .side-brand-mark svg{ width:21px; height:21px; }
+  .side-brand-text h1{ font-family:'Cormorant Garamond',serif; font-size:19px; font-weight:700; color:var(--gold-2); line-height:1.1; }
+  .side-brand-text p{ font-size:10.5px; color:var(--muted); margin-top:2px; letter-spacing:.03em; }
+
+  .side-label{
+    font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--muted); padding:16px 12px 8px;
   }
-  .brand h1{ font-family:'Cormorant Garamond',serif; font-size:26px; font-weight:700; color:var(--gold-2); letter-spacing:-0.01em; }
-  .brand p{ font-size:12.5px; color:var(--muted); margin-top:2px; }
+  .side-nav{ display:flex; flex-direction:column; gap:2px; }
+  .side-item{
+    display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:11px;
+    color:var(--ink-2); font-size:13.5px; font-weight:600; cursor:pointer; user-select:none;
+    border:1px solid transparent; transition:all .15s ease; position:relative; text-decoration:none;
+  }
+  .side-item .ico{
+    width:30px; height:30px; border-radius:9px; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+    background:rgba(212,164,95,0.08); font-size:14px; transition:all .15s ease;
+  }
+  .side-item .ico svg{ width:16px; height:16px; }
+  .side-item:hover{ background:rgba(212,164,95,0.07); color:var(--ink); }
+  .side-item.active{
+    background:linear-gradient(135deg, rgba(212,164,95,0.18), rgba(212,164,95,0.08));
+    color:var(--gold-2); border-color:var(--line);
+  }
+  .side-item.active .ico{ background:linear-gradient(135deg, var(--gold-2), var(--gold)); color:#241a05; }
+  .side-item.active .ico svg{ stroke:#241a05; }
+
+  .side-scanner{
+    margin-top:auto; padding-top:16px;
+  }
+  .side-scanner-card{
+    display:block; text-decoration:none; border-radius:16px; padding:16px 15px;
+    background:linear-gradient(150deg, rgba(212,164,95,0.16), rgba(212,164,95,0.03));
+    border:1px solid var(--line);
+  }
+  .side-scanner-card .lbl{ font-size:11.5px; font-weight:700; color:var(--gold-2); margin-bottom:3px; }
+  .side-scanner-card .sub{ font-size:11px; color:var(--muted); margin-bottom:12px; line-height:1.4; }
+  .side-scanner-btn{
+    display:inline-flex; align-items:center; gap:7px; width:100%; justify-content:center;
+    padding:9px 12px; border-radius:9px; background:linear-gradient(135deg, var(--gold-2), var(--gold));
+    color:#241a05; font-size:12px; font-weight:700;
+  }
+  .side-scanner-btn svg{ width:14px; height:14px; }
+
+  /* ===== Main column ===== */
+  .main-area{ flex:1; min-width:0; padding:28px 30px 60px; }
+
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+    margin-bottom:22px;
+  }
+  .topbar-titles h2{ font-family:'Cormorant Garamond',serif; font-size:27px; font-weight:700; color:var(--ink); }
+  .topbar-titles p{ font-size:12.5px; color:var(--muted); margin-top:3px; }
   .top-actions{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
   .updated-note{ font-size:11.5px; color:var(--muted); display:flex; align-items:center; gap:6px; }
   .updated-note::before{
     content:""; width:6px; height:6px; border-radius:50%; background:var(--success);
     box-shadow:0 0 0 3px var(--success-soft);
   }
-  .scanner-btn{
-    display:inline-flex; align-items:center; gap:8px;
-    padding:11px 18px; border-radius:10px;
-    background:linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%);
-    color:#241a05; font-family:'Inter',sans-serif; font-size:13px; font-weight:700;
-    text-decoration:none; box-shadow:0 6px 16px rgba(212,164,95,0.28);
-    transition:transform .15s ease, box-shadow .15s ease;
-    white-space:nowrap;
-  }
-  .scanner-btn:hover{ transform:translateY(-1px); box-shadow:0 8px 20px rgba(212,164,95,0.35); }
-  .scanner-btn svg{ width:16px; height:16px; flex-shrink:0; }
   .refresh-btn{
     display:flex; align-items:center; gap:8px;
     padding:11px 20px; border-radius:10px; border:none;
@@ -111,27 +155,11 @@
 
   .wrap{ max-width:1200px; margin:0 auto; }
 
-  /* ===== Ledger tab grade switcher (signature element) ===== */
-  .tab-row{ display:flex; align-items:flex-end; margin-bottom:0; padding-inline-start:6px; flex-wrap:wrap; }
-  .tab{
-    position:relative; cursor:pointer; user-select:none;
-    padding:12px 25px 14px; margin-inline-end:-10px;
-    background:#2c2620; color:var(--muted); font-weight:600; font-size:13.5px;
-    border-radius:12px 12px 0 0; border:1px solid var(--line); border-bottom:none;
-    transition:all .18s ease; z-index:1;
-  }
-  .tab:hover{ color:var(--ink); background:#342d24; }
-  .tab.active{
-    background:var(--card); color:var(--ink); z-index:5;
-    box-shadow:0 -3px 10px rgba(120,90,40,0.08);
-  }
-  .tab.active::after{
-    content:""; position:absolute; left:0; right:0; bottom:-1px; height:3px;
-    background:var(--gold); border-radius:3px 3px 0 0;
-  }
+  /* Content card that used to be joined to the horizontal tabs — now a
+     free-standing rounded panel since navigation lives in the sidebar. */
   .tab-panel{
-    background:var(--card); border:1px solid var(--line); border-radius:0 16px 16px 16px;
-    padding:30px; box-shadow:var(--shadow-lg); position:relative; z-index:4;
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius-lg);
+    padding:26px; box-shadow:var(--shadow-lg); position:relative;
   }
 
   .state-msg{
@@ -148,21 +176,30 @@
   .content.show{ display:block; }
 
   /* ===== KPI cards ===== */
-  .kpi-grid{ display:grid; grid-template-columns:repeat(5,1fr); gap:13px; margin-bottom:28px; }
+  .kpi-grid{ display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:26px; }
   .kpi-card{
-    background:var(--paper); border:1px solid var(--line); border-radius:14px;
+    background:var(--paper); border:1px solid var(--line); border-radius:var(--radius-md);
     padding:18px 18px 16px; position:relative; overflow:hidden; transition:box-shadow .18s ease, transform .18s ease;
   }
   .kpi-card:hover{ box-shadow:var(--shadow-md); transform:translateY(-2px); }
-  .kpi-card::before{
-    content:""; position:absolute; top:0; left:0; right:0; height:3px;
-    background:linear-gradient(90deg, var(--gold), transparent);
-    opacity:0; transition:opacity .18s ease;
+  .kpi-top{ display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:10px; }
+  .kpi-label{ font-size:10.5px; color:var(--muted); font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
+  .kpi-arrow{
+    width:24px; height:24px; border-radius:8px; display:flex; align-items:center; justify-content:center;
+    background:rgba(212,164,95,0.10); color:var(--gold-2); flex-shrink:0;
   }
-  .kpi-card:hover::before{ opacity:1; }
-  .kpi-label{ font-size:10.5px; color:var(--muted); font-weight:700; letter-spacing:.06em; text-transform:uppercase; margin-bottom:10px; }
-  .kpi-value{ font-size:26px; font-weight:700; color:var(--ink); line-height:1; }
+  .kpi-arrow svg{ width:12px; height:12px; }
+  .kpi-value{ font-size:27px; font-weight:700; color:var(--ink); line-height:1; }
   .kpi-sub{ font-size:11px; color:var(--muted); margin-top:8px; line-height:1.4; }
+  /* First KPI card mirrors the reference design's filled "hero" stat card */
+  .kpi-card.hero{
+    background:linear-gradient(150deg, var(--gold-2), var(--gold));
+    border-color:transparent;
+  }
+  .kpi-card.hero .kpi-label{ color:rgba(36,26,5,0.72); }
+  .kpi-card.hero .kpi-value{ color:#241a05; }
+  .kpi-card.hero .kpi-sub{ color:rgba(36,26,5,0.65); }
+  .kpi-card.hero .kpi-arrow{ background:rgba(36,26,5,0.14); color:#241a05; }
   .kpi-card.seal{
     display:flex; align-items:center; gap:13px; justify-content:flex-start;
   }
@@ -185,9 +222,9 @@
     padding:3px 9px; border-radius:999px; letter-spacing:.03em; text-transform:uppercase;
   }
 
-  .two-col{ display:grid; grid-template-columns:1.2fr 1fr; gap:16px; margin-bottom:28px; }
+  .two-col{ display:grid; grid-template-columns:1.2fr 1fr; gap:16px; margin-bottom:26px; }
   .chart-card{
-    background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:19px;
+    background:var(--paper); border:1px solid var(--line); border-radius:var(--radius-md); padding:19px;
     transition:box-shadow .18s ease;
   }
   .chart-card:hover{ box-shadow:var(--shadow-sm); }
@@ -199,8 +236,8 @@
   .chart-empty.show{ display:flex; }
 
   /* ===== Lists ===== */
-  .list-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:28px; }
-  .list-card{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:19px; }
+  .list-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:26px; }
+  .list-card{ background:var(--paper); border:1px solid var(--line); border-radius:var(--radius-md); padding:19px; }
   .list-row{
     display:flex; align-items:center; justify-content:space-between; gap:10px;
     padding:10px 4px; border-bottom:1px solid var(--line); font-size:13px;
@@ -275,18 +312,10 @@
   }
   .excel-btn:hover{ border-color:var(--success); color:var(--success); }
 
-  .footer-note{ text-align:center; font-size:11.5px; color:var(--muted); margin-top:30px; display:flex; align-items:center; justify-content:center; gap:7px; }
+  .footer-note{ text-align:center; font-size:11.5px; color:var(--muted); margin-top:26px; display:flex; align-items:center; justify-content:center; gap:7px; }
   .footer-note::before{ content:"🔒"; font-size:11px; }
 
-  /* ===== History / Archive tab ===== */
-  .tab.history-tab{ margin-inline-start:14px; }
-  .tab.history-tab::before{
-    content:"🗂 "; font-size:11px;
-  }
-  .tab.exams-tab{ margin-inline-start:8px; }
-  .tab.exams-tab::before{
-    content:"📝 "; font-size:11px;
-  }
+  /* ===== History banner ===== */
   .hist-banner{
     display:none; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;
     background:var(--gold-soft); border:1px solid var(--line); border-radius:12px;
@@ -317,7 +346,7 @@
     transition:all .15s ease;
   }
   .ghost-btn:hover{ border-color:var(--gold); }
-  .delta-cards{ display:grid; grid-template-columns:repeat(4,1fr); gap:13px; margin-bottom:28px; }
+  .delta-cards{ display:grid; grid-template-columns:repeat(4,1fr); gap:13px; margin-bottom:26px; }
   .delta-badge{ font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:3px; margin-top:8px; }
   .delta-badge.up{ color:var(--success); }
   .delta-badge.down{ color:var(--error); }
@@ -350,10 +379,21 @@
   .modal-close{ border:none; background:none; font-size:22px; cursor:pointer; color:var(--muted); line-height:1; }
   .modal-close:hover{ color:var(--ink); }
 
+  @media (max-width:1080px){
+    .kpi-grid{ grid-template-columns:repeat(3,1fr); }
+  }
   @media (max-width:900px){
+    .app-shell{ flex-direction:column; }
+    .sidebar{ position:relative; width:100%; height:auto; flex-direction:row; flex-wrap:wrap; align-items:center; padding:16px; }
+    .side-brand{ padding:4px 8px; }
+    .side-label{ display:none; }
+    .side-nav{ flex-direction:row; flex-wrap:wrap; }
+    .side-scanner{ margin-top:0; margin-inline-start:auto; }
+    .side-scanner-card{ display:none; }
     .kpi-grid{ grid-template-columns:repeat(2,1fr); }
     .two-col, .list-grid{ grid-template-columns:1fr; }
     .delta-cards{ grid-template-columns:repeat(2,1fr); }
+    .main-area{ padding:20px 16px 50px; }
   }
   @media (prefers-reduced-motion: reduce){
     .refresh-btn .spin, .state-msg .spinner, .kpi-card, .kpi-card::before{ animation:none !important; transition:none !important; }
@@ -362,302 +402,349 @@
 </head>
 <body>
 
-<div class="topbar">
-  <div class="brand">
-    <div class="brand-mark">
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M4 19V9.5L12 4L20 9.5V19" stroke="#241a05" stroke-width="1.8" stroke-linejoin="round"/>
-        <path d="M9 19V13H15V19" stroke="#241a05" stroke-width="1.8" stroke-linejoin="round"/>
-      </svg>
-    </div>
-    <div class="brand-text">
-      <div class="brand-eyebrow">Live insights</div>
-      <h1>Live Dashboard</h1>
-      <p>Attendance & payment insights</p>
-    </div>
-  </div>
-  <div class="top-actions">
-    <span class="updated-note" id="updatedNote"></span>
-    <a class="scanner-btn" href="index.html">
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/>
-        <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/>
-        <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/>
-        <path d="M14 14h7v7h-7z" stroke="currentColor" stroke-width="1.8"/>
-      </svg>
-      Attendance Scanner
-    </a>
-    <button class="refresh-btn" id="refreshBtn" onclick="loadDashboard()">
-      <span class="spin">↻</span> Refresh data
-    </button>
-  </div>
-</div>
-
-<div class="wrap">
-  <div class="tab-row" id="gradeTabs">
-    <div class="tab active" data-grade="all">All Grades</div>
-    <div class="tab" data-grade="first">First Secondary</div>
-    <div class="tab" data-grade="second">Second Secondary</div>
-    <div class="tab" data-grade="third">Third Secondary</div>
-    <div class="tab exams-tab" id="examsTab">Exam Grades</div>
-    <div class="tab history-tab" id="historyTab">Monthly History</div>
-  </div>
-
-  <div class="tab-panel">
-    <div id="dashboardView">
-    <div class="state-msg show" id="loadingMsg">
-      <span class="spinner"></span> Loading data from Supabase…
-    </div>
-    <div class="state-msg err" id="errorMsg"></div>
-
-    <div class="content" id="dashContent">
-
-      <div class="kpi-grid">
-        <div class="kpi-card">
-          <div class="kpi-label">Total Students</div>
-          <div class="kpi-value num" id="kpiStudents">–</div>
-          <div class="kpi-sub" id="kpiStudentsSub"></div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Attendance Rate</div>
-          <div class="kpi-value num" id="kpiAttendance">–</div>
-          <div class="kpi-sub" id="kpiAttendanceSub"></div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Total Collected</div>
-          <div class="kpi-value num" id="kpiRevenue">–</div>
-          <div class="kpi-sub" id="kpiRevenueSub"></div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Unpaid</div>
-          <div class="kpi-value num" id="kpiUnpaid">–</div>
-          <div class="kpi-sub" id="kpiUnpaidSub"></div>
-        </div>
-        <div class="kpi-card seal">
-          <div class="seal-ring">
-            <svg width="58" height="58" viewBox="0 0 58 58">
-              <circle class="bg" cx="29" cy="29" r="24" fill="none" stroke-width="6"></circle>
-              <circle class="fg" id="collectionRing" cx="29" cy="29" r="24" fill="none" stroke-width="6"
-                stroke-dasharray="150.8" stroke-dashoffset="150.8"></circle>
-            </svg>
-            <div class="seal-pct" id="collectionPctText">–</div>
-          </div>
-          <div>
-            <div class="kpi-label">Collection Rate</div>
-            <div class="kpi-sub" id="kpiCollectionSub" style="margin-top:4px;">of amounts due</div>
-          </div>
-        </div>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="side-brand">
+      <div class="side-brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 19V9.5L12 4L20 9.5V19" stroke="#241a05" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M9 19V13H15V19" stroke="#241a05" stroke-width="1.8" stroke-linejoin="round"/>
+        </svg>
       </div>
-
-      <div class="two-col">
-        <div class="chart-card">
-          <div class="section-title">Attendance Rate by Grade <span class="tag">Live</span></div>
-          <div class="chart-box">
-            <canvas id="attendanceByGradeChart"></canvas>
-            <div class="chart-empty" id="attChartEmpty">No attendance data yet</div>
-          </div>
-        </div>
-        <div class="chart-card">
-          <div class="section-title">Payment Status</div>
-          <div class="chart-box">
-            <canvas id="paymentStatusChart"></canvas>
-            <div class="chart-empty" id="payChartEmpty">No payment data yet</div>
-          </div>
-        </div>
+      <div class="side-brand-text">
+        <h1>Live Dashboard</h1>
+        <p>Attendance & payments</p>
       </div>
-
-      <div class="two-col">
-        <div class="chart-card">
-          <div class="section-title">Average Exam Scores <span class="tag" id="examAvgSourceTag">exams</span></div>
-          <div class="chart-box" style="height:190px;">
-            <canvas id="examAvgChart"></canvas>
-            <div class="chart-empty" id="examAvgChartEmpty">No exam scores recorded yet</div>
-          </div>
-        </div>
-        <div class="chart-card">
-          <div class="section-title">Score Distribution <span class="tag">by student</span></div>
-          <div class="chart-box" style="height:190px;">
-            <canvas id="examDistChart"></canvas>
-            <div class="chart-empty" id="examDistChartEmpty">No exam scores recorded yet</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="list-grid">
-        <div class="list-card">
-          <div class="section-title">Top Attendance</div>
-          <div id="topAttendersList"></div>
-        </div>
-        <div class="list-card">
-          <div class="section-title">Unpaid Students</div>
-          <div id="unpaidList"></div>
-        </div>
-      </div>
-
-      <div class="list-grid">
-        <div class="list-card">
-          <div class="section-title">Top Exam Performers</div>
-          <div id="topExamList"></div>
-        </div>
-        <div class="list-card">
-          <div class="section-title">Needs Improvement</div>
-          <div id="lowExamList"></div>
-        </div>
-      </div>
-
-      <div class="chart-card">
-        <div class="roster-head">
-          <div class="search-box">
-            <input type="text" id="rosterSearch" placeholder="Search by name or phone…" oninput="renderRoster()">
-          </div>
-          <div class="pay-filter" id="payFilter">
-            <button class="active" data-f="all" onclick="setPayFilter('all')">All</button>
-            <button data-f="paid" onclick="setPayFilter('paid')">Paid</button>
-            <button data-f="unpaid" onclick="setPayFilter('unpaid')">Unpaid</button>
-          </div>
-          <button class="ghost-btn" id="gradeReportBtn" onclick="generateGradeReport()">📄 Grade Report (PDF)</button>
-          <button class="excel-btn" id="gradeExcelBtn" onclick="exportRosterExcel()">📊 Export Excel</button>
-        </div>
-        <div class="table-scroll-top" id="rosterScrollTop"><div class="table-scroll-top-inner" id="rosterScrollTopInner"></div></div>
-        <div class="table-wrap" id="rosterTableWrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Grade</th>
-                <th>Present</th>
-                <th>Absent</th>
-                <th>Attendance Rate</th>
-                <th>Student Phone</th>
-                <th>Parent Phone</th>
-                <th>Payment</th>
-                <th>Last Attendance</th>
-                <th>Report</th>
-              </tr>
-            </thead>
-            <tbody id="rosterBody"></tbody>
-          </table>
-        </div>
-      </div>
-
-    </div>
     </div>
 
-    <div id="historyView" style="display:none;">
-      <div class="state-msg show" id="histLoadingMsg">
-        <span class="spinner"></span> Loading monthly history…
+    <div class="side-label">Grades</div>
+    <div class="side-nav" id="gradeTabs">
+      <div class="side-item active" data-grade="all">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/></svg></span>
+        All Grades
       </div>
-      <div class="state-msg err" id="histErrorMsg"></div>
+      <div class="side-item" data-grade="first">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3l9 4.5-9 4.5-9-4.5 9-4.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M6.5 10v5c0 1.7 2.5 3 5.5 3s5.5-1.3 5.5-3v-5" stroke="currentColor" stroke-width="1.7"/></svg></span>
+        First Secondary
+      </div>
+      <div class="side-item" data-grade="second">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3l9 4.5-9 4.5-9-4.5 9-4.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M6.5 10v5c0 1.7 2.5 3 5.5 3s5.5-1.3 5.5-3v-5" stroke="currentColor" stroke-width="1.7"/></svg></span>
+        Second Secondary
+      </div>
+      <div class="side-item" data-grade="third">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3l9 4.5-9 4.5-9-4.5 9-4.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M6.5 10v5c0 1.7 2.5 3 5.5 3s5.5-1.3 5.5-3v-5" stroke="currentColor" stroke-width="1.7"/></svg></span>
+        Third Secondary
+      </div>
+    </div>
 
-      <div class="content" id="histContent">
+    <div class="side-label">Records</div>
+    <div class="side-nav">
+      <div class="side-item exams-tab" id="examsTab">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 3h10a1 1 0 0 1 1 1v16l-6-3-6 3V4a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9 8h6M9 11h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        Exam Grades
+      </div>
+      <div class="side-item history-tab" id="historyTab">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M3 9h18M8 3v3M16 3v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>
+        Monthly History
+      </div>
+    </div>
 
-        <div class="hist-banner" id="histBanner">
-          <div class="msg">
-            No snapshot saved yet for the current month.
-            <span>Save it before the month rolls over, so this month's numbers aren't lost.</span>
-          </div>
-          <button class="save-snapshot-btn" onclick="saveCurrentMonthSnapshot()">💾 Save current month now</button>
+    <div class="side-scanner">
+      <a class="side-scanner-card" href="index.html">
+        <div class="lbl">Attendance Scanner</div>
+        <div class="sub">Scan QR codes to mark attendance and log payments.</div>
+        <div class="side-scanner-btn">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/><path d="M14 14h7v7h-7z" stroke="currentColor" stroke-width="1.8"/></svg>
+          Open Scanner
         </div>
+      </a>
+    </div>
+  </aside>
 
-        <div class="hist-toolbar">
-          <div class="left">
-            <select class="hist-select" id="histGradeSelect" onchange="onHistGradeChange()">
-              <option value="all">All Grades</option>
-              <option value="first">First Secondary</option>
-              <option value="second">Second Secondary</option>
-              <option value="third">Third Secondary</option>
-            </select>
-          </div>
-          <button class="save-snapshot-btn" id="saveSnapshotBtn" onclick="saveCurrentMonthSnapshot()">💾 Save Current Month</button>
-          <button class="ghost-btn" onclick="generateHistoryMonthReport()">📄 Download PDF (Latest Month)</button>
-          <button class="excel-btn" onclick="exportHistoryExcel()">📊 Export Excel</button>
+  <main class="main-area">
+    <div class="topbar">
+      <div class="topbar-titles">
+        <h2 id="pageTitle">Dashboard</h2>
+        <p id="pageSubtitle">Attendance & payment insights</p>
+      </div>
+      <div class="top-actions">
+        <span class="updated-note" id="updatedNote"></span>
+        <button class="refresh-btn" id="refreshBtn" onclick="loadDashboard()">
+          <span class="spin">↻</span> Refresh data
+        </button>
+      </div>
+    </div>
+
+    <div class="wrap">
+      <div class="tab-panel">
+        <div id="dashboardView">
+        <div class="state-msg show" id="loadingMsg">
+          <span class="spinner"></span> Loading data from Supabase…
         </div>
+        <div class="state-msg err" id="errorMsg"></div>
 
-        <div class="delta-cards" id="deltaCards"></div>
+        <div class="content" id="dashContent">
 
-        <div class="two-col">
+          <div class="kpi-grid">
+            <div class="kpi-card hero">
+              <div class="kpi-top">
+                <div class="kpi-label">Total Students</div>
+                <div class="kpi-arrow"><svg viewBox="0 0 24 24" fill="none"><path d="M7 17L17 7M9 7h8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              </div>
+              <div class="kpi-value num" id="kpiStudents">–</div>
+              <div class="kpi-sub" id="kpiStudentsSub"></div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-top">
+                <div class="kpi-label">Attendance Rate</div>
+                <div class="kpi-arrow"><svg viewBox="0 0 24 24" fill="none"><path d="M7 17L17 7M9 7h8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              </div>
+              <div class="kpi-value num" id="kpiAttendance">–</div>
+              <div class="kpi-sub" id="kpiAttendanceSub"></div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-top">
+                <div class="kpi-label">Total Collected</div>
+                <div class="kpi-arrow"><svg viewBox="0 0 24 24" fill="none"><path d="M7 17L17 7M9 7h8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              </div>
+              <div class="kpi-value num" id="kpiRevenue">–</div>
+              <div class="kpi-sub" id="kpiRevenueSub"></div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-top">
+                <div class="kpi-label">Unpaid</div>
+                <div class="kpi-arrow"><svg viewBox="0 0 24 24" fill="none"><path d="M7 17L17 7M9 7h8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              </div>
+              <div class="kpi-value num" id="kpiUnpaid">–</div>
+              <div class="kpi-sub" id="kpiUnpaidSub"></div>
+            </div>
+            <div class="kpi-card seal">
+              <div class="seal-ring">
+                <svg width="58" height="58" viewBox="0 0 58 58">
+                  <circle class="bg" cx="29" cy="29" r="24" fill="none" stroke-width="6"></circle>
+                  <circle class="fg" id="collectionRing" cx="29" cy="29" r="24" fill="none" stroke-width="6"
+                    stroke-dasharray="150.8" stroke-dashoffset="150.8"></circle>
+                </svg>
+                <div class="seal-pct" id="collectionPctText">–</div>
+              </div>
+              <div>
+                <div class="kpi-label">Collection Rate</div>
+                <div class="kpi-sub" id="kpiCollectionSub" style="margin-top:4px;">of amounts due</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="two-col">
+            <div class="chart-card">
+              <div class="section-title">Attendance Rate by Grade <span class="tag">Live</span></div>
+              <div class="chart-box">
+                <canvas id="attendanceByGradeChart"></canvas>
+                <div class="chart-empty" id="attChartEmpty">No attendance data yet</div>
+              </div>
+            </div>
+            <div class="chart-card">
+              <div class="section-title">Payment Status</div>
+              <div class="chart-box">
+                <canvas id="paymentStatusChart"></canvas>
+                <div class="chart-empty" id="payChartEmpty">No payment data yet</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="two-col">
+            <div class="chart-card">
+              <div class="section-title">Average Exam Scores <span class="tag" id="examAvgSourceTag">exams</span></div>
+              <div class="chart-box" style="height:190px;">
+                <canvas id="examAvgChart"></canvas>
+                <div class="chart-empty" id="examAvgChartEmpty">No exam scores recorded yet</div>
+              </div>
+            </div>
+            <div class="chart-card">
+              <div class="section-title">Score Distribution <span class="tag">by student</span></div>
+              <div class="chart-box" style="height:190px;">
+                <canvas id="examDistChart"></canvas>
+                <div class="chart-empty" id="examDistChartEmpty">No exam scores recorded yet</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="list-grid">
+            <div class="list-card">
+              <div class="section-title">Top Attendance</div>
+              <div id="topAttendersList"></div>
+            </div>
+            <div class="list-card">
+              <div class="section-title">Unpaid Students</div>
+              <div id="unpaidList"></div>
+            </div>
+          </div>
+
+          <div class="list-grid">
+            <div class="list-card">
+              <div class="section-title">Top Exam Performers</div>
+              <div id="topExamList"></div>
+            </div>
+            <div class="list-card">
+              <div class="section-title">Needs Improvement</div>
+              <div id="lowExamList"></div>
+            </div>
+          </div>
+
           <div class="chart-card">
-            <div class="section-title">Attendance & Collection Rate <span class="tag">Trend</span></div>
-            <div class="chart-box">
-              <canvas id="histRateChart"></canvas>
-              <div class="chart-empty" id="histRateEmpty">No history saved yet</div>
+            <div class="roster-head">
+              <div class="search-box">
+                <input type="text" id="rosterSearch" placeholder="Search by name or phone…" oninput="renderRoster()">
+              </div>
+              <div class="pay-filter" id="payFilter">
+                <button class="active" data-f="all" onclick="setPayFilter('all')">All</button>
+                <button data-f="paid" onclick="setPayFilter('paid')">Paid</button>
+                <button data-f="unpaid" onclick="setPayFilter('unpaid')">Unpaid</button>
+              </div>
+              <button class="ghost-btn" id="gradeReportBtn" onclick="generateGradeReport()">📄 Grade Report (PDF)</button>
+              <button class="excel-btn" id="gradeExcelBtn" onclick="exportRosterExcel()">📊 Export Excel</button>
+            </div>
+            <div class="table-scroll-top" id="rosterScrollTop"><div class="table-scroll-top-inner" id="rosterScrollTopInner"></div></div>
+            <div class="table-wrap" id="rosterTableWrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Grade</th>
+                    <th>Present</th>
+                    <th>Absent</th>
+                    <th>Attendance Rate</th>
+                    <th>Student Phone</th>
+                    <th>Parent Phone</th>
+                    <th>Payment</th>
+                    <th>Last Attendance</th>
+                    <th>Report</th>
+                  </tr>
+                </thead>
+                <tbody id="rosterBody"></tbody>
+              </table>
             </div>
           </div>
-          <div class="chart-card">
-            <div class="section-title">Revenue by Month</div>
-            <div class="chart-box">
-              <canvas id="histRevenueChart"></canvas>
-              <div class="chart-empty" id="histRevenueEmpty">No history saved yet</div>
+
+        </div>
+        </div>
+
+        <div id="historyView" style="display:none;">
+          <div class="state-msg show" id="histLoadingMsg">
+            <span class="spinner"></span> Loading monthly history…
+          </div>
+          <div class="state-msg err" id="histErrorMsg"></div>
+
+          <div class="content" id="histContent">
+
+            <div class="hist-banner" id="histBanner">
+              <div class="msg">
+                No snapshot saved yet for the current month.
+                <span>Save it before the month rolls over, so this month's numbers aren't lost.</span>
+              </div>
+              <button class="save-snapshot-btn" onclick="saveCurrentMonthSnapshot()">💾 Save current month now</button>
             </div>
+
+            <div class="hist-toolbar">
+              <div class="left">
+                <select class="hist-select" id="histGradeSelect" onchange="onHistGradeChange()">
+                  <option value="all">All Grades</option>
+                  <option value="first">First Secondary</option>
+                  <option value="second">Second Secondary</option>
+                  <option value="third">Third Secondary</option>
+                </select>
+              </div>
+              <button class="save-snapshot-btn" id="saveSnapshotBtn" onclick="saveCurrentMonthSnapshot()">💾 Save Current Month</button>
+              <button class="ghost-btn" onclick="generateHistoryMonthReport()">📄 Download PDF (Latest Month)</button>
+              <button class="excel-btn" onclick="exportHistoryExcel()">📊 Export Excel</button>
+            </div>
+
+            <div class="delta-cards" id="deltaCards"></div>
+
+            <div class="two-col">
+              <div class="chart-card">
+                <div class="section-title">Attendance & Collection Rate <span class="tag">Trend</span></div>
+                <div class="chart-box">
+                  <canvas id="histRateChart"></canvas>
+                  <div class="chart-empty" id="histRateEmpty">No history saved yet</div>
+                </div>
+              </div>
+              <div class="chart-card">
+                <div class="section-title">Revenue by Month</div>
+                <div class="chart-box">
+                  <canvas id="histRevenueChart"></canvas>
+                  <div class="chart-empty" id="histRevenueEmpty">No history saved yet</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="chart-card">
+              <div class="section-title">Month-by-Month Comparison</div>
+              <div class="hist-table-note">Each row is a saved snapshot. Change vs. shows the difference from the previous saved month. Use "Who Hasn't Paid" to see who was unpaid that month.</div>
+              <div class="table-scroll-top" id="histScrollTop"><div class="table-scroll-top-inner" id="histScrollTopInner"></div></div>
+              <div class="table-wrap" id="histTableWrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Month</th>
+                      <th>Students</th>
+                      <th>Attendance Rate</th>
+                      <th>Collection Rate</th>
+                      <th>Revenue</th>
+                      <th>Paid</th>
+                      <th>Unpaid</th>
+                      <th>Who Hasn't Paid</th>
+                    </tr>
+                  </thead>
+                  <tbody id="histTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+
           </div>
         </div>
 
-        <div class="chart-card">
-          <div class="section-title">Month-by-Month Comparison</div>
-          <div class="hist-table-note">Each row is a saved snapshot. Change vs. shows the difference from the previous saved month. Use "Who Hasn't Paid" to see who was unpaid that month.</div>
-          <div class="table-scroll-top" id="histScrollTop"><div class="table-scroll-top-inner" id="histScrollTopInner"></div></div>
-          <div class="table-wrap" id="histTableWrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Month</th>
-                  <th>Students</th>
-                  <th>Attendance Rate</th>
-                  <th>Collection Rate</th>
-                  <th>Revenue</th>
-                  <th>Paid</th>
-                  <th>Unpaid</th>
-                  <th>Who Hasn't Paid</th>
-                </tr>
-              </thead>
-              <tbody id="histTableBody"></tbody>
-            </table>
+        <div id="examsView" style="display:none;">
+          <div class="state-msg show" id="examLoadingMsg">
+            <span class="spinner"></span> Loading grades…
+          </div>
+          <div class="state-msg err" id="examErrorMsg"></div>
+
+          <div class="content" id="examContent">
+
+            <div class="hist-toolbar">
+              <div class="left">
+                <select class="hist-select" id="examGradeSelect" onchange="onExamGradeChange()">
+                  <option value="first">First Secondary</option>
+                  <option value="second">Second Secondary</option>
+                  <option value="third">Third Secondary</option>
+                </select>
+                <div class="search-box" style="min-width:200px;">
+                  <input type="text" id="examSearch" placeholder="Search by student name…" oninput="renderExamTable()">
+                </div>
+              </div>
+              <a class="save-snapshot-btn" href="manage_exams.html" style="text-decoration:none;">➕ Manage Exams</a>
+              <button class="excel-btn" onclick="exportExamExcel()">📊 Export Excel</button>
+            </div>
+
+            <div class="chart-card">
+              <div class="section-title">Grades Table <span class="tag">Permanent — not cleared monthly</span></div>
+              <div class="hist-table-note">Each exam is shown in its own column. To add a new exam or enter/edit scores, use the "Manage Exams" page.</div>
+              <div class="table-scroll-top" id="examScrollTop"><div class="table-scroll-top-inner" id="examScrollTopInner"></div></div>
+              <div class="table-wrap" id="examTableWrap">
+                <table>
+                  <thead id="examTableHead"></thead>
+                  <tbody id="examTableBody"></tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
 
       </div>
+
+      <div class="footer-note">Data is read live from Supabase using a read-only anon key</div>
     </div>
-
-    <div id="examsView" style="display:none;">
-      <div class="state-msg show" id="examLoadingMsg">
-        <span class="spinner"></span> Loading grades…
-      </div>
-      <div class="state-msg err" id="examErrorMsg"></div>
-
-      <div class="content" id="examContent">
-
-        <div class="hist-toolbar">
-          <div class="left">
-            <select class="hist-select" id="examGradeSelect" onchange="onExamGradeChange()">
-              <option value="first">First Secondary</option>
-              <option value="second">Second Secondary</option>
-              <option value="third">Third Secondary</option>
-            </select>
-            <div class="search-box" style="min-width:200px;">
-              <input type="text" id="examSearch" placeholder="Search by student name…" oninput="renderExamTable()">
-            </div>
-          </div>
-          <a class="save-snapshot-btn" href="manage_exams.html" style="text-decoration:none;">➕ Manage Exams</a>
-          <button class="excel-btn" onclick="exportExamExcel()">📊 Export Excel</button>
-        </div>
-
-        <div class="chart-card">
-          <div class="section-title">Grades Table <span class="tag">Permanent — not cleared monthly</span></div>
-          <div class="hist-table-note">Each exam is shown in its own column. To add a new exam or enter/edit scores, use the "Manage Exams" page.</div>
-          <div class="table-scroll-top" id="examScrollTop"><div class="table-scroll-top-inner" id="examScrollTopInner"></div></div>
-          <div class="table-wrap" id="examTableWrap">
-            <table>
-              <thead id="examTableHead"></thead>
-              <tbody id="examTableBody"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-
-  </div>
-
-  <div class="footer-note">Data is read live from Supabase using a read-only anon key</div>
+  </main>
 </div>
 
 <!-- Unpaid-this-month modal -->
@@ -733,12 +820,28 @@
     Chart.defaults.borderColor = "rgba(212,164,95,0.14)";
   }
 
-  /* ---------- Tabs ---------- */
-  document.querySelectorAll("#gradeTabs .tab[data-grade]").forEach(tab => {
+  /* ---------- Sidebar navigation ---------- */
+  const PAGE_TITLES = {
+    all: ["Dashboard", "Attendance & payment insights — all grades"],
+    first: ["First Secondary", "Attendance & payment insights"],
+    second: ["Second Secondary", "Attendance & payment insights"],
+    third: ["Third Secondary", "Attendance & payment insights"]
+  };
+  function setPageTitle(title, subtitle){
+    document.getElementById("pageTitle").textContent = title;
+    document.getElementById("pageSubtitle").textContent = subtitle;
+  }
+  function clearActiveNav(){
+    document.querySelectorAll(".side-item").forEach(t => t.classList.remove("active"));
+  }
+
+  document.querySelectorAll("#gradeTabs .side-item[data-grade]").forEach(tab => {
     tab.addEventListener("click", () => {
-      document.querySelectorAll("#gradeTabs .tab").forEach(t => t.classList.remove("active"));
+      clearActiveNav();
       tab.classList.add("active");
       currentGrade = tab.dataset.grade;
+      const [title, sub] = PAGE_TITLES[currentGrade] || PAGE_TITLES.all;
+      setPageTitle(title, sub);
       document.getElementById("dashboardView").style.display = "";
       document.getElementById("historyView").style.display = "none";
       document.getElementById("examsView").style.display = "none";
@@ -747,8 +850,9 @@
   });
 
   document.getElementById("historyTab").addEventListener("click", () => {
-    document.querySelectorAll("#gradeTabs .tab").forEach(t => t.classList.remove("active"));
+    clearActiveNav();
     document.getElementById("historyTab").classList.add("active");
+    setPageTitle("Monthly History", "Month-by-month attendance & payment archive");
     document.getElementById("dashboardView").style.display = "none";
     document.getElementById("historyView").style.display = "";
     document.getElementById("examsView").style.display = "none";
@@ -757,8 +861,9 @@
   });
 
   document.getElementById("examsTab").addEventListener("click", () => {
-    document.querySelectorAll("#gradeTabs .tab").forEach(t => t.classList.remove("active"));
+    clearActiveNav();
     document.getElementById("examsTab").classList.add("active");
+    setPageTitle("Exam Grades", "Scores across every recorded exam");
     document.getElementById("dashboardView").style.display = "none";
     document.getElementById("historyView").style.display = "none";
     document.getElementById("examsView").style.display = "";
