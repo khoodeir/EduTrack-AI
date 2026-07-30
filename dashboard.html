@@ -195,7 +195,7 @@
   }
   .tab{
     position:relative; cursor:pointer; user-select:none;
-    padding:10px 16px; margin:2px 0;
+    padding:10px 16px; margin:0;
     background:var(--card); color:var(--muted); font-weight:500; font-size:13px;
     border-radius:10px; border:1px solid var(--line);
     transition:all .18s ease; z-index:1;
@@ -276,10 +276,10 @@
   .content.show{ display:block; }
 
   /* ===== KPI cards ===== */
-  .kpi-grid{ display:grid; grid-template-columns:repeat(5,1fr); gap:13px; margin-bottom:28px; }
+  .kpi-grid{ display:grid; grid-template-columns:repeat(5,1fr); gap:16px; margin-bottom:28px; }
   .kpi-card{
     background:var(--paper); border:1px solid var(--line); border-radius:16px;
-    padding:18px 18px 16px; position:relative; overflow:hidden; transition:box-shadow .18s ease, transform .18s ease;
+    padding:20px; position:relative; overflow:hidden; transition:box-shadow .18s ease, transform .18s ease;
   }
   .kpi-card:hover{ box-shadow:var(--shadow-md); transform:translateY(-2px); }
   .kpi-card::before{
@@ -315,7 +315,7 @@
 
   .two-col{ display:grid; grid-template-columns:1.2fr 1fr; gap:16px; margin-bottom:28px; }
   .chart-card{
-    background:var(--paper); border:1px solid var(--line); border-radius:16px; padding:19px;
+    background:var(--paper); border:1px solid var(--line); border-radius:16px; padding:20px;
     transition:box-shadow .18s ease;
   }
   .chart-card:hover{ box-shadow:var(--shadow-sm); }
@@ -328,7 +328,7 @@
 
   /* ===== Lists ===== */
   .list-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:28px; }
-  .list-card{ background:var(--paper); border:1px solid var(--line); border-radius:16px; padding:19px; }
+  .list-card{ background:var(--paper); border:1px solid var(--line); border-radius:16px; padding:20px; }
   .list-row{
     display:flex; align-items:center; justify-content:space-between; gap:10px;
     padding:10px 4px; border-bottom:1px solid var(--line); font-size:13px;
@@ -407,18 +407,8 @@
   .footer-note::before{ content:"🔒"; font-size:11px; }
 
   /* ===== History / Archive tab ===== */
-  .tab.history-tab{ margin-inline-start:14px; }
-  .tab.history-tab::before{
-    content:"🗂 "; font-size:11px;
-  }
-  .tab.exams-tab{ margin-inline-start:8px; }
-  .tab.exams-tab::before{
-    content:"📝 "; font-size:11px;
-  }
-  .tab.settings-tab{ margin-inline-start:8px; }
-  .tab.settings-tab::before{
-    content:"⚙️ "; font-size:11px;
-  }
+  .tab.history-tab, .tab.exams-tab, .tab.settings-tab { margin-inline-start: 0; }
+  .tab.history-tab::before, .tab.exams-tab::before, .tab.settings-tab::before { content: none; }
 
   /* ===== Settings tab (redesigned to match the reference purple/navy dashboard) ===== */
   #settingsView{
@@ -513,7 +503,7 @@
   .settings-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:16px; max-width:820px; }
   .settings-card{
     background:var(--paper); border:1px solid var(--line); border-radius:14px;
-    padding:22px; display:flex; flex-direction:column; gap:16px;
+    padding:20px; display:flex; flex-direction:column; gap:16px;
   }
   .settings-card-head{ display:flex; align-items:center; gap:10px; }
   .settings-card-icon{
