@@ -23,22 +23,22 @@
 <link rel="preconnect" href="https://evbjulsahncllewwvlxp.supabase.co">
 <style>
   :root{
-    --ink:#ece3d2;
-    --ink-2:#d8cbb3;
-    --paper:#2b241c;
-    --card:#241e18;
-    --sidebar:#1c1712;
-    --line:rgba(212,164,95,0.16);
-    --gold:#d4a45f;
-    --gold-2:#e3b876;
-    --gold-soft:rgba(212,164,95,0.16);
+    --ink:#e4e9f0;
+    --ink-2:#c3cdda;
+    --paper:#232a35;
+    --card:#1c222b;
+    --sidebar:#141a22;
+    --line:rgba(90,140,210,0.16);
+    --gold:#3f6fb0;
+    --gold-2:#5f8fd0;
+    --gold-soft:rgba(63,111,176,0.16);
     --success:#6fbf8b;
     --success-soft:rgba(111,191,139,0.16);
     --error:#e2857a;
     --error-soft:rgba(226,133,122,0.16);
-    --muted:#a89985;
-    --cream-bg-1:#18140f;
-    --cream-bg-2:#1e1810;
+    --muted:#8b96a6;
+    --cream-bg-1:#11151b;
+    --cream-bg-2:#161c24;
     --shadow-sm:0 1px 2px rgba(0,0,0,0.30);
     --shadow-md:0 8px 24px rgba(0,0,0,0.40);
     --shadow-lg:0 20px 50px rgba(0,0,0,0.50);
@@ -50,8 +50,8 @@
   body{
     font-family:'Inter',sans-serif;
     background:
-      radial-gradient(circle at 15% 10%, rgba(212,164,95,0.10), transparent 45%),
-      radial-gradient(circle at 85% 90%, rgba(212,164,95,0.08), transparent 45%),
+      radial-gradient(circle at 15% 10%, rgba(63,111,176,0.10), transparent 45%),
+      radial-gradient(circle at 85% 90%, rgba(63,111,176,0.08), transparent 45%),
       linear-gradient(160deg, var(--cream-bg-1), var(--cream-bg-2));
     color:var(--ink);
     min-height:100vh;
@@ -78,7 +78,7 @@
     width:42px; height:42px; border-radius:13px; flex-shrink:0;
     background:linear-gradient(135deg, var(--gold-2), var(--gold));
     display:flex; align-items:center; justify-content:center;
-    box-shadow:0 6px 16px rgba(212,164,95,0.30);
+    box-shadow:0 6px 16px rgba(63,111,176,0.30);
   }
   .side-brand-mark svg{ width:21px; height:21px; }
   .side-brand-text h1{ font-family:'Cormorant Garamond',serif; font-size:19px; font-weight:700; color:var(--gold-2); line-height:1.1; }
@@ -96,23 +96,23 @@
   }
   .side-item .ico{
     width:30px; height:30px; border-radius:9px; flex-shrink:0; display:flex; align-items:center; justify-content:center;
-    background:rgba(212,164,95,0.08); font-size:14px; transition:all .15s ease;
+    background:rgba(63,111,176,0.08); font-size:14px; transition:all .15s ease;
   }
   .side-item .ico svg{ width:16px; height:16px; }
-  .side-item:hover{ background:rgba(212,164,95,0.07); color:var(--ink); }
+  .side-item:hover{ background:rgba(63,111,176,0.07); color:var(--ink); }
   .side-item.active{
-    background:linear-gradient(135deg, rgba(212,164,95,0.18), rgba(212,164,95,0.08));
+    background:linear-gradient(135deg, rgba(63,111,176,0.18), rgba(63,111,176,0.08));
     color:var(--gold-2); border-color:var(--line);
   }
-  .side-item.active .ico{ background:linear-gradient(135deg, var(--gold-2), var(--gold)); color:#241a05; }
-  .side-item.active .ico svg{ stroke:#241a05; }
+  .side-item.active .ico{ background:linear-gradient(135deg, var(--gold-2), var(--gold)); color:#0d131b; }
+  .side-item.active .ico svg{ stroke:#0d131b; }
 
   .side-scanner{
     margin-top:auto; padding-top:16px;
   }
   .side-scanner-card{
     display:block; text-decoration:none; border-radius:16px; padding:16px 15px;
-    background:linear-gradient(150deg, rgba(212,164,95,0.16), rgba(212,164,95,0.03));
+    background:linear-gradient(150deg, rgba(63,111,176,0.16), rgba(63,111,176,0.03));
     border:1px solid var(--line);
   }
   .side-scanner-card .lbl{ font-size:11.5px; font-weight:700; color:var(--gold-2); margin-bottom:3px; }
@@ -120,7 +120,7 @@
   .side-scanner-btn{
     display:inline-flex; align-items:center; gap:7px; width:100%; justify-content:center;
     padding:9px 12px; border-radius:9px; background:linear-gradient(135deg, var(--gold-2), var(--gold));
-    color:#241a05; font-size:12px; font-weight:700;
+    color:#0d131b; font-size:12px; font-weight:700;
   }
   .side-scanner-btn svg{ width:14px; height:14px; }
 
@@ -143,7 +143,7 @@
     display:flex; align-items:center; gap:8px;
     padding:11px 20px; border-radius:10px; border:none;
     background:linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%);
-    color:#241a05; font-family:'Inter',sans-serif;
+    color:#0d131b; font-family:'Inter',sans-serif;
     font-weight:700; font-size:13px; cursor:pointer; transition:all .18s ease;
     box-shadow:0 6px 16px rgba(0,0,0,0.22);
   }
@@ -169,7 +169,7 @@
   .state-msg.show{ display:flex; }
   .state-msg.err{ color:var(--error); flex-direction:column; gap:9px; }
   .state-msg .spinner{
-    width:18px; height:18px; border-radius:50%; border:2px solid rgba(212,164,95,0.18);
+    width:18px; height:18px; border-radius:50%; border:2px solid rgba(63,111,176,0.18);
     border-top-color:var(--gold); animation:spin .7s linear infinite; flex-shrink:0;
   }
   .content{ display:none; }
@@ -186,7 +186,7 @@
   .kpi-label{ font-size:10.5px; color:var(--muted); font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
   .kpi-arrow{
     width:24px; height:24px; border-radius:8px; display:flex; align-items:center; justify-content:center;
-    background:rgba(212,164,95,0.10); color:var(--gold-2); flex-shrink:0;
+    background:rgba(63,111,176,0.10); color:var(--gold-2); flex-shrink:0;
   }
   .kpi-arrow svg{ width:12px; height:12px; }
   .kpi-value{ font-size:27px; font-weight:700; color:var(--ink); line-height:1; }
@@ -196,16 +196,16 @@
     background:linear-gradient(150deg, var(--gold-2), var(--gold));
     border-color:transparent;
   }
-  .kpi-card.hero .kpi-label{ color:rgba(36,26,5,0.72); }
-  .kpi-card.hero .kpi-value{ color:#241a05; }
-  .kpi-card.hero .kpi-sub{ color:rgba(36,26,5,0.65); }
-  .kpi-card.hero .kpi-arrow{ background:rgba(36,26,5,0.14); color:#241a05; }
+  .kpi-card.hero .kpi-label{ color:rgba(13,19,27,0.72); }
+  .kpi-card.hero .kpi-value{ color:#0d131b; }
+  .kpi-card.hero .kpi-sub{ color:rgba(13,19,27,0.65); }
+  .kpi-card.hero .kpi-arrow{ background:rgba(13,19,27,0.14); color:#0d131b; }
   .kpi-card.seal{
     display:flex; align-items:center; gap:13px; justify-content:flex-start;
   }
   .seal-ring{ position:relative; width:58px; height:58px; flex-shrink:0; }
   .seal-ring svg{ transform:rotate(-90deg); }
-  .seal-ring .bg{ stroke:rgba(212,164,95,0.15); }
+  .seal-ring .bg{ stroke:rgba(63,111,176,0.15); }
   .seal-ring .fg{ stroke:var(--gold); stroke-linecap:round; transition:stroke-dashoffset .6s ease; }
   .seal-pct{
     position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
@@ -246,7 +246,7 @@
   .list-name{ display:flex; align-items:center; gap:9px; min-width:0; }
   .list-name .name{ font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:150px; }
   .list-name .grade-chip{
-    font-size:9.5px; font-weight:700; color:var(--gold-2); background:rgba(212,164,95,0.12);
+    font-size:9.5px; font-weight:700; color:var(--gold-2); background:rgba(63,111,176,0.12);
     padding:2px 7px; border-radius:999px; flex-shrink:0;
   }
   .rank{
@@ -259,7 +259,7 @@
   .val.high{ color:var(--success); }
   .phone-link{
     font-size:11px; color:var(--muted); text-decoration:none; display:inline-block;
-    padding:3px 8px; border-radius:6px; background:rgba(212,164,95,0.07); transition:all .15s ease;
+    padding:3px 8px; border-radius:6px; background:rgba(63,111,176,0.07); transition:all .15s ease;
     cursor:pointer;
   }
   .phone-link:hover{ color:var(--gold-2); background:var(--gold-soft); }
@@ -285,7 +285,7 @@
     transition:all .15s ease;
   }
   .pay-filter button:hover{ border-color:var(--gold); color:var(--ink); }
-  .pay-filter button.active{ background:linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%); color:#241a05; border-color:var(--gold); }
+  .pay-filter button.active{ background:linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%); color:#0d131b; border-color:var(--gold); }
 
   .table-scroll-top{ overflow-x:auto; overflow-y:hidden; height:16px; margin-bottom:2px; }
   .table-scroll-top-inner{ height:1px; }
@@ -299,11 +299,11 @@
   tbody td{ padding:11px 14px; border-bottom:1px solid var(--line); color:var(--ink); white-space:nowrap; }
   tbody tr:last-child td{ border-bottom:none; }
   tbody tr{ transition:background .12s ease; }
-  tbody tr:hover{ background:rgba(212,164,95,0.07); }
+  tbody tr:hover{ background:rgba(63,111,176,0.07); }
   .chip{ display:inline-block; padding:3px 10px; border-radius:999px; font-size:11px; font-weight:700; }
   .chip.paid{ background:var(--success-soft); color:var(--success); }
   .chip.unpaid{ background:var(--error-soft); color:var(--error); }
-  .bar-track{ width:70px; height:6px; border-radius:4px; background:rgba(212,164,95,0.12); display:inline-block; vertical-align:middle; margin-right:7px; }
+  .bar-track{ width:70px; height:6px; border-radius:4px; background:rgba(63,111,176,0.12); display:inline-block; vertical-align:middle; margin-right:7px; }
   .bar-fill{ height:100%; border-radius:4px; background:var(--gold); }
   .excel-btn{
     padding:10px 16px; border-radius:9px; border:1px solid var(--line); background:var(--card);
@@ -334,7 +334,7 @@
   }
   .save-snapshot-btn{
     display:flex; align-items:center; gap:8px; padding:10px 18px; border-radius:9px; border:none;
-    background:linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%); color:#241a05;
+    background:linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%); color:#0d131b;
     font-family:'Inter',sans-serif; font-weight:700; font-size:12.5px; cursor:pointer;
     box-shadow:0 6px 16px rgba(0,0,0,0.2); transition:all .15s ease;
   }
@@ -407,8 +407,8 @@
     <div class="side-brand">
       <div class="side-brand-mark">
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M4 19V9.5L12 4L20 9.5V19" stroke="#241a05" stroke-width="1.8" stroke-linejoin="round"/>
-          <path d="M9 19V13H15V19" stroke="#241a05" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M4 19V9.5L12 4L20 9.5V19" stroke="#0d131b" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M9 19V13H15V19" stroke="#0d131b" stroke-width="1.8" stroke-linejoin="round"/>
         </svg>
       </div>
       <div class="side-brand-text">
@@ -802,9 +802,9 @@
   const GRADE_LABELS = { first: "First Secondary", second: "Second Secondary", third: "Third Secondary" };
   const GRADES = ["first", "second", "third"];
   const GRADE_COLORS = {
-    first:  "rgba(184,137,43,0.75)",   // gold
-    second: "rgba(96,148,214,0.78)",     // ink-2
-    third:  "rgba(111,191,139,0.7)"      // success
+    first:  "rgba(95,143,208,0.75)",   // blue
+    second: "rgba(140,170,220,0.78)",  // lighter blue
+    third:  "rgba(111,191,139,0.7)"    // success
   };
 
   let currentGrade = "all";
@@ -814,10 +814,10 @@
 
   // Dark theme: Chart.js defaults to dark tick/legend text, which is invisible
   // against this page's dark background — override globally so every chart
-  // (current and future) inherits legible, muted-warm text out of the box.
+  // (current and future) inherits legible, muted-blue text out of the box.
   if(typeof Chart !== "undefined"){
-    Chart.defaults.color = "#a89985";
-    Chart.defaults.borderColor = "rgba(212,164,95,0.14)";
+    Chart.defaults.color = "#8b96a6";
+    Chart.defaults.borderColor = "rgba(63,111,176,0.14)";
   }
 
   /* ---------- Sidebar navigation ---------- */
@@ -1191,7 +1191,7 @@
         labels: rows.map(r => GRADE_LABELS[r.grade]),
         datasets: [{
           data: rows.map(r => r.rate ?? 0),
-          backgroundColor: "rgba(212,164,95,0.65)",
+          backgroundColor: "rgba(63,111,176,0.65)",
           borderRadius: 6, maxBarThickness: 46
         }]
       },
@@ -1199,7 +1199,7 @@
         maintainAspectRatio: false,
         plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.raw}%` } } },
         scales: {
-          y: { beginAtZero: true, max: 100, ticks: { callback: v => v + "%", font: { size: 10 } }, grid: { color: "rgba(212,164,95,0.08)" } },
+          y: { beginAtZero: true, max: 100, ticks: { callback: v => v + "%", font: { size: 10 } }, grid: { color: "rgba(63,111,176,0.08)" } },
           x: { ticks: { font: { size: 11, family: "Inter" } }, grid: { display: false } }
         }
       }
@@ -1273,7 +1273,7 @@
             } } }
           },
           scales: {
-            y: { beginAtZero: true, max: 100, ticks: { callback: v => v + "%", font: { size: 10 } }, grid: { color: "rgba(212,164,95,0.08)" } },
+            y: { beginAtZero: true, max: 100, ticks: { callback: v => v + "%", font: { size: 10 } }, grid: { color: "rgba(63,111,176,0.08)" } },
             x: { ticks: { font: { size: 10 } }, grid: { display: false } }
           }
         }
@@ -1295,7 +1295,7 @@
           maintainAspectRatio: false,
           plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.raw}%` } } },
           scales: {
-            y: { beginAtZero: true, max: 100, ticks: { callback: v => v + "%", font: { size: 10 } }, grid: { color: "rgba(212,164,95,0.08)" } },
+            y: { beginAtZero: true, max: 100, ticks: { callback: v => v + "%", font: { size: 10 } }, grid: { color: "rgba(63,111,176,0.08)" } },
             x: { ticks: { font: { size: 10 } }, grid: { display: false } }
           }
         }
@@ -1398,7 +1398,7 @@
       return;
     }
 
-    const examCountChip = (c) => `<span class="grade-chip" style="background:rgba(168,153,133,0.12); color:var(--muted);">${c} exam${c === 1 ? "" : "s"}</span>`;
+    const examCountChip = (c) => `<span class="grade-chip" style="background:rgba(139,150,166,0.12); color:var(--muted);">${c} exam${c === 1 ? "" : "s"}</span>`;
     const rowHtml = (s, i, valClass) => `
       <div class="list-row">
         <div class="list-name">
@@ -1721,7 +1721,7 @@
       data: {
         labels,
         datasets: [
-          { label: "Attendance Rate", data: rows.map(r => r[col.attendanceRate]), borderColor: "rgba(212,164,95,0.9)", backgroundColor: "rgba(212,164,95,0.15)", fill: true, tension: 0.3 },
+          { label: "Attendance Rate", data: rows.map(r => r[col.attendanceRate]), borderColor: "rgba(63,111,176,0.9)", backgroundColor: "rgba(63,111,176,0.15)", fill: true, tension: 0.3 },
           { label: "Collection Rate", data: rows.map(r => r[col.collectionRate]), borderColor: "rgba(111,191,139,0.9)", backgroundColor: "rgba(111,191,139,0.12)", fill: true, tension: 0.3 }
         ]
       },
@@ -1729,7 +1729,7 @@
         maintainAspectRatio: false,
         plugins: { legend: { position: "bottom", labels: { font: { family: "Inter", size: 11 }, padding: 12 } }, tooltip: { callbacks: { label: c => `${c.dataset.label}: ${c.raw}%` } } },
         scales: {
-          y: { beginAtZero: true, max: 100, ticks: { callback: v => v + "%", font: { size: 10 } }, grid: { color: "rgba(212,164,95,0.08)" } },
+          y: { beginAtZero: true, max: 100, ticks: { callback: v => v + "%", font: { size: 10 } }, grid: { color: "rgba(63,111,176,0.08)" } },
           x: { ticks: { font: { size: 10 } }, grid: { display: false } }
         }
       }
@@ -1739,13 +1739,13 @@
       type: "bar",
       data: {
         labels,
-        datasets: [{ label: "Revenue", data: rows.map(r => r[col.revenue]), backgroundColor: "rgba(212,164,95,0.65)", borderRadius: 6, maxBarThickness: 40 }]
+        datasets: [{ label: "Revenue", data: rows.map(r => r[col.revenue]), backgroundColor: "rgba(63,111,176,0.65)", borderRadius: 6, maxBarThickness: 40 }]
       },
       options: {
         maintainAspectRatio: false,
         plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmtEGP(c.raw) } } },
         scales: {
-          y: { beginAtZero: true, ticks: { font: { size: 10 } }, grid: { color: "rgba(212,164,95,0.08)" } },
+          y: { beginAtZero: true, ticks: { font: { size: 10 } }, grid: { color: "rgba(63,111,176,0.08)" } },
           x: { ticks: { font: { size: 10 } }, grid: { display: false } }
         }
       }
@@ -1994,9 +1994,9 @@
           datasets: [{
             label: "Score",
             data: points.map(p => p.pct),
-            borderColor: "rgba(212,164,95,0.9)",
-            backgroundColor: "rgba(212,164,95,0.15)",
-            fill: true, tension: 0.3, pointRadius: 4, pointBackgroundColor: "rgba(212,164,95,1)"
+            borderColor: "rgba(63,111,176,0.9)",
+            backgroundColor: "rgba(63,111,176,0.15)",
+            fill: true, tension: 0.3, pointRadius: 4, pointBackgroundColor: "rgba(63,111,176,1)"
           }]
         },
         options: {
@@ -2009,7 +2009,7 @@
             } } }
           },
           scales: {
-            y: { beginAtZero: true, max: 100, ticks: { callback: v => v + "%", font: { size: 10 } }, grid: { color: "rgba(212,164,95,0.08)" } },
+            y: { beginAtZero: true, max: 100, ticks: { callback: v => v + "%", font: { size: 10 } }, grid: { color: "rgba(63,111,176,0.08)" } },
             x: { ticks: { font: { size: 10 } }, grid: { display: false } }
           }
         }
@@ -2041,8 +2041,8 @@
      before the month rolls over if you want an accurate archival copy.
      ============================================================ */
   const PDF_COLORS = {
-    gold: [185,129,47], gold2: [165,112,31], ink: [44,33,22],
-    success: [46,125,82], error: [163,52,42], muted: [138,122,99]
+    gold: [63,111,176], gold2: [47,90,148], ink: [30,40,55],
+    success: [46,125,82], error: [163,52,42], muted: [110,122,140]
   };
   const pdfLibReady = () => typeof window.jspdf !== "undefined";
 
