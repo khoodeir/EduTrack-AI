@@ -1442,16 +1442,41 @@
 
     try{
       const gradesToFetch = currentGrade === "all" ? GRADES : [currentGrade];
-      const results = await Promise.all(gradesToFetch.map(fetchGrade));
+      
+      // Fetch each grade individually to prevent one missing table from breaking everything
+      const results = [];
+      const errors = [];
+      for (const g of gradesToFetch) {
+        try {
+          const data = await fetchGrade(g);
+          results.push(data);
+        } catch (e) {
+          console.error(`Error fetching grade ${g}:`, e);
+          errors.push(`${g}: ${e.message}`);
+        }
+      }
+      
+      if (results.length === 0 && errors.length > 0) {
+        throw new Error("Could not load any data. Check if tables exist in Supabase.\n" + errors.join("\n"));
+      }
+
       combined.students = results.flat();
       const examData = await fetchExamData(gradesToFetch);
       combined.examAverages = examData.perExam;
       combined.examStudentAverages = examData.perStudent;
 
       renderAll();
+      
+      // Show partial error warning if some grades failed
+      if (errors.length > 0 && currentGrade === "all") {
+        console.warn("Some grades failed to load:", errors);
+        document.getElementById("updatedNote").textContent = "⚠️ Partial data loaded";
+      } else {
+        document.getElementById("updatedNote").textContent =
+          "Last updated: " + new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+      }
+      
       contentEl.classList.add("show");
-      document.getElementById("updatedNote").textContent =
-        "Last updated: " + new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
       wireTopScrollbar("rosterScrollTop", "rosterScrollTopInner", "rosterTableWrap");
     }catch(err){
       console.error(err);
@@ -1516,6 +1541,8 @@
     renderPaymentStatusChart(paidStudents.length, unpaidStudents.length);
     renderExamAvgChart();
     renderExamDistChart();
+    renderAttVsPerfChart();
+    renderGradeRadarChart();
     renderTopAttenders(students);
     renderUnpaidList(unpaidStudents);
     renderExamPerformerLists();
@@ -1753,7 +1780,7 @@
   function renderExamDistChart(){
     const canvas = document.getElementById("examDistChart");
     const emptyEl = document.getElementById("examDistChartEmpty");
-    destroyChart("examDist"); destroyChart("attVsPerf"); destroyChart("gradeRadar");
+    destroyChart("examDist");
     if(!chartLibReady()){ canvas.style.display="none"; emptyEl.textContent="Chart library failed to load — try refreshing"; emptyEl.classList.add("show"); return; }
 
     const gradesShown = currentGrade === "all" ? GRADES : [currentGrade];
