@@ -18,19 +18,26 @@
 <link rel="preconnect" href="https://evbjulsahncllewwvlxp.supabase.co">
 <style>
   :root{
-    --accent:#b9812f;
-    --accent-2:#a5701f;
-    --gold:#b9812f;
-    --success:#2e7d52;
-    --warning:#b9812f;
-    --error:#a3342a;
-    --glass:rgba(0,0,0,0.03);
-    --glass-border:rgba(185,129,47,0.28);
-    --cream-bg-1:#f4ecd8;
-    --cream-bg-2:#f9f3e4;
-    --card:#fdfaf1;
-    --ink:#2c2116;
-    --muted:#8a7a63;
+    --ink:#4a4a4a;
+    --ink-2:#2d2d2d;
+    --paper:#f5f0eb;
+    --card:#faf7f3;
+    --line:rgba(160,140,120,0.35);
+    --gold:#8b5e3c;
+    --gold-2:#6b4226;
+    --gold-soft:rgba(139,94,60,0.10);
+    --success:#2e7d32;
+    --success-soft:rgba(46,125,50,0.15);
+    --warning:#f9a825;
+    --warning-soft:rgba(249, 168, 37, 0.15);
+    --error:#c62828;
+    --error-soft:rgba(198, 40, 40, 0.15);
+    --muted:#8a8a8a;
+    --cream-bg-1:#eae5df;
+    --cream-bg-2:#f5f0eb;
+    --shadow-sm:0 1px 3px rgba(107,66,38,0.06);
+    --shadow-md:0 8px 24px rgba(107,66,38,0.08);
+    --shadow-lg:0 20px 50px rgba(107,66,38,0.10);
   }
   *{ margin:0; padding:0; box-sizing:border-box; }
   body{
@@ -42,20 +49,19 @@
     padding:48px 20px;
     color:var(--ink);
     background:
-      radial-gradient(circle at 15% 10%, rgba(185,129,47,0.10), transparent 45%),
-      radial-gradient(circle at 85% 90%, rgba(185,129,47,0.08), transparent 45%),
+      radial-gradient(circle at 15% 10%, rgba(139,94,60,0.04), transparent 45%),
+      radial-gradient(circle at 85% 90%, rgba(122,59,59,0.03), transparent 45%),
       linear-gradient(160deg, var(--cream-bg-1), var(--cream-bg-2));
   }
   .container{
-    width:100%; max-width:460px;
+    width:100%; max-width:480px;
     background:var(--card);
-    border:1px solid var(--glass-border);
-    border-radius:22px;
-    padding:44px 32px 32px;
+    border:1px solid var(--line);
+    border-radius:24px;
+    padding:48px 32px 32px;
     text-align:center;
     position:relative;
-    overflow:hidden;
-    box-shadow:0 20px 50px rgba(120,90,40,0.10);
+    box-shadow:var(--shadow-lg);
     animation:containerIn .4s ease;
   }
   @keyframes containerIn{
@@ -71,14 +77,18 @@
   }
   .icon-circle svg{ width:26px; height:26px; }
 
+  .header-actions{
+    position:absolute; top:18px; left:0; right:0; padding:0 22px;
+    display:flex; justify-content:space-between; align-items:center;
+  }
   .icon-btn{
-    position:absolute; top:18px;
-    width:36px; height:36px; border-radius:10px;
-    border:1px solid var(--glass-border);
-    background:rgba(185,129,47,0.04);
-    color:var(--muted); cursor:pointer;
+    width:38px; height:38px; border-radius:12px;
+    border:1px solid var(--line);
+    background:var(--gold-soft);
+    color:var(--gold); cursor:pointer;
     display:flex; align-items:center; justify-content:center;
     font-size:16px; transition:all .2s ease;
+    position:static !important;
   }
   .icon-btn:hover{ color:var(--accent); border-color:var(--accent-2); }
   #settingsBtn{ right:18px; }
@@ -111,11 +121,11 @@
 
   .session-bar{ margin-top:18px; margin-bottom:8px; }
   .start-session-btn{
-    width:100%; padding:14px; border:none; border-radius:14px; cursor:pointer;
-    font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:15px;
-    background:var(--accent);
-    color:var(--ink); display:flex; align-items:center; justify-content:center; gap:8px;
-    box-shadow:0 4px 14px rgba(185,129,47,0.25); transition:all .2s ease;
+    width:100%; padding:16px; border:none; border-radius:16px; cursor:pointer;
+    font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:16px;
+    background:linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%);
+    color:#ffffff; display:flex; align-items:center; justify-content:center; gap:10px;
+    box-shadow:0 8px 20px rgba(139,94,60,0.25); transition:all .25s ease;
   }
   .start-session-btn:hover{ transform:translateY(-1px); box-shadow:0 6px 18px rgba(185,129,47,0.32); filter:brightness(1.08); }
   .start-session-btn:active{ transform:translateY(0); }
@@ -146,16 +156,19 @@
   .end-session-btn:hover{ background:rgba(163,52,42,0.15); }
 
   .toolbar{
-    display:flex; gap:8px; margin-bottom:16px;
-    margin-top:16px;
+    display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:20px;
+    margin-top:20px;
   }
   .tool-btn{
-    flex:1; padding:10px; border-radius:10px;
-    border:1px solid var(--glass-border);
-    background:rgba(185,129,47,0.04); color:var(--accent);
-    font-family:'Inter',sans-serif; font-size:13px; font-weight:600;
+    padding:12px 8px; border-radius:12px;
+    border:1px solid var(--line);
+    background:var(--card); color:var(--gold);
+    font-family:'Inter',sans-serif; font-size:11px; font-weight:700;
+    text-transform:uppercase; letter-spacing:0.02em;
     cursor:pointer; transition:all .2s ease;
+    display:flex; flex-direction:column; align-items:center; gap:6px;
   }
+  .tool-btn:hover{ border-color:var(--gold); background:var(--gold-soft); transform:translateY(-2px); }
   .tool-btn:hover{ border-color:var(--accent-2); background:rgba(185,129,47,0.08); }
 
   .mode-toggle{
@@ -173,6 +186,10 @@
     display:flex; align-items:center; justify-content:center; gap:6px;
   }
   .mode-btn.active{
+    background:linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%);
+    color:#ffffff;
+    box-shadow:0 4px 12px rgba(139,94,60,0.2);
+  }
     background:var(--accent);
     color:var(--ink);
   }
@@ -296,13 +313,13 @@
   }
   .dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }
   .wait .dot{ background:var(--gold); box-shadow:0 0 8px var(--gold); animation:pulse 1.4s infinite; }
-  .success{ color:var(--success); border-color:rgba(46,125,82,0.35) !important; background:rgba(46,125,82,0.08) !important; }
+  .success{ color:var(--success); border-color:var(--success-soft) !important; background:var(--success-soft) !important; }
   .success .dot{ background:var(--success); box-shadow:0 0 8px var(--success); }
-  .duplicate{ color:var(--warning); border-color:rgba(184,137,43,0.35) !important; background:rgba(184,137,43,0.08) !important; }
+  .duplicate{ color:var(--warning); border-color:var(--warning-soft) !important; background:var(--warning-soft) !important; }
   .duplicate .dot{ background:var(--warning); box-shadow:0 0 8px var(--warning); }
-  .warning{ color:var(--warning); border-color:rgba(184,137,43,0.35) !important; background:rgba(184,137,43,0.08) !important; }
+  .warning{ color:var(--warning); border-color:var(--warning-soft) !important; background:var(--warning-soft) !important; }
   .warning .dot{ background:var(--warning); box-shadow:0 0 8px var(--warning); }
-  .error{ color:var(--error); border-color:rgba(163,52,42,0.35) !important; background:rgba(163,52,42,0.08) !important; }
+  .error{ color:var(--error); border-color:var(--error-soft) !important; background:var(--error-soft) !important; }
   .error .dot{ background:var(--error); box-shadow:0 0 8px var(--error); }
   .wait{ color:#8a6a1f; }
 
@@ -502,7 +519,17 @@
   .toast.show{ opacity:1; transform:translateX(-50%) translateY(4px); }
 
   @media (prefers-reduced-motion: reduce){
-    .scan-line, .dot, .result-check, .spinner, .session-pulse, .container{ animation:none !important; }
+    .scan-line, .dot, .result-check, .spinner, .session-pulse, .container{
+    width:100%; max-width:480px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:24px;
+    padding:48px 32px 32px;
+    text-align:center;
+    position:relative;
+    box-shadow:var(--shadow-lg);
+    animation:containerIn .4s ease;
+  }
   }
 
   .auth-overlay{
@@ -561,8 +588,12 @@
 <body>
 
 <div class="container" id="mainContainer" style="display:none;">
-  <button type="button" class="icon-btn" id="settingsBtn" onclick="openModal('settingsModal')" title="Settings">⚙️</button>
-  <button type="button" class="icon-btn" id="logoutBtn" onclick="handleLogout()" title="Log out">🚪</button>
+  <div class="header-actions">
+    <button type="button" class="icon-btn" id="logoutBtn" onclick="handleLogout()" title="Log out">🚪</button>
+    <button type="button" class="icon-btn" id="settingsBtn" onclick="openModal('settingsModal')" title="Settings">⚙️</button>
+  </div>
+  
+  
 
   <div class="icon-circle">
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -581,14 +612,14 @@
   </div>
 
   <div class="toolbar">
-    <button type="button" class="tool-btn" onclick="window.location.href='student_search.html'">🔍 Search Student</button>
+    <button type="button" class="tool-btn" onclick="window.location.href='student_search.html'"><span>🔍</span> Search</button>
     <button
   type="button"
   class="tool-btn"
   onclick="window.location.href='https://khoodeir.github.io/EduTrack-AI/Manage_exams.html'">
-  📝 Add Exam
+  <span>📝</span> Exam
  </button>
-    <button type="button" class="tool-btn" onclick="openDashboardGate()">📊 Dashboard</button>
+    <button type="button" class="tool-btn" onclick="openDashboardGate()"><span>📊</span> Dash</button>
   </div>
 
   <div class="mode-toggle">
@@ -755,6 +786,13 @@
 </div>
 
 <script>
+
+  function getScoreColor(score, alpha = 0.8) {
+    if (score >= 90) return `rgba(46, 125, 50, ${alpha})`; // Green
+    if (score >= 70) return `rgba(251, 192, 45, ${alpha})`; // Yellow
+    return `rgba(211, 47, 47, ${alpha})`; // Red
+  }
+    
   const WEBHOOKS = {
     attendance: "https://helmet-handrail-skipper.ngrok-free.dev/webhook/attendance&payment",
     payment:    "https://helmet-handrail-skipper.ngrok-free.dev/webhook/attendance&payment",
