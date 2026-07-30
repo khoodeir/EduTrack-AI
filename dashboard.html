@@ -11,7 +11,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Cairo:wght@500;600;700&display=swap" rel="stylesheet">
 <!-- Speed up navigation to the other two pages: fetch them into the browser cache in the background -->
 <link rel="prefetch" href="index.html">
 <link rel="prefetch" href="student_search.html">
@@ -42,6 +42,33 @@
     --shadow-md:0 8px 24px rgba(120,90,40,0.12);
     --shadow-lg:0 20px 50px rgba(120,90,40,0.16);
   }
+  /* ===== Dark mode palette (applied via [data-theme="dark"] on <html>) ===== */
+  [data-theme="dark"]{
+    --ink:#f2e9d6;
+    --ink-2:#e7dcc0;
+    --paper:#241f16;
+    --card:#2a2417;
+    --line:rgba(217,164,74,0.20);
+    --gold:#dba955;
+    --gold-2:#e6bd72;
+    --gold-soft:rgba(219,169,85,0.15);
+    --success:#4fb47f;
+    --success-soft:rgba(79,180,127,0.14);
+    --error:#e2716a;
+    --error-soft:rgba(226,113,106,0.14);
+    --muted:#a8996f;
+    --cream-bg-1:#171310;
+    --cream-bg-2:#1d1811;
+    --shadow-sm:0 1px 2px rgba(0,0,0,0.35);
+    --shadow-md:0 8px 24px rgba(0,0,0,0.4);
+    --shadow-lg:0 20px 50px rgba(0,0,0,0.55);
+  }
+  [data-theme="dark"] .scanner-btn,
+  [data-theme="dark"] .refresh-btn,
+  [data-theme="dark"] .save-snapshot-btn,
+  [data-theme="dark"] .pay-filter button.active{ color:#241a05; }
+  [data-theme="dark"] .kpi-value,
+  [data-theme="dark"] tbody td{ color:var(--ink); }
   *{ margin:0; padding:0; box-sizing:border-box; }
   html,body{ height:100%; }
   body{
@@ -53,7 +80,15 @@
     color:var(--ink);
     min-height:100vh;
     padding:32px 24px 64px;
+    transition:background .25s ease, color .25s ease;
   }
+  [dir="rtl"] body{ font-family:'Cairo','Inter',sans-serif; }
+  [dir="rtl"] .brand h1,
+  [dir="rtl"] .section-title{ font-family:'Cairo','Cormorant Garamond',serif; }
+  [dir="rtl"] .search-box input{ padding:10px 38px 10px 14px; }
+  [dir="rtl"] .search-box::before{ left:auto; right:13px; }
+  [dir="rtl"] thead th{ text-align:right; }
+  [dir="rtl"] .bar-track{ margin-right:0; margin-left:7px; }
   .num{ font-family:'Space Grotesk',sans-serif; }
   .serif{ font-family:'Cormorant Garamond',serif; }
 
@@ -287,6 +322,164 @@
   .tab.exams-tab::before{
     content:"📝 "; font-size:11px;
   }
+  .tab.settings-tab{ margin-inline-start:8px; }
+  .tab.settings-tab::before{
+    content:"⚙️ "; font-size:11px;
+  }
+
+  /* ===== Settings tab (redesigned to match the reference purple/navy dashboard) ===== */
+  #settingsView{
+    --sv-navy:#1e1b39;
+    --sv-navy-2:#141225;
+    --sv-purple:#6c5dd3;
+    --sv-purple-2:#8b7fe8;
+    --sv-bg:#f5f6fa;
+    --sv-card:#ffffff;
+    --sv-ink:#1f2430;
+    --sv-muted:#8b93a7;
+    --sv-line:#eef0f6;
+    --sv-shadow:0 10px 30px rgba(30,27,57,0.09);
+    background:var(--sv-bg);
+    margin:-30px;
+    padding:30px;
+    border-radius:0 16px 16px 16px;
+  }
+  [data-theme="dark"] #settingsView{
+    --sv-bg:#141225;
+    --sv-card:#1c1935;
+    --sv-line:#2a2550;
+    --sv-ink:#f2eefc;
+    --sv-muted:#a79fd1;
+    --sv-shadow:0 10px 30px rgba(0,0,0,0.4);
+  }
+  .sv-hero{
+    background:linear-gradient(135deg, var(--sv-navy) 0%, #2a2550 100%);
+    border-radius:20px; padding:26px 28px; color:#fff;
+    display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap;
+    margin-bottom:22px; box-shadow:var(--sv-shadow);
+  }
+  [data-theme="dark"] .sv-hero{ background:linear-gradient(135deg, #0f0d1f 0%, #1c1935 100%); }
+  .sv-hero-left{ display:flex; align-items:center; gap:16px; }
+  .sv-hero-avatar{
+    width:52px; height:52px; border-radius:50%; flex-shrink:0;
+    background:linear-gradient(135deg, var(--sv-purple), var(--sv-purple-2));
+    display:flex; align-items:center; justify-content:center; font-size:22px;
+    box-shadow:0 6px 16px rgba(108,93,211,0.45);
+  }
+  .sv-hero-title{ font-family:'Cormorant Garamond',serif; font-weight:700; font-size:21px; }
+  [dir="rtl"] .sv-hero-title{ font-family:'Cairo','Cormorant Garamond',serif; }
+  .sv-hero-sub{ font-size:12.5px; color:rgba(255,255,255,0.65); margin-top:3px; }
+  .sv-hero-pill{
+    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.16);
+    padding:8px 16px; border-radius:999px; font-size:11.5px; font-weight:600;
+    display:flex; align-items:center; gap:7px; white-space:nowrap;
+  }
+  .sv-hero-pill::before{
+    content:""; width:7px; height:7px; border-radius:50%; background:#4fd991;
+    box-shadow:0 0 0 3px rgba(79,217,145,0.25);
+  }
+  #settingsView .settings-grid{ gap:18px; }
+  #settingsView .settings-card{
+    background:var(--sv-card); border:1px solid var(--sv-line); border-radius:20px;
+    padding:24px; box-shadow:var(--sv-shadow); transition:transform .18s ease, box-shadow .18s ease;
+  }
+  #settingsView .settings-card:hover{ transform:translateY(-2px); }
+  #settingsView .settings-card-icon{
+    width:44px; height:44px; border-radius:14px;
+    background:linear-gradient(135deg, var(--sv-purple), var(--sv-purple-2));
+    color:#fff; font-size:18px; box-shadow:0 6px 14px rgba(108,93,211,0.35);
+  }
+  #settingsView .settings-card-title{ color:var(--sv-ink); }
+  #settingsView .settings-card-sub{ color:var(--sv-muted); }
+  #settingsView .settings-row{
+    background:var(--sv-bg); border:1px solid var(--sv-line); border-radius:14px;
+  }
+  #settingsView .settings-row-label{ color:var(--sv-ink); }
+  #settingsView .settings-row-desc{ color:var(--sv-muted); }
+  #settingsView .switch .slider{ background:#dfe2ee; }
+  [data-theme="dark"] #settingsView .switch .slider{ background:#332e58; }
+  #settingsView .switch input:checked + .slider{ background:linear-gradient(135deg, var(--sv-navy), var(--sv-purple)); }
+  #settingsView .switch .slider::before{ box-shadow:0 2px 6px rgba(30,27,57,0.3); }
+  #settingsView .lang-switch{ background:var(--sv-bg); border:1px solid var(--sv-line); border-radius:14px; }
+  #settingsView .lang-switch button{ color:var(--sv-muted); border-radius:10px; }
+  #settingsView .lang-switch button:hover{ color:var(--sv-ink); }
+  #settingsView .lang-switch button.active{
+    background:linear-gradient(135deg, var(--sv-navy), var(--sv-purple)); color:#fff;
+    box-shadow:0 6px 14px rgba(108,93,211,0.35);
+  }
+  #settingsView .theme-preview button{ border-radius:16px; border:2px solid var(--sv-line); background:var(--sv-card); }
+  #settingsView .theme-preview button.active{ border-color:var(--sv-purple); box-shadow:0 0 0 3px rgba(108,93,211,0.16); }
+  #settingsView .theme-preview span{ color:var(--sv-ink); }
+  #settingsView .theme-preview .swatch.light{ background:linear-gradient(160deg,#f5f6fa,#ffffff); border:1px solid #e3e6f0; }
+  #settingsView .theme-preview .swatch.dark{ background:linear-gradient(160deg,#141225,#1e1b39); border:1px solid #2a2550; }
+  #settingsView .settings-note{
+    background:var(--sv-bg); border:1px solid var(--sv-line); color:var(--sv-muted); border-radius:12px;
+  }
+
+  /* ===== Settings tab ===== */
+  .settings-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:16px; max-width:820px; }
+  .settings-card{
+    background:var(--paper); border:1px solid var(--line); border-radius:14px;
+    padding:22px; display:flex; flex-direction:column; gap:16px;
+  }
+  .settings-card-head{ display:flex; align-items:center; gap:10px; }
+  .settings-card-icon{
+    width:38px; height:38px; border-radius:10px; flex-shrink:0;
+    background:var(--gold-soft); color:var(--gold-2);
+    display:flex; align-items:center; justify-content:center; font-size:17px;
+  }
+  .settings-card-title{ font-family:'Cormorant Garamond',serif; font-weight:700; font-size:17px; color:var(--ink); }
+  .settings-card-sub{ font-size:11.5px; color:var(--muted); margin-top:2px; }
+  .settings-row{
+    display:flex; align-items:center; justify-content:space-between; gap:14px;
+    padding:12px 14px; background:var(--card); border:1px solid var(--line); border-radius:11px;
+  }
+  .settings-row .settings-row-label{ font-size:13px; font-weight:600; color:var(--ink); }
+  .settings-row .settings-row-desc{ font-size:11px; color:var(--muted); margin-top:2px; }
+
+  /* Toggle switch */
+  .switch{ position:relative; display:inline-block; width:46px; height:26px; flex-shrink:0; }
+  .switch input{ opacity:0; width:0; height:0; }
+  .switch .slider{
+    position:absolute; cursor:pointer; inset:0; background:rgba(138,122,99,0.28);
+    border-radius:999px; transition:.2s ease;
+  }
+  .switch .slider::before{
+    content:""; position:absolute; height:20px; width:20px; left:3px; top:3px;
+    background:#fff; border-radius:50%; transition:.2s ease; box-shadow:0 1px 3px rgba(0,0,0,0.25);
+  }
+  .switch input:checked + .slider{ background:linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%); }
+  .switch input:checked + .slider::before{ transform:translateX(20px); }
+  [dir="rtl"] .switch input:checked + .slider::before{ transform:translateX(-20px); }
+
+  /* Language segmented control */
+  .lang-switch{ display:flex; gap:6px; background:var(--card); border:1px solid var(--line); border-radius:11px; padding:5px; }
+  .lang-switch button{
+    flex:1; padding:9px 12px; border-radius:8px; border:none; background:transparent;
+    color:var(--muted); font-family:inherit; font-weight:700; font-size:12.5px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:7px; transition:all .15s ease;
+  }
+  .lang-switch button:hover{ color:var(--ink); }
+  .lang-switch button.active{
+    background:linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%); color:#241a05;
+    box-shadow:0 4px 10px rgba(120,95,40,0.22);
+  }
+  .theme-preview{ display:flex; gap:10px; }
+  .theme-preview button{
+    flex:1; border-radius:11px; border:2px solid var(--line); cursor:pointer; padding:12px 10px 10px;
+    display:flex; flex-direction:column; align-items:center; gap:8px; background:var(--card);
+    transition:all .15s ease; font-family:inherit;
+  }
+  .theme-preview button.active{ border-color:var(--gold); box-shadow:0 0 0 3px var(--gold-soft); }
+  .theme-preview .swatch{ width:100%; height:38px; border-radius:7px; }
+  .theme-preview .swatch.light{ background:linear-gradient(160deg,#f4ecd8,#f9f3e4); border:1px solid rgba(185,129,47,0.25); }
+  .theme-preview .swatch.dark{ background:linear-gradient(160deg,#171310,#1d1811); border:1px solid rgba(217,164,74,0.25); }
+  .theme-preview span{ font-size:11.5px; font-weight:600; color:var(--ink); }
+  .settings-note{
+    font-size:11.5px; color:var(--muted); background:var(--gold-soft); border:1px solid var(--line);
+    border-radius:10px; padding:10px 13px; line-height:1.5;
+  }
+  @media (max-width:700px){ .settings-grid{ grid-template-columns:1fr; } }
   .hist-banner{
     display:none; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;
     background:var(--gold-soft); border:1px solid var(--line); border-radius:12px;
@@ -371,9 +564,9 @@
       </svg>
     </div>
     <div class="brand-text">
-      <div class="brand-eyebrow">Live insights</div>
-      <h1>Live Dashboard</h1>
-      <p>Attendance & payment insights</p>
+      <div class="brand-eyebrow" data-i18n="brandEyebrow">Live insights</div>
+      <h1 data-i18n="brandTitle">Live Dashboard</h1>
+      <p data-i18n="brandSub">Attendance & payment insights</p>
     </div>
   </div>
   <div class="top-actions">
@@ -385,22 +578,23 @@
         <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/>
         <path d="M14 14h7v7h-7z" stroke="currentColor" stroke-width="1.8"/>
       </svg>
-      Attendance Scanner
+      <span data-i18n="scannerBtn">Attendance Scanner</span>
     </a>
     <button class="refresh-btn" id="refreshBtn" onclick="loadDashboard()">
-      <span class="spin">↻</span> Refresh data
+      <span class="spin">↻</span> <span data-i18n="refreshBtn">Refresh data</span>
     </button>
   </div>
 </div>
 
 <div class="wrap">
   <div class="tab-row" id="gradeTabs">
-    <div class="tab active" data-grade="all">All Grades</div>
-    <div class="tab" data-grade="first">First Secondary</div>
-    <div class="tab" data-grade="second">Second Secondary</div>
-    <div class="tab" data-grade="third">Third Secondary</div>
-    <div class="tab exams-tab" id="examsTab">Exam Grades</div>
-    <div class="tab history-tab" id="historyTab">Monthly History</div>
+    <div class="tab active" data-grade="all" data-i18n="tabAll">All Grades</div>
+    <div class="tab" data-grade="first" data-i18n="tabFirst">First Secondary</div>
+    <div class="tab" data-grade="second" data-i18n="tabSecond">Second Secondary</div>
+    <div class="tab" data-grade="third" data-i18n="tabThird">Third Secondary</div>
+    <div class="tab exams-tab" id="examsTab" data-i18n="tabExams">Exam Grades</div>
+    <div class="tab history-tab" id="historyTab" data-i18n="tabHistory">Monthly History</div>
+    <div class="tab settings-tab" id="settingsTab" data-i18n="tabSettings">Settings</div>
   </div>
 
   <div class="tab-panel">
@@ -414,22 +608,22 @@
 
       <div class="kpi-grid">
         <div class="kpi-card">
-          <div class="kpi-label">Total Students</div>
+          <div class="kpi-label" data-i18n="kpiTotalStudents">Total Students</div>
           <div class="kpi-value num" id="kpiStudents">–</div>
           <div class="kpi-sub" id="kpiStudentsSub"></div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">Attendance Rate</div>
+          <div class="kpi-label" data-i18n="kpiAttendanceRate">Attendance Rate</div>
           <div class="kpi-value num" id="kpiAttendance">–</div>
           <div class="kpi-sub" id="kpiAttendanceSub"></div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">Total Collected</div>
+          <div class="kpi-label" data-i18n="kpiTotalCollected">Total Collected</div>
           <div class="kpi-value num" id="kpiRevenue">–</div>
           <div class="kpi-sub" id="kpiRevenueSub"></div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">Unpaid</div>
+          <div class="kpi-label" data-i18n="kpiUnpaid">Unpaid</div>
           <div class="kpi-value num" id="kpiUnpaid">–</div>
           <div class="kpi-sub" id="kpiUnpaidSub"></div>
         </div>
@@ -443,64 +637,64 @@
             <div class="seal-pct" id="collectionPctText">–</div>
           </div>
           <div>
-            <div class="kpi-label">Collection Rate</div>
-            <div class="kpi-sub" id="kpiCollectionSub" style="margin-top:4px;">of amounts due</div>
+            <div class="kpi-label" data-i18n="kpiCollectionRate">Collection Rate</div>
+            <div class="kpi-sub" id="kpiCollectionSub" style="margin-top:4px;" data-i18n="kpiOfAmountsDue">of amounts due</div>
           </div>
         </div>
       </div>
 
       <div class="two-col">
         <div class="chart-card">
-          <div class="section-title">Attendance Rate by Grade <span class="tag">Live</span></div>
+          <div class="section-title"><span data-i18n="secAttByGrade">Attendance Rate by Grade</span> <span class="tag" data-i18n="tagLive">Live</span></div>
           <div class="chart-box">
             <canvas id="attendanceByGradeChart"></canvas>
-            <div class="chart-empty" id="attChartEmpty">No attendance data yet</div>
+            <div class="chart-empty" id="attChartEmpty" data-i18n="emptyAttendance">No attendance data yet</div>
           </div>
         </div>
         <div class="chart-card">
-          <div class="section-title">Payment Status</div>
+          <div class="section-title" data-i18n="secPaymentStatus">Payment Status</div>
           <div class="chart-box">
             <canvas id="paymentStatusChart"></canvas>
-            <div class="chart-empty" id="payChartEmpty">No payment data yet</div>
+            <div class="chart-empty" id="payChartEmpty" data-i18n="emptyPayment">No payment data yet</div>
           </div>
         </div>
       </div>
 
       <div class="two-col">
         <div class="chart-card">
-          <div class="section-title">Average Exam Scores <span class="tag" id="examAvgSourceTag">exams</span></div>
+          <div class="section-title"><span data-i18n="secAvgExam">Average Exam Scores</span> <span class="tag" id="examAvgSourceTag">exams</span></div>
           <div class="chart-box" style="height:190px;">
             <canvas id="examAvgChart"></canvas>
-            <div class="chart-empty" id="examAvgChartEmpty">No exam scores recorded yet</div>
+            <div class="chart-empty" id="examAvgChartEmpty" data-i18n="emptyExamScores">No exam scores recorded yet</div>
           </div>
         </div>
         <div class="chart-card">
-          <div class="section-title">Score Distribution <span class="tag">by student</span></div>
+          <div class="section-title"><span data-i18n="secScoreDist">Score Distribution</span> <span class="tag" data-i18n="tagByStudent">by student</span></div>
           <div class="chart-box" style="height:190px;">
             <canvas id="examDistChart"></canvas>
-            <div class="chart-empty" id="examDistChartEmpty">No exam scores recorded yet</div>
+            <div class="chart-empty" id="examDistChartEmpty" data-i18n="emptyExamScores">No exam scores recorded yet</div>
           </div>
         </div>
       </div>
 
       <div class="list-grid">
         <div class="list-card">
-          <div class="section-title">Top Attendance</div>
+          <div class="section-title" data-i18n="secTopAttendance">Top Attendance</div>
           <div id="topAttendersList"></div>
         </div>
         <div class="list-card">
-          <div class="section-title">Unpaid Students</div>
+          <div class="section-title" data-i18n="secUnpaidStudents">Unpaid Students</div>
           <div id="unpaidList"></div>
         </div>
       </div>
 
       <div class="list-grid">
         <div class="list-card">
-          <div class="section-title">Top Exam Performers</div>
+          <div class="section-title" data-i18n="secTopExam">Top Exam Performers</div>
           <div id="topExamList"></div>
         </div>
         <div class="list-card">
-          <div class="section-title">Needs Improvement</div>
+          <div class="section-title" data-i18n="secNeedsImprovement">Needs Improvement</div>
           <div id="lowExamList"></div>
         </div>
       </div>
@@ -508,31 +702,31 @@
       <div class="chart-card">
         <div class="roster-head">
           <div class="search-box">
-            <input type="text" id="rosterSearch" placeholder="Search by name or phone…" oninput="renderRoster()">
+            <input type="text" id="rosterSearch" data-i18n-ph="searchNamePhone" placeholder="Search by name or phone…" oninput="renderRoster()">
           </div>
           <div class="pay-filter" id="payFilter">
-            <button class="active" data-f="all" onclick="setPayFilter('all')">All</button>
-            <button data-f="paid" onclick="setPayFilter('paid')">Paid</button>
-            <button data-f="unpaid" onclick="setPayFilter('unpaid')">Unpaid</button>
+            <button class="active" data-f="all" onclick="setPayFilter('all')" data-i18n="filterAll">All</button>
+            <button data-f="paid" onclick="setPayFilter('paid')" data-i18n="filterPaid">Paid</button>
+            <button data-f="unpaid" onclick="setPayFilter('unpaid')" data-i18n="filterUnpaid">Unpaid</button>
           </div>
-          <button class="ghost-btn" id="gradeReportBtn" onclick="generateGradeReport()">📄 Grade Report (PDF)</button>
-          <button class="excel-btn" id="gradeExcelBtn" onclick="exportRosterExcel()">📊 Export Excel</button>
+          <button class="ghost-btn" id="gradeReportBtn" onclick="generateGradeReport()">📄 <span data-i18n="gradeReportBtn">Grade Report (PDF)</span></button>
+          <button class="excel-btn" id="gradeExcelBtn" onclick="exportRosterExcel()">📊 <span data-i18n="exportExcel">Export Excel</span></button>
         </div>
         <div class="table-scroll-top" id="rosterScrollTop"><div class="table-scroll-top-inner" id="rosterScrollTopInner"></div></div>
         <div class="table-wrap" id="rosterTableWrap">
           <table>
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Grade</th>
-                <th>Present</th>
-                <th>Absent</th>
-                <th>Attendance Rate</th>
-                <th>Student Phone</th>
-                <th>Parent Phone</th>
-                <th>Payment</th>
-                <th>Last Attendance</th>
-                <th>Report</th>
+                <th data-i18n="colName">Name</th>
+                <th data-i18n="colGrade">Grade</th>
+                <th data-i18n="colPresent">Present</th>
+                <th data-i18n="colAbsent">Absent</th>
+                <th data-i18n="colAttendanceRate">Attendance Rate</th>
+                <th data-i18n="colStudentPhone">Student Phone</th>
+                <th data-i18n="colParentPhone">Parent Phone</th>
+                <th data-i18n="colPayment">Payment</th>
+                <th data-i18n="colLastAttendance">Last Attendance</th>
+                <th data-i18n="colReport">Report</th>
               </tr>
             </thead>
             <tbody id="rosterBody"></tbody>
@@ -553,61 +747,61 @@
 
         <div class="hist-banner" id="histBanner">
           <div class="msg">
-            No snapshot saved yet for the current month.
-            <span>Save it before the month rolls over, so this month's numbers aren't lost.</span>
+            <span data-i18n="histBannerMsg">No snapshot saved yet for the current month.</span>
+            <span data-i18n="histBannerSub">Save it before the month rolls over, so this month's numbers aren't lost.</span>
           </div>
-          <button class="save-snapshot-btn" onclick="saveCurrentMonthSnapshot()">💾 Save current month now</button>
+          <button class="save-snapshot-btn" onclick="saveCurrentMonthSnapshot()">💾 <span data-i18n="saveNow">Save current month now</span></button>
         </div>
 
         <div class="hist-toolbar">
           <div class="left">
             <select class="hist-select" id="histGradeSelect" onchange="onHistGradeChange()">
-              <option value="all">All Grades</option>
-              <option value="first">First Secondary</option>
-              <option value="second">Second Secondary</option>
-              <option value="third">Third Secondary</option>
+              <option value="all" data-i18n="tabAll">All Grades</option>
+              <option value="first" data-i18n="tabFirst">First Secondary</option>
+              <option value="second" data-i18n="tabSecond">Second Secondary</option>
+              <option value="third" data-i18n="tabThird">Third Secondary</option>
             </select>
           </div>
-          <button class="save-snapshot-btn" id="saveSnapshotBtn" onclick="saveCurrentMonthSnapshot()">💾 Save Current Month</button>
-          <button class="ghost-btn" onclick="generateHistoryMonthReport()">📄 Download PDF (Latest Month)</button>
-          <button class="excel-btn" onclick="exportHistoryExcel()">📊 Export Excel</button>
+          <button class="save-snapshot-btn" id="saveSnapshotBtn" onclick="saveCurrentMonthSnapshot()">💾 <span data-i18n="saveCurrentMonth">Save Current Month</span></button>
+          <button class="ghost-btn" onclick="generateHistoryMonthReport()">📄 <span data-i18n="downloadLatestPdf">Download PDF (Latest Month)</span></button>
+          <button class="excel-btn" onclick="exportHistoryExcel()">📊 <span data-i18n="exportExcel">Export Excel</span></button>
         </div>
 
         <div class="delta-cards" id="deltaCards"></div>
 
         <div class="two-col">
           <div class="chart-card">
-            <div class="section-title">Attendance & Collection Rate <span class="tag">Trend</span></div>
+            <div class="section-title"><span data-i18n="secAttCollTrend">Attendance & Collection Rate</span> <span class="tag" data-i18n="tagTrend">Trend</span></div>
             <div class="chart-box">
               <canvas id="histRateChart"></canvas>
-              <div class="chart-empty" id="histRateEmpty">No history saved yet</div>
+              <div class="chart-empty" id="histRateEmpty" data-i18n="emptyHistory">No history saved yet</div>
             </div>
           </div>
           <div class="chart-card">
-            <div class="section-title">Revenue by Month</div>
+            <div class="section-title" data-i18n="secRevenueByMonth">Revenue by Month</div>
             <div class="chart-box">
               <canvas id="histRevenueChart"></canvas>
-              <div class="chart-empty" id="histRevenueEmpty">No history saved yet</div>
+              <div class="chart-empty" id="histRevenueEmpty" data-i18n="emptyHistory">No history saved yet</div>
             </div>
           </div>
         </div>
 
         <div class="chart-card">
-          <div class="section-title">Month-by-Month Comparison</div>
-          <div class="hist-table-note">Each row is a saved snapshot. Change vs. shows the difference from the previous saved month. Use "Who Hasn't Paid" to see who was unpaid that month.</div>
+          <div class="section-title" data-i18n="secMonthComparison">Month-by-Month Comparison</div>
+          <div class="hist-table-note" data-i18n="histTableNote">Each row is a saved snapshot. Change vs. shows the difference from the previous saved month. Use "Who Hasn't Paid" to see who was unpaid that month.</div>
           <div class="table-scroll-top" id="histScrollTop"><div class="table-scroll-top-inner" id="histScrollTopInner"></div></div>
           <div class="table-wrap" id="histTableWrap">
             <table>
               <thead>
                 <tr>
-                  <th>Month</th>
-                  <th>Students</th>
-                  <th>Attendance Rate</th>
-                  <th>Collection Rate</th>
-                  <th>Revenue</th>
-                  <th>Paid</th>
-                  <th>Unpaid</th>
-                  <th>Who Hasn't Paid</th>
+                  <th data-i18n="colMonth">Month</th>
+                  <th data-i18n="colStudents">Students</th>
+                  <th data-i18n="colAttendanceRate">Attendance Rate</th>
+                  <th data-i18n="colCollectionRate">Collection Rate</th>
+                  <th data-i18n="colRevenue">Revenue</th>
+                  <th data-i18n="colPaid">Paid</th>
+                  <th data-i18n="colUnpaid">Unpaid</th>
+                  <th data-i18n="colWhoUnpaid">Who Hasn't Paid</th>
                 </tr>
               </thead>
               <tbody id="histTableBody"></tbody>
@@ -629,21 +823,21 @@
         <div class="hist-toolbar">
           <div class="left">
             <select class="hist-select" id="examGradeSelect" onchange="onExamGradeChange()">
-              <option value="first">First Secondary</option>
-              <option value="second">Second Secondary</option>
-              <option value="third">Third Secondary</option>
+              <option value="first" data-i18n="tabFirst">First Secondary</option>
+              <option value="second" data-i18n="tabSecond">Second Secondary</option>
+              <option value="third" data-i18n="tabThird">Third Secondary</option>
             </select>
             <div class="search-box" style="min-width:200px;">
-              <input type="text" id="examSearch" placeholder="Search by student name…" oninput="renderExamTable()">
+              <input type="text" id="examSearch" data-i18n-ph="searchStudentName" placeholder="Search by student name…" oninput="renderExamTable()">
             </div>
           </div>
-          <a class="save-snapshot-btn" href="manage_exams.html" style="text-decoration:none;">➕ Manage Exams</a>
-          <button class="excel-btn" onclick="exportExamExcel()">📊 Export Excel</button>
+          <a class="save-snapshot-btn" href="manage_exams.html" style="text-decoration:none;">➕ <span data-i18n="manageExams">Manage Exams</span></a>
+          <button class="excel-btn" onclick="exportExamExcel()">📊 <span data-i18n="exportExcel">Export Excel</span></button>
         </div>
 
         <div class="chart-card">
-          <div class="section-title">Grades Table <span class="tag">Permanent — not cleared monthly</span></div>
-          <div class="hist-table-note">Each exam is shown in its own column. To add a new exam or enter/edit scores, use the "Manage Exams" page.</div>
+          <div class="section-title"><span data-i18n="secGradesTable">Grades Table</span> <span class="tag" data-i18n="tagPermanent">Permanent — not cleared monthly</span></div>
+          <div class="hist-table-note" data-i18n="gradesTableNote">Each exam is shown in its own column. To add a new exam or enter/edit scores, use the "Manage Exams" page.</div>
           <div class="table-scroll-top" id="examScrollTop"><div class="table-scroll-top-inner" id="examScrollTopInner"></div></div>
           <div class="table-wrap" id="examTableWrap">
             <table>
@@ -655,9 +849,74 @@
       </div>
     </div>
 
+    <div id="settingsView" style="display:none;">
+
+      <div class="sv-hero">
+        <div class="sv-hero-left">
+          <div class="sv-hero-avatar">⚙️</div>
+          <div>
+            <div class="sv-hero-title" data-i18n="settingsHeroTitle">Dashboard Settings</div>
+            <div class="sv-hero-sub" data-i18n="settingsHeroSub">Customize how your dashboard looks and speaks</div>
+          </div>
+        </div>
+        <div class="sv-hero-pill" data-i18n="settingsHeroPill">Changes save instantly</div>
+      </div>
+
+      <div class="settings-grid">
+
+        <div class="settings-card">
+          <div class="settings-card-head">
+            <div class="settings-card-icon">🌓</div>
+            <div>
+              <div class="settings-card-title" data-i18n="settingsAppearance">Appearance</div>
+              <div class="settings-card-sub" data-i18n="settingsAppearanceSub">Choose how the dashboard looks</div>
+            </div>
+          </div>
+          <div class="theme-preview" id="themePreview">
+            <button type="button" data-theme-choice="light" onclick="setTheme('light')">
+              <span class="swatch light"></span>
+              <span data-i18n="settingsLight">Light</span>
+            </button>
+            <button type="button" data-theme-choice="dark" onclick="setTheme('dark')">
+              <span class="swatch dark"></span>
+              <span data-i18n="settingsDark">Dark</span>
+            </button>
+          </div>
+          <div class="settings-row">
+            <div>
+              <div class="settings-row-label" data-i18n="settingsDarkMode">Dark Mode</div>
+              <div class="settings-row-desc" data-i18n="settingsDarkModeDesc">Easier on the eyes at night</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="darkModeToggle" onchange="setTheme(this.checked ? 'dark' : 'light')">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <div class="settings-card-head">
+            <div class="settings-card-icon">🌐</div>
+            <div>
+              <div class="settings-card-title" data-i18n="settingsLanguage">Language</div>
+              <div class="settings-card-sub" data-i18n="settingsLanguageSub">Switch the interface language</div>
+            </div>
+          </div>
+          <div class="lang-switch" id="langSwitch">
+            <button type="button" data-lang-choice="en" onclick="setLanguage('en')">English</button>
+            <button type="button" data-lang-choice="ar" onclick="setLanguage('ar')">العربية</button>
+          </div>
+          <div class="settings-note" data-i18n="settingsLangNote">
+            Labels, buttons, and headers switch language instantly. Names and phone numbers stay exactly as stored in Supabase.
+          </div>
+        </div>
+
+      </div>
+    </div>
+
   </div>
 
-  <div class="footer-note">Data is read live from Supabase using a read-only anon key</div>
+  <div class="footer-note" data-i18n="footerNote">Data is read live from Supabase using a read-only anon key</div>
 </div>
 
 <!-- Unpaid-this-month modal -->
@@ -725,6 +984,199 @@
   let combined = { students: [], statsRows: [], examAverages: {}, examStudentAverages: [] }; // students = merged attendance+payment rows, tagged with grade
   let charts = {};
 
+  /* ============================================================
+     SETTINGS: THEME + LANGUAGE (English / Arabic only)
+     Persisted in localStorage so the choice sticks between visits.
+     ============================================================ */
+  const I18N = {
+    en: {
+      tabAll: "All Grades", tabFirst: "First Secondary", tabSecond: "Second Secondary", tabThird: "Third Secondary",
+      tabExams: "Exam Grades", tabHistory: "Monthly History", tabSettings: "Settings",
+      brandEyebrow: "Live insights", brandTitle: "Live Dashboard", brandSub: "Attendance & payment insights",
+      scannerBtn: "Attendance Scanner", refreshBtn: "Refresh data",
+      kpiTotalStudents: "Total Students", kpiAttendanceRate: "Attendance Rate", kpiTotalCollected: "Total Collected",
+      kpiUnpaid: "Unpaid", kpiCollectionRate: "Collection Rate", kpiOfAmountsDue: "of amounts due",
+      secAttByGrade: "Attendance Rate by Grade", tagLive: "Live",
+      secPaymentStatus: "Payment Status",
+      secAvgExam: "Average Exam Scores",
+      secScoreDist: "Score Distribution", tagByStudent: "by student",
+      secTopAttendance: "Top Attendance", secUnpaidStudents: "Unpaid Students",
+      secTopExam: "Top Exam Performers", secNeedsImprovement: "Needs Improvement",
+      searchNamePhone: "Search by name or phone…",
+      filterAll: "All", filterPaid: "Paid", filterUnpaid: "Unpaid",
+      gradeReportBtn: "Grade Report (PDF)", exportExcel: "Export Excel",
+      colName: "Name", colGrade: "Grade", colPresent: "Present", colAbsent: "Absent",
+      colAttendanceRate: "Attendance Rate", colStudentPhone: "Student Phone", colParentPhone: "Parent Phone",
+      colPayment: "Payment", colLastAttendance: "Last Attendance", colReport: "Report",
+      colMonth: "Month", colStudents: "Students", colCollectionRate: "Collection Rate", colRevenue: "Revenue",
+      colPaid: "Paid", colUnpaid: "Unpaid", colWhoUnpaid: "Who Hasn't Paid",
+      histBannerMsg: "No snapshot saved yet for the current month.",
+      histBannerSub: "Save it before the month rolls over, so this month's numbers aren't lost.",
+      saveNow: "Save current month now", saveCurrentMonth: "Save Current Month",
+      downloadLatestPdf: "Download PDF (Latest Month)",
+      secAttCollTrend: "Attendance & Collection Rate", tagTrend: "Trend",
+      secRevenueByMonth: "Revenue by Month",
+      secMonthComparison: "Month-by-Month Comparison",
+      histTableNote: "Each row is a saved snapshot. Change vs. shows the difference from the previous saved month. Use \"Who Hasn't Paid\" to see who was unpaid that month.",
+      manageExams: "Manage Exams",
+      secGradesTable: "Grades Table", tagPermanent: "Permanent — not cleared monthly",
+      gradesTableNote: "Each exam is shown in its own column. To add a new exam or enter/edit scores, use the \"Manage Exams\" page.",
+      searchStudentName: "Search by student name…",
+      footerNote: "Data is read live from Supabase using a read-only anon key",
+      settingsAppearance: "Appearance", settingsAppearanceSub: "Choose how the dashboard looks",
+      settingsLight: "Light", settingsDark: "Dark",
+      settingsDarkMode: "Dark Mode", settingsDarkModeDesc: "Easier on the eyes at night",
+      settingsLanguage: "Language", settingsLanguageSub: "Switch the interface language",
+      settingsLangNote: "Labels, buttons, and headers switch language instantly. Names and phone numbers stay exactly as stored in Supabase.",
+      settingsHeroTitle: "Dashboard Settings", settingsHeroSub: "Customize how your dashboard looks and speaks",
+      settingsHeroPill: "Changes save instantly",
+      emptyAttendance: "No attendance data yet", emptyPayment: "No payment data yet",
+      emptyExamScores: "No exam scores recorded yet", emptyHistory: "No history saved yet",
+      chartLibFail: "Chart library failed to load — try refreshing",
+      noDataYet: "No data yet", everyonePaid: "🎉 Everyone has paid", everyonePaidMonth: "Everyone paid this month.",
+      moreSeeTable: "more — see the table below",
+      noExamScoresYet: "No exam scores yet", notEnoughExamData: "Not enough students with exam scores yet to show a separate list",
+      noMatchingResults: "No matching results",
+      noSavedMonths: "No saved months yet",
+      noSavedMonthsGrade: "No saved months yet for this grade — save the current month to start tracking.",
+      noStudentsGrade: "No students in this grade",
+      noStudentsMatch: "No students match",
+      acrossAllGrades: "across all grades",
+      avgOfStudents: "avg of", students_: "students", noAttendanceData: "no attendance data",
+      studentsPaid: "students paid",
+      outOf: "out of", noPaymentRecords: "no payment records",
+      lastUpdated: "Last updated:",
+      exams_: "exams", exam_: "exam"
+    },
+    ar: {
+      tabAll: "كل الصفوف", tabFirst: "الصف الأول الثانوي", tabSecond: "الصف الثاني الثانوي", tabThird: "الصف الثالث الثانوي",
+      tabExams: "درجات الامتحانات", tabHistory: "السجل الشهري", tabSettings: "الإعدادات",
+      brandEyebrow: "بيانات لحظية", brandTitle: "لوحة المتابعة", brandSub: "بيانات الحضور والمدفوعات",
+      scannerBtn: "ماسح الحضور", refreshBtn: "تحديث البيانات",
+      kpiTotalStudents: "إجمالي الطلاب", kpiAttendanceRate: "نسبة الحضور", kpiTotalCollected: "إجمالي التحصيل",
+      kpiUnpaid: "غير مدفوع", kpiCollectionRate: "نسبة التحصيل", kpiOfAmountsDue: "من المبالغ المستحقة",
+      secAttByGrade: "نسبة الحضور حسب الصف", tagLive: "لحظي",
+      secPaymentStatus: "حالة الدفع",
+      secAvgExam: "متوسط درجات الامتحانات",
+      secScoreDist: "توزيع الدرجات", tagByStudent: "لكل طالب",
+      secTopAttendance: "الأعلى حضورًا", secUnpaidStudents: "الطلاب غير المدفوعين",
+      secTopExam: "الأعلى تحصيلًا", secNeedsImprovement: "بحاجة إلى تحسين",
+      searchNamePhone: "ابحث بالاسم أو رقم الهاتف…",
+      filterAll: "الكل", filterPaid: "مدفوع", filterUnpaid: "غير مدفوع",
+      gradeReportBtn: "تقرير الصف (PDF)", exportExcel: "تصدير إكسل",
+      colName: "الاسم", colGrade: "الصف", colPresent: "حضور", colAbsent: "غياب",
+      colAttendanceRate: "نسبة الحضور", colStudentPhone: "هاتف الطالب", colParentPhone: "هاتف ولي الأمر",
+      colPayment: "الدفع", colLastAttendance: "آخر حضور", colReport: "التقرير",
+      colMonth: "الشهر", colStudents: "الطلاب", colCollectionRate: "نسبة التحصيل", colRevenue: "الإيراد",
+      colPaid: "مدفوع", colUnpaid: "غير مدفوع", colWhoUnpaid: "من لم يدفع",
+      histBannerMsg: "لم يتم حفظ نسخة للشهر الحالي بعد.",
+      histBannerSub: "احفظها قبل بداية الشهر الجديد حتى لا تفقد أرقام هذا الشهر.",
+      saveNow: "احفظ الشهر الحالي الآن", saveCurrentMonth: "حفظ الشهر الحالي",
+      downloadLatestPdf: "تحميل PDF (آخر شهر)",
+      secAttCollTrend: "نسبة الحضور والتحصيل", tagTrend: "اتجاه",
+      secRevenueByMonth: "الإيراد حسب الشهر",
+      secMonthComparison: "مقارنة شهرًا بشهر",
+      histTableNote: "كل صف هو نسخة محفوظة. يوضح عمود التغيير الفرق عن آخر شهر محفوظ. استخدم \"من لم يدفع\" لرؤية من لم يدفع في ذلك الشهر.",
+      manageExams: "إدارة الامتحانات",
+      secGradesTable: "جدول الدرجات", tagPermanent: "دائم — لا يُمسح شهريًا",
+      gradesTableNote: "يظهر كل امتحان في عمود مستقل. لإضافة امتحان جديد أو إدخال/تعديل الدرجات، استخدم صفحة \"إدارة الامتحانات\".",
+      searchStudentName: "ابحث باسم الطالب…",
+      footerNote: "تُقرأ البيانات مباشرة من Supabase باستخدام مفتاح قراءة فقط",
+      settingsAppearance: "المظهر", settingsAppearanceSub: "اختر شكل لوحة المتابعة",
+      settingsLight: "فاتح", settingsDark: "داكن",
+      settingsDarkMode: "الوضع الداكن", settingsDarkModeDesc: "أريح للعين ليلًا",
+      settingsLanguage: "اللغة", settingsLanguageSub: "بدّل لغة الواجهة",
+      settingsLangNote: "تتغير التسميات والأزرار والعناوين فورًا. الأسماء وأرقام الهواتف تبقى كما هي في Supabase.",
+      settingsHeroTitle: "إعدادات لوحة التحكم", settingsHeroSub: "خصص شكل ولغة لوحة التحكم الخاصة بك",
+      settingsHeroPill: "التغييرات تُحفظ فورًا",
+      emptyAttendance: "لا توجد بيانات حضور بعد", emptyPayment: "لا توجد بيانات دفع بعد",
+      emptyExamScores: "لا توجد درجات امتحانات مسجلة بعد", emptyHistory: "لا يوجد سجل محفوظ بعد",
+      chartLibFail: "فشل تحميل مكتبة الرسوم البيانية — حاول التحديث",
+      noDataYet: "لا توجد بيانات بعد", everyonePaid: "🎉 الجميع دفع", everyonePaidMonth: "الجميع دفع هذا الشهر.",
+      moreSeeTable: "أكثر — انظر الجدول أدناه",
+      noExamScoresYet: "لا توجد درجات امتحانات بعد", notEnoughExamData: "لا يوجد عدد كافٍ من الطلاب بدرجات امتحانات لعرض قائمة منفصلة",
+      noMatchingResults: "لا توجد نتائج مطابقة",
+      noSavedMonths: "لا يوجد شهر محفوظ بعد",
+      noSavedMonthsGrade: "لا يوجد شهر محفوظ بعد لهذا الصف — احفظ الشهر الحالي لبدء المتابعة.",
+      noStudentsGrade: "لا يوجد طلاب في هذا الصف",
+      noStudentsMatch: "لا يوجد طلاب مطابقون لـ",
+      acrossAllGrades: "في كل الصفوف",
+      avgOfStudents: "متوسط", students_: "طالب", noAttendanceData: "لا توجد بيانات حضور",
+      studentsPaid: "طالب دفعوا",
+      outOf: "من أصل", noPaymentRecords: "لا توجد سجلات دفع",
+      lastUpdated: "آخر تحديث:",
+      exams_: "امتحانات", exam_: "امتحان"
+    }
+  };
+
+  let currentLang = localStorage.getItem("dashLang") || "en";
+  let currentTheme = localStorage.getItem("dashTheme") || "light";
+
+  function t(key){
+    return (I18N[currentLang] && I18N[currentLang][key] != null) ? I18N[currentLang][key] : (I18N.en[key] != null ? I18N.en[key] : key);
+  }
+
+  function tGradeLabel(grade){
+    const map = {
+      first: currentLang === "ar" ? I18N.ar.tabFirst : I18N.en.tabFirst,
+      second: currentLang === "ar" ? I18N.ar.tabSecond : I18N.en.tabSecond,
+      third: currentLang === "ar" ? I18N.ar.tabThird : I18N.en.tabThird
+    };
+    return map[grade] || GRADE_LABELS[grade] || "—";
+  }
+
+  function applyTranslations(){
+    document.querySelectorAll("[data-i18n]").forEach(el => {
+      const key = el.dataset.i18n;
+      el.textContent = t(key);
+    });
+    document.querySelectorAll("[data-i18n-ph]").forEach(el => {
+      el.placeholder = t(el.dataset.i18nPh);
+    });
+  }
+
+  function setTheme(theme){
+    currentTheme = theme === "dark" ? "dark" : "light";
+    localStorage.setItem("dashTheme", currentTheme);
+    document.documentElement.setAttribute("data-theme", currentTheme);
+    const toggle = document.getElementById("darkModeToggle");
+    if(toggle) toggle.checked = currentTheme === "dark";
+    document.querySelectorAll("#themePreview button").forEach(b => {
+      b.classList.toggle("active", b.dataset.themeChoice === currentTheme);
+    });
+  }
+
+  function setLanguage(lang){
+    currentLang = (lang === "ar") ? "ar" : "en";
+    localStorage.setItem("dashLang", currentLang);
+    document.documentElement.lang = currentLang;
+    document.documentElement.dir = currentLang === "ar" ? "rtl" : "ltr";
+    document.querySelectorAll("#langSwitch button").forEach(b => {
+      b.classList.toggle("active", b.dataset.langChoice === currentLang);
+    });
+    applyTranslations();
+    // Re-render whichever view is currently visible so dynamically-built
+    // text (grade labels, Paid/Unpaid chips, empty states, dates) updates too.
+    if(document.getElementById("settingsView").style.display !== "none"){
+      // nothing dynamic to re-render on the settings view itself
+    } else if(document.getElementById("historyView").style.display !== "none"){
+      renderHistory();
+    } else if(document.getElementById("examsView").style.display !== "none"){
+      renderExamTable();
+    } else if(combined.students.length || document.getElementById("dashContent").classList.contains("show")){
+      renderAll();
+    }
+  }
+
+  document.getElementById("settingsTab").addEventListener("click", () => {
+    document.querySelectorAll("#gradeTabs .tab").forEach(t => t.classList.remove("active"));
+    document.getElementById("settingsTab").classList.add("active");
+    document.getElementById("dashboardView").style.display = "none";
+    document.getElementById("historyView").style.display = "none";
+    document.getElementById("examsView").style.display = "none";
+    document.getElementById("settingsView").style.display = "";
+  });
+
   /* ---------- Tabs ---------- */
   document.querySelectorAll("#gradeTabs .tab[data-grade]").forEach(tab => {
     tab.addEventListener("click", () => {
@@ -734,6 +1186,7 @@
       document.getElementById("dashboardView").style.display = "";
       document.getElementById("historyView").style.display = "none";
       document.getElementById("examsView").style.display = "none";
+      document.getElementById("settingsView").style.display = "none";
       loadDashboard();
     });
   });
@@ -744,6 +1197,7 @@
     document.getElementById("dashboardView").style.display = "none";
     document.getElementById("historyView").style.display = "";
     document.getElementById("examsView").style.display = "none";
+    document.getElementById("settingsView").style.display = "none";
     document.getElementById("histGradeSelect").value = historyGradeFilter;
     loadHistory();
   });
@@ -754,6 +1208,7 @@
     document.getElementById("dashboardView").style.display = "none";
     document.getElementById("historyView").style.display = "none";
     document.getElementById("examsView").style.display = "";
+    document.getElementById("settingsView").style.display = "none";
     document.getElementById("examGradeSelect").value = examGrade;
     loadExamGrades();
   });
@@ -812,7 +1267,7 @@
       const p = pct(s.attendanceCount, s.absenceCount);
       const paymentLabel = s.paymentStatus !== "" ? (isPaid(s.paymentStatus) ? "Paid" : "Unpaid") : "—";
       return [
-        s.name || "—", GRADE_LABELS[s.grade] || "—", s.attendanceCount, s.absenceCount,
+        s.name || "—", tGradeLabel(s.grade) || "—", s.attendanceCount, s.absenceCount,
         p != null ? `${p}%` : "—", s.studentPhone || "—", s.parentPhone || "—",
         paymentLabel, s.amountPaid || 0, s.lastAttendance || "—"
       ];
@@ -1016,7 +1471,7 @@
 
     document.getElementById("kpiStudents").textContent = studentsCount;
     document.getElementById("kpiStudentsSub").textContent =
-      currentGrade === "all" ? "across all grades" : GRADE_LABELS[currentGrade];
+      currentGrade === "all" ? "across all grades" : tGradeLabel(currentGrade);
 
     document.getElementById("kpiAttendance").textContent = attendanceRate != null ? `${attendanceRate}%` : "–";
     document.getElementById("kpiAttendanceSub").textContent = pcts.length ? `avg of ${pcts.length} students` : "no attendance data";
@@ -1075,7 +1530,7 @@
     charts.att = new Chart(canvas, {
       type: "bar",
       data: {
-        labels: rows.map(r => GRADE_LABELS[r.grade]),
+        labels: rows.map(r => tGradeLabel(r.grade)),
         datasets: [{
           data: rows.map(r => r.rate ?? 0),
           backgroundColor: "rgba(185,129,47,0.65)",
@@ -1142,7 +1597,7 @@
         data: {
           labels,
           datasets: gradesShown.map(g => ({
-            label: GRADE_LABELS[g],
+            label: tGradeLabel(g),
             data: (data[g] || []).map(e => e.avg),
             borderColor: GRADE_COLORS[g],
             backgroundColor: GRADE_COLORS[g],
@@ -1156,7 +1611,7 @@
             tooltip: { callbacks: { label: c => {
               const g = gradesShown[c.datasetIndex];
               const ex = (data[g] || [])[c.dataIndex];
-              return `${GRADE_LABELS[g]} – ${ex ? ex.name : ""}: ${c.raw}%`;
+              return `${tGradeLabel(g)} – ${ex ? ex.name : ""}: ${c.raw}%`;
             } } }
           },
           scales: {
@@ -1172,7 +1627,7 @@
         data: {
           labels: rows.map(e => e.name),
           datasets: [{
-            label: GRADE_LABELS[currentGrade],
+            label: tGradeLabel(currentGrade),
             data: rows.map(e => e.avg ?? 0),
             backgroundColor: GRADE_COLORS[currentGrade],
             borderRadius: 5, maxBarThickness: 40
@@ -1239,7 +1694,7 @@
         <div class="list-name">
           <span class="rank">${i+1}</span>
           <span class="name">${s.name}</span>
-          ${currentGrade === "all" ? `<span class="grade-chip">${GRADE_LABELS[s.grade]}</span>` : ""}
+          ${currentGrade === "all" ? `<span class="grade-chip">${tGradeLabel(s.grade)}</span>` : ""}
         </div>
         <div class="val">${s.p}%</div>
       </div>
@@ -1253,7 +1708,7 @@
       <div class="list-row">
         <div class="list-name">
           <span class="name">${s.name}</span>
-          ${currentGrade === "all" ? `<span class="grade-chip">${GRADE_LABELS[s.grade]}</span>` : ""}
+          ${currentGrade === "all" ? `<span class="grade-chip">${tGradeLabel(s.grade)}</span>` : ""}
         </div>
         ${s.studentPhone ? `<a class="phone-link" href="tel:${s.studentPhone}">${s.studentPhone}</a>` : `<span class="empty-note" style="padding:0;">—</span>`}
       </div>
@@ -1291,7 +1746,7 @@
         <div class="list-name">
           <span class="rank">${i+1}</span>
           <span class="name">${s.name}</span>
-          ${currentGrade === "all" ? `<span class="grade-chip">${GRADE_LABELS[s.grade]}</span>` : ""}
+          ${currentGrade === "all" ? `<span class="grade-chip">${tGradeLabel(s.grade)}</span>` : ""}
           ${examCountChip(s.count)}
         </div>
         <div class="val ${valClass}">${s.avg}%</div>
@@ -1299,9 +1754,6 @@
     `;
 
     // Sort once, then split into a top half and a bottom half that never overlap.
-    // With very few students on record, "top 6" and "lowest 6" would otherwise just
-    // be the same one or two people shown twice — this keeps each list meaningful
-    // and only shows a "not enough data" note once everyone's already in the other list.
     const sortedDesc = [...enriched].sort((a,b) => b.avg - a.avg || b.count - a.count);
     const n = sortedDesc.length;
     const topCount = Math.min(6, Math.ceil(n / 2));
@@ -1346,7 +1798,7 @@
       return `
         <tr>
           <td style="font-weight:600;">${s.name || "—"}</td>
-          <td>${GRADE_LABELS[s.grade] || "—"}</td>
+          <td>${tGradeLabel(s.grade) || "—"}</td>
           <td>${s.attendanceCount}</td>
           <td>${s.absenceCount}</td>
           <td>
@@ -1354,7 +1806,7 @@
           </td>
           <td>${s.studentPhone ? `<a class="phone-link" href="tel:${s.studentPhone}">${s.studentPhone}</a>` : "—"}</td>
           <td>${s.parentPhone ? `<a class="phone-link" href="tel:${s.parentPhone}">${s.parentPhone}</a>` : "—"}</td>
-          <td>${hasPaymentRecord ? `<span class="chip ${paid ? 'paid' : 'unpaid'}">${paid ? 'Paid' : 'Unpaid'}</span>` : "—"}</td>
+          <td>${hasPaymentRecord ? `<span class="chip ${paid ? 'paid' : 'unpaid'}">${paid ? t('filterPaid') : t('filterUnpaid')}</span>` : "—"}</td>
           <td>${s.lastAttendance || "—"}</td>
           <td><button class="unpaid-link" onclick="generateStudentReport('${s.qrCode}')" title="Download PDF report">📄</button></td>
         </tr>`;
@@ -1465,18 +1917,7 @@
     }
   }
 
-  /* ---------- Auto-backfill a missed previous month ----------
-     If the dashboard is opened in a new month and the previous
-     month was never saved, save it automatically using whatever
-     live data is available right now, so nothing is silently lost.
-     Note: this is a best-effort fallback — it can only reconstruct
-     last month's numbers from data that's still live when the page
-     is opened. If your attendance/payment tables get reset for the
-     new month before anyone opens the dashboard, the true numbers
-     for the missed month are already gone by then. For guaranteed
-     accuracy, still try to save each month before it ends (the
-     banner on the Monthly History tab reminds you to do this).
-  ---------------------------------------------------------------*/
+  /* ---------- Auto-backfill a missed previous month ---------------------------------------------------------------*/
   async function autoBackfillMissedMonth(){
     try{
       const col = HIST_SCHEMA.col;
@@ -1693,28 +2134,6 @@
 
   /* ============================================================
      EXAM GRADES (dynamic columns, driven by an "exams" table)
-     Read-only display here. Adding exams and entering/editing
-     scores is done from the separate "Manage Exams" page
-     (manage_exams.html), which writes to the same Supabase tables:
-
-       create table exams (
-         id bigint generated always as identity primary key,
-         exam_name text not null,
-         max_score numeric not null default 100,
-         grade text not null,              -- 'first' | 'second' | 'third'
-         created_at timestamptz default now()
-       );
-
-       create table exam_scores (
-         id bigint generated always as identity primary key,
-         exam_id bigint not null references exams(id) on delete cascade,
-         student_code text not null,       -- matches qr_code in the attendance tables
-         score numeric not null,
-         created_at timestamptz default now()
-       );
-
-     Both need a SELECT policy for the anon role so this page can
-     read them.
      ============================================================ */
   const EXAMS_SCHEMA = {
     table: "exams",
@@ -1839,8 +2258,6 @@
     const student = examStudents.find(s => s.qrCode === qrCode);
     if(!student) return;
 
-    // examList is already ordered oldest -> newest (created_at ascending), so the
-    // trend line reads left-to-right in the order exams actually happened.
     const points = examList.map(e => {
       const row = examScores.find(sc => sc[scol.examId] === e[ecol.id] && sc[scol.studentCode] === qrCode);
       if(!row) return null;
@@ -1918,14 +2335,6 @@
 
   /* ============================================================
      PDF REPORTS
-     Uses jsPDF + jspdf-autotable (loaded from cdnjs, see <head>).
-     Three report types:
-       - generateStudentReport(qrCode)   → single student, from live data
-       - generateGradeReport()           → whole grade currently shown on the dashboard, from live data
-       - generateHistoryMonthReport()    → a saved month from the Monthly History tab
-     "Monthly" reports reflect whatever data is live/saved at the moment
-     you generate them — same caveat as monthly_snapshots: generate/save
-     before the month rolls over if you want an accurate archival copy.
      ============================================================ */
   const PDF_COLORS = {
     gold: [185,129,47], gold2: [165,112,31], ink: [44,33,22],
@@ -2200,3 +2609,5 @@
 </script>
 </body>
 </html>
+ENDOFFILE
+wc -l /home/claude/dashboard.html
