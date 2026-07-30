@@ -32,10 +32,12 @@
     --gold:#8b5e3c;
     --gold-2:#6b4226;
     --gold-soft:rgba(139,94,60,0.10);
-    --success:#7a3b3b;
-    --success-soft:rgba(122,59,59,0.10);
-    --error:#9e2a2a;
-    --error-soft:rgba(158,42,42,0.10);
+    --success:#2e7d32;
+    --success-soft:rgba(46,125,50,0.15);
+    --warning:#f9a825;
+    --warning-soft:rgba(249, 168, 37, 0.15);
+    --error:#c62828;
+    --error-soft:rgba(198, 40, 40, 0.15);
     --muted:#8a8a8a;
     --cream-bg-1:#eae5df;
     --cream-bg-2:#f5f0eb;
@@ -53,10 +55,12 @@
     --gold:#c9a882;
     --gold-2:#b8946a;
     --gold-soft:rgba(201,168,130,0.12);
-    --success:#b86565;
-    --success-soft:rgba(184,101,101,0.12);
-    --error:#d94040;
-    --error-soft:rgba(217,64,64,0.12);
+    --success:#4caf50;
+    --success-soft:rgba(76,175,80,0.15);
+    --warning:#fdd835;
+    --warning-soft:rgba(253,216,53,0.15);
+    --error:#ef5350;
+    --error-soft:rgba(239,83,80,0.15);
     --muted:#9a9080;
     --cream-bg-1:#1a1612;
     --cream-bg-2:#221e1a;
@@ -678,6 +682,30 @@
         </div>
       </div>
 
+      
+      <div class="two-col" style="grid-template-columns: 1fr 1fr;">
+        <div class="chart-card">
+          <div class="section-title">
+            <span data-i18n="secAttVsPerf">Attendance vs. Performance</span>
+            <span class="tag">Correlation</span>
+          </div>
+          <div class="chart-box" style="height: 220px;">
+            <canvas id="attVsPerfChart"></canvas>
+            <div class="chart-empty" id="attVsPerfEmpty">Not enough data</div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="section-title">
+            <span data-i18n="secGradePerformance">Grade Performance Breakdown</span>
+            <span class="tag">Overview</span>
+          </div>
+          <div class="chart-box" style="height: 220px;">
+            <canvas id="gradeRadarChart"></canvas>
+            <div class="chart-empty" id="gradeRadarEmpty">No data</div>
+          </div>
+        </div>
+      </div>
+        
       <div class="list-grid">
         <div class="list-card">
           <div class="section-title" data-i18n="secTopAttendance">Top Attendance</div>
@@ -973,7 +1001,7 @@
   let currentGrade = "all";
   let payFilterState = "all";
   let combined = { students: [], statsRows: [], examAverages: {}, examStudentAverages: [] }; // students = merged attendance+payment rows, tagged with grade
-  let charts = {};
+  let charts = { attVsPerf: null, gradeRadar: null,};
 
   /* ============================================================
      SETTINGS: THEME + LANGUAGE (English / Arabic only)
@@ -987,7 +1015,7 @@
       scannerBtn: "Attendance Scanner", refreshBtn: "Refresh data",
       kpiTotalStudents: "Total Students", kpiAttendanceRate: "Attendance Rate", kpiTotalCollected: "Total Collected",
       kpiUnpaid: "Unpaid", kpiCollectionRate: "Collection Rate", kpiOfAmountsDue: "of amounts due",
-      secAttByGrade: "Attendance Rate by Grade", tagLive: "Live",
+      secAttByGrade: "Attendance Rate by Grade", secAttVsPerf: "Attendance vs. Performance", secGradePerformance: "Grade Performance Breakdown", tagLive: "Live",
       secPaymentStatus: "Payment Status",
       secAvgExam: "Average Exam Scores",
       secScoreDist: "Score Distribution", tagByStudent: "by student",
@@ -1046,7 +1074,7 @@
       scannerBtn: "ماسح الحضور", refreshBtn: "تحديث البيانات",
       kpiTotalStudents: "إجمالي الطلاب", kpiAttendanceRate: "نسبة الحضور", kpiTotalCollected: "إجمالي التحصيل",
       kpiUnpaid: "غير مدفوع", kpiCollectionRate: "نسبة التحصيل", kpiOfAmountsDue: "من المبالغ المستحقة",
-      secAttByGrade: "نسبة الحضور حسب الصف", tagLive: "لحظي",
+      secAttByGrade: "نسبة الحضور حسب الصف", secAttVsPerf: "الحضور مقابل الأداء", secGradePerformance: "تحليل أداء الصفوف", tagLive: "لحظي",
       secPaymentStatus: "حالة الدفع",
       secAvgExam: "متوسط درجات الامتحانات",
       secScoreDist: "توزيع الدرجات", tagByStudent: "لكل طالب",
@@ -1634,10 +1662,98 @@
     }
   }
 
+  
+  function renderAttVsPerfChart() {
+    const canvas = document.getElementById("attVsPerfChart");
+    const emptyEl = document.getElementById("attVsPerfEmpty");
+    destroyChart("attVsPerf");
+    if(!chartLibReady()){ return; }
+
+    const gradesShown = currentGrade === "all" ? GRADES : [currentGrade];
+    const examData = (combined.examStudentAverages || []).filter(r => gradesShown.includes(r.grade));
+    const students = combined.students.filter(s => gradesShown.includes(s.grade));
+    
+    const dataPoints = [];
+    examData.forEach(ed => {
+      const s = students.find(st => st.qrCode === ed.code);
+      if (s) {
+        const attRate = pct(s.attendanceCount, s.absenceCount);
+        if (attRate != null) {
+          dataPoints.push({ x: attRate, y: ed.avg, name: s.name, grade: s.grade });
+        }
+      }
+    });
+
+    if(dataPoints.length < 3){ canvas.style.display = "none"; emptyEl.classList.add("show"); return; }
+    canvas.style.display = "block"; emptyEl.classList.remove("show");
+
+    charts.attVsPerf = new Chart(canvas, {
+      type: 'scatter',
+      data: {
+        datasets: [{
+          label: 'Students',
+          data: dataPoints,
+          backgroundColor: dataPoints.map(d => getScoreColor(d.y, 0.6)),
+          borderColor: dataPoints.map(d => getScoreColor(d.y, 1)),
+          borderWidth: 1, pointRadius: 5
+        }]
+      },
+      options: {
+        maintainAspectRatio: false,
+        scales: {
+          x: { title: { display: true, text: 'Attendance %', font: { size: 10 } }, min: 0, max: 100 },
+          y: { title: { display: true, text: 'Exam Score %', font: { size: 10 } }, min: 0, max: 100 }
+        },
+        plugins: {
+          tooltip: { callbacks: { label: (c) => `${c.raw.name}: Att ${c.raw.x}%, Score ${c.raw.y}%` } },
+          legend: { display: false }
+        }
+      }
+    });
+  }
+
+  function renderGradeRadarChart() {
+    const canvas = document.getElementById("gradeRadarChart");
+    const emptyEl = document.getElementById("gradeRadarEmpty");
+    destroyChart("gradeRadar");
+    if(!chartLibReady()){ return; }
+
+    const grades = GRADES;
+    const attData = grades.map(g => {
+      const gs = combined.students.filter(s => s.grade === g);
+      const pcts = gs.map(s => pct(s.attendanceCount, s.absenceCount)).filter(v => v != null);
+      return pcts.length ? Math.round(pcts.reduce((a,b)=>a+b,0)/pcts.length) : 0;
+    });
+    
+    const scoreData = grades.map(g => {
+      const data = (combined.examAverages || {})[g] || [];
+      return data.length ? Math.round(data.reduce((a,b)=>a+(b.avg||0),0)/data.length) : 0;
+    });
+
+    if(attData.every(v => v === 0) && scoreData.every(v => v === 0)){ canvas.style.display = "none"; emptyEl.classList.add("show"); return; }
+    canvas.style.display = "block"; emptyEl.classList.remove("show");
+
+    charts.gradeRadar = new Chart(canvas, {
+      type: 'radar',
+      data: {
+        labels: grades.map(g => tGradeLabel(g)),
+        datasets: [
+          { label: 'Attendance', data: attData, borderColor: 'rgba(139,94,60,0.8)', backgroundColor: 'rgba(139,94,60,0.2)', fill: true },
+          { label: 'Exam Score', data: scoreData, borderColor: 'rgba(46, 125, 50, 0.8)', backgroundColor: 'rgba(46, 125, 50, 0.2)', fill: true }
+        ]
+      },
+      options: {
+        maintainAspectRatio: false,
+        scales: { r: { min: 0, max: 100, ticks: { display: false } } },
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } }
+      }
+    });
+  }
+        
   function renderExamDistChart(){
     const canvas = document.getElementById("examDistChart");
     const emptyEl = document.getElementById("examDistChartEmpty");
-    destroyChart("examDist");
+    destroyChart("examDist"); destroyChart("attVsPerf"); destroyChart("gradeRadar");
     if(!chartLibReady()){ canvas.style.display="none"; emptyEl.textContent="Chart library failed to load — try refreshing"; emptyEl.classList.add("show"); return; }
 
     const gradesShown = currentGrade === "all" ? GRADES : [currentGrade];
@@ -1647,10 +1763,10 @@
 
     // Performance bands based on each student's own average across all their recorded exams.
     const bands = [
-      { label: "Excellent (90-100%)", min: 90, max: 101, color: "rgba(139,94,60,0.75)" },
-      { label: "Good (75-89%)",       min: 75, max: 90,  color: "rgba(122,59,59,0.75)" },
-      { label: "Average (60-74%)",    min: 60, max: 75,  color: "rgba(110,100,90,0.70)" },
-      { label: "Needs Work (<60%)",   min: -1, max: 60,  color: "rgba(158,42,42,0.75)" }
+      { label: "Excellent (90-100%)", min: 90, max: 101, color: "rgba(46, 125, 50, 0.8)" },
+      { label: "Good (75-89%)",       min: 75, max: 90,  color: "rgba(102, 187, 106, 0.8)" },
+      { label: "Average (60-74%)",    min: 60, max: 75,  color: "rgba(251, 192, 45, 0.8)" },
+      { label: "Needs Work (<60%)",   min: -1, max: 60,  color: "rgba(211, 47, 47, 0.8)" }
     ];
     const counts = bands.map(b => rows.filter(r => r.avg >= b.min && r.avg < b.max).length);
 
@@ -1685,7 +1801,7 @@
           <span class="name">${s.name}</span>
           ${currentGrade === "all" ? `<span class="grade-chip">${tGradeLabel(s.grade)}</span>` : ""}
         </div>
-        <div class="val">${s.p}%</div>
+        <div class="val" style="color: ${getScoreColor(s.p, 1)}">${s.p}%</div>
       </div>
     `).join("");
   }
@@ -1738,7 +1854,7 @@
           ${currentGrade === "all" ? `<span class="grade-chip">${tGradeLabel(s.grade)}</span>` : ""}
           ${examCountChip(s.count)}
         </div>
-        <div class="val ${valClass}">${s.avg}%</div>
+        <div class="val ${valClass}" style="color: ${getScoreColor(s.avg, 1)}">${s.avg}%</div>
       </div>
     `;
 
@@ -1791,7 +1907,7 @@
           <td>${s.attendanceCount}</td>
           <td>${s.absenceCount}</td>
           <td>
-            ${p != null ? `<span class="bar-track"><span class="bar-fill" style="width:${p}%;"></span></span>${p}%` : "—"}
+            ${p != null ? `<span class="bar-track"><span class="bar-fill" style="width:${p}%; background: ${getScoreColor(p, 0.7)};"></span></span><span style="color: ${getScoreColor(p, 1)}; font-weight: bold;">${p}%</span>` : "—"}
           </td>
           <td>${s.studentPhone ? `<a class="phone-link" href="tel:${s.studentPhone}">${s.studentPhone}</a>` : "—"}</td>
           <td>${s.parentPhone ? `<a class="phone-link" href="tel:${s.parentPhone}">${s.parentPhone}</a>` : "—"}</td>
