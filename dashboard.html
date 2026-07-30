@@ -195,12 +195,12 @@
   }
   .tab{
     position:relative; cursor:pointer; user-select:none;
-    padding:10px 16px; margin:4px 0;
+    padding:10px 16px; margin:2px 0;
     background:var(--card); color:var(--muted); font-weight:500; font-size:13px;
     border-radius:10px; border:1px solid var(--line);
     transition:all .18s ease; z-index:1;
     text-align:left; white-space:nowrap; 
-    min-height:42px; display:flex; align-items:center; justify-content:flex-start;
+    min-height:44px; display:flex; align-items:center; justify-content:flex-start;
     width: 100%; gap: 10px;
   }
   [dir="rtl"] .tab { text-align: right; }
@@ -689,10 +689,10 @@
     <!-- GRADES GROUP -->
     <div class="tab-group-label" data-group="grades" onclick="toggleGroup(this)">▼ Grades</div>
     <div class="tab-group" data-group="grades">
-      <div class="tab active" data-grade="all" data-i18n="tabAll">All Grades</div>
-      <div class="tab" data-grade="first" data-i18n="tabFirst">First Secondary</div>
-      <div class="tab" data-grade="second" data-i18n="tabSecond">Second Secondary</div>
-      <div class="tab" data-grade="third" data-i18n="tabThird">Third Secondary</div>
+      <div class="tab active" data-grade="all" data-i18n="tabAll">🎓 All Grades</div>
+      <div class="tab" data-grade="first" data-i18n="tabFirst">📘 First Secondary</div>
+      <div class="tab" data-grade="second" data-i18n="tabSecond">📗 Second Secondary</div>
+      <div class="tab" data-grade="third" data-i18n="tabThird">📙 Third Secondary</div>
     </div>
     
     <!-- OTHER GROUP -->
@@ -1116,8 +1116,8 @@
      ============================================================ */
   const I18N = {
     en: {
-      tabAll: "All Grades", tabFirst: "First Secondary", tabSecond: "Second Secondary", tabThird: "Third Secondary",
-      tabExams: "Exam Grades", tabHistory: "Monthly History", tabSettings: "Settings",
+      tabAll: "🎓 All Grades", tabFirst: "📘 First Secondary", tabSecond: "📗 Second Secondary", tabThird: "📙 Third Secondary",
+      tabExams: "📝 Exam Grades", tabHistory: "📂 Monthly History", tabSettings: "⚙️ Settings",
       brandEyebrow: "Live insights", brandTitle: "Live Dashboard", brandSub: "Attendance & payment insights",
       scannerBtn: "Attendance Scanner", refreshBtn: "Refresh data",
       kpiTotalStudents: "Total Students", kpiAttendanceRate: "Attendance Rate", kpiTotalCollected: "Total Collected",
@@ -1175,8 +1175,8 @@
       exams_: "exams", exam_: "exam"
     },
     ar: {
-      tabAll: "كل الصفوف", tabFirst: "الصف الأول الثانوي", tabSecond: "الصف الثاني الثانوي", tabThird: "الصف الثالث الثانوي",
-      tabExams: "درجات الامتحانات", tabHistory: "السجل الشهري", tabSettings: "الإعدادات",
+      tabAll: "🎓 كل الصفوف", tabFirst: "📘 الصف الأول الثانوي", tabSecond: "📗 الصف الثاني الثانوي", tabThird: "📙 الصف الثالث الثانوي",
+      tabExams: "📝 درجات الامتحانات", tabHistory: "📂 السجل الشهري", tabSettings: "⚙️ الإعدادات",
       brandEyebrow: "بيانات لحظية", brandTitle: "لوحة المتابعة", brandSub: "بيانات الحضور والمدفوعات",
       scannerBtn: "ماسح الحضور", refreshBtn: "تحديث البيانات",
       kpiTotalStudents: "إجمالي الطلاب", kpiAttendanceRate: "نسبة الحضور", kpiTotalCollected: "إجمالي التحصيل",
