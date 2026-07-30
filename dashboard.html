@@ -8,6 +8,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
@@ -249,6 +250,8 @@
   .pay-filter button:hover{ border-color:var(--gold); color:var(--ink); }
   .pay-filter button.active{ background:linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%); color:#241a05; border-color:var(--gold); }
 
+  .table-scroll-top{ overflow-x:auto; overflow-y:hidden; height:16px; margin-bottom:2px; }
+  .table-scroll-top-inner{ height:1px; }
   .table-wrap{ overflow-x:auto; border:1px solid var(--line); border-radius:12px; }
   table{ width:100%; border-collapse:collapse; font-size:12.5px; min-width:760px; }
   thead th{
@@ -265,6 +268,12 @@
   .chip.unpaid{ background:var(--error-soft); color:var(--error); }
   .bar-track{ width:70px; height:6px; border-radius:4px; background:rgba(185,129,47,0.12); display:inline-block; vertical-align:middle; margin-right:7px; }
   .bar-fill{ height:100%; border-radius:4px; background:var(--gold); }
+  .excel-btn{
+    padding:10px 16px; border-radius:9px; border:1px solid var(--line); background:var(--card);
+    color:var(--ink); font-family:'Inter',sans-serif; font-weight:700; font-size:12.5px; cursor:pointer;
+    transition:all .15s ease; display:inline-flex; align-items:center; gap:6px; text-decoration:none;
+  }
+  .excel-btn:hover{ border-color:var(--success); color:var(--success); }
 
   .footer-note{ text-align:center; font-size:11.5px; color:var(--muted); margin-top:30px; display:flex; align-items:center; justify-content:center; gap:7px; }
   .footer-note::before{ content:"🔒"; font-size:11px; }
@@ -507,8 +516,10 @@
             <button data-f="unpaid" onclick="setPayFilter('unpaid')">Unpaid</button>
           </div>
           <button class="ghost-btn" id="gradeReportBtn" onclick="generateGradeReport()">📄 Grade Report (PDF)</button>
+          <button class="excel-btn" id="gradeExcelBtn" onclick="exportRosterExcel()">📊 Export Excel</button>
         </div>
-        <div class="table-wrap">
+        <div class="table-scroll-top" id="rosterScrollTop"><div class="table-scroll-top-inner" id="rosterScrollTopInner"></div></div>
+        <div class="table-wrap" id="rosterTableWrap">
           <table>
             <thead>
               <tr>
@@ -559,6 +570,7 @@
           </div>
           <button class="save-snapshot-btn" id="saveSnapshotBtn" onclick="saveCurrentMonthSnapshot()">💾 Save Current Month</button>
           <button class="ghost-btn" onclick="generateHistoryMonthReport()">📄 Download PDF (Latest Month)</button>
+          <button class="excel-btn" onclick="exportHistoryExcel()">📊 Export Excel</button>
         </div>
 
         <div class="delta-cards" id="deltaCards"></div>
@@ -583,7 +595,8 @@
         <div class="chart-card">
           <div class="section-title">Month-by-Month Comparison</div>
           <div class="hist-table-note">Each row is a saved snapshot. Change vs. shows the difference from the previous saved month. Use "Who Hasn't Paid" to see who was unpaid that month.</div>
-          <div class="table-wrap">
+          <div class="table-scroll-top" id="histScrollTop"><div class="table-scroll-top-inner" id="histScrollTopInner"></div></div>
+          <div class="table-wrap" id="histTableWrap">
             <table>
               <thead>
                 <tr>
@@ -625,12 +638,14 @@
             </div>
           </div>
           <a class="save-snapshot-btn" href="manage_exams.html" style="text-decoration:none;">➕ Manage Exams</a>
+          <button class="excel-btn" onclick="exportExamExcel()">📊 Export Excel</button>
         </div>
 
         <div class="chart-card">
           <div class="section-title">Grades Table <span class="tag">Permanent — not cleared monthly</span></div>
           <div class="hist-table-note">Each exam is shown in its own column. To add a new exam or enter/edit scores, use the "Manage Exams" page.</div>
-          <div class="table-wrap">
+          <div class="table-scroll-top" id="examScrollTop"><div class="table-scroll-top-inner" id="examScrollTopInner"></div></div>
+          <div class="table-wrap" id="examTableWrap">
             <table>
               <thead id="examTableHead"></thead>
               <tbody id="examTableBody"></tbody>
@@ -749,6 +764,24 @@
     renderRoster();
   }
 
+  /* ---------- Top/bottom scrollbar sync for wide tables ----------
+     Each wide table gets a thin scrollbar strip above it (in addition
+     to the browser's native one at the bottom), so users can scroll
+     left/right without needing to reach the bottom of the table first. ---------- */
+  function wireTopScrollbar(topId, innerId, wrapId){
+    const top = document.getElementById(topId);
+    const inner = document.getElementById(innerId);
+    const wrap = document.getElementById(wrapId);
+    if(!top || !inner || !wrap) return;
+    const table = wrap.querySelector("table");
+    const sync = () => { inner.style.width = (table ? table.scrollWidth : wrap.scrollWidth) + "px"; };
+    sync();
+    new ResizeObserver(sync).observe(wrap);
+    let syncing = false;
+    top.addEventListener("scroll", () => { if(syncing) return; syncing = true; wrap.scrollLeft = top.scrollLeft; syncing = false; });
+    wrap.addEventListener("scroll", () => { if(syncing) return; syncing = true; top.scrollLeft = wrap.scrollLeft; syncing = false; });
+  }
+
   /* ---------- Helpers ---------- */
   function isPaid(status){
     const s = String(status ?? "").trim().toLowerCase();
@@ -760,6 +793,66 @@
     return total > 0 ? Math.round((a / total) * 100) : null;
   }
   function fmtEGP(n){ return `EGP ${Number(n || 0).toLocaleString('en-US')}`; }
+
+  /* ---------- Excel export helper ----------
+     Builds a workbook from an array-of-arrays (first row = headers)
+     and triggers a download. Used by every "Export Excel" button. ---------- */
+  function exportRowsToExcel(rows, sheetName, filename){
+    if(typeof XLSX === "undefined"){ alert("The Excel library failed to load — check your connection and try again."); return; }
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, sheetName.slice(0, 31));
+    XLSX.writeFile(wb, filename);
+  }
+
+  function exportRosterExcel(){
+    if(!combined.students.length){ alert("No student data loaded yet — try refreshing the dashboard first."); return; }
+    const header = ["Name","Grade","Present","Absent","Attendance Rate","Student Phone","Parent Phone","Payment","Amount Paid","Last Attendance"];
+    const rows = combined.students.map(s => {
+      const p = pct(s.attendanceCount, s.absenceCount);
+      const paymentLabel = s.paymentStatus !== "" ? (isPaid(s.paymentStatus) ? "Paid" : "Unpaid") : "—";
+      return [
+        s.name || "—", GRADE_LABELS[s.grade] || "—", s.attendanceCount, s.absenceCount,
+        p != null ? `${p}%` : "—", s.studentPhone || "—", s.parentPhone || "—",
+        paymentLabel, s.amountPaid || 0, s.lastAttendance || "—"
+      ];
+    });
+    exportRowsToExcel([header, ...rows], "Roster", `roster_${currentGrade}_${new Date().toISOString().slice(0,10)}.xlsx`);
+  }
+
+  function exportHistoryExcel(){
+    const col = HIST_SCHEMA.col;
+    const rows = historyRows
+      .filter(r => r[col.grade] === historyGradeFilter)
+      .sort((a,b) => (a[col.year]-b[col.year]) || (a[col.month]-b[col.month]));
+    if(!rows.length){ alert("No saved monthly snapshots yet for this grade."); return; }
+    const header = ["Month","Students","Attendance Rate","Collection Rate","Revenue","Paid","Unpaid"];
+    const body = rows.map(r => [
+      monthLabel(r[col.year], r[col.month]), r[col.students], `${r[col.attendanceRate]}%`,
+      `${r[col.collectionRate]}%`, r[col.revenue], r[col.paidCount], r[col.unpaidCount]
+    ]);
+    exportRowsToExcel([header, ...body], "Monthly History", `monthly_history_${historyGradeFilter}_${new Date().toISOString().slice(0,10)}.xlsx`);
+  }
+
+  function exportExamExcel(){
+    if(!examStudents.length){ alert("No student data loaded yet for this grade."); return; }
+    const ecol = EXAMS_SCHEMA.col, scol = SCORES_SCHEMA.col;
+    const header = ["Name", ...examList.map(e => e[ecol.name]), "Average"];
+    const rows = examStudents.map(s => {
+      let sumPct = 0, cnt = 0;
+      const cells = examList.map(e => {
+        const row = examScores.find(sc => sc[scol.examId] === e[ecol.id] && sc[scol.studentCode] === s.qrCode);
+        if(!row) return "—";
+        const sc = Number(row[scol.score]);
+        const mx = Number(e[ecol.maxScore]) || 100;
+        if(!isNaN(sc)){ sumPct += (sc / mx) * 100; cnt++; }
+        return `${row[scol.score]} / ${e[ecol.maxScore]}`;
+      });
+      const avg = cnt ? Math.round(sumPct / cnt) : null;
+      return [s.name || "—", ...cells, avg != null ? `${avg}%` : "—"];
+    });
+    exportRowsToExcel([header, ...rows], "Exam Grades", `exam_grades_${examGrade}_${new Date().toISOString().slice(0,10)}.xlsx`);
+  }
 
   /* ---------- Fetch + merge one grade ---------- */
   async function fetchGrade(grade){
@@ -887,6 +980,7 @@
       contentEl.classList.add("show");
       document.getElementById("updatedNote").textContent =
         "Last updated: " + new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+      wireTopScrollbar("rosterScrollTop", "rosterScrollTopInner", "rosterTableWrap");
     }catch(err){
       console.error(err);
       errorEl.innerHTML = `
@@ -1109,10 +1203,10 @@
 
     // Performance bands based on each student's own average across all their recorded exams.
     const bands = [
-      { label: "Excellent (90-100%)", min: 90, max: 101, color: "rgba(46,125,82,0.75)" },
-      { label: "Good (75-89%)",       min: 75, max: 90,  color: "rgba(185,129,47,0.75)" },
-      { label: "Average (60-74%)",    min: 60, max: 75,  color: "rgba(165,112,31,0.55)" },
-      { label: "Needs Work (<60%)",   min: -1, max: 60,  color: "rgba(163,52,42,0.7)" }
+      { label: "Excellent (90-100%)", min: 90, max: 101, color: "rgba(94,84,181,0.8)" },
+      { label: "Good (75-89%)",       min: 75, max: 90,  color: "rgba(59,145,163,0.8)" },
+      { label: "Average (60-74%)",    min: 60, max: 75,  color: "rgba(224,159,62,0.85)" },
+      { label: "Needs Work (<60%)",   min: -1, max: 60,  color: "rgba(198,90,97,0.85)" }
     ];
     const counts = bands.map(b => rows.filter(r => r.avg >= b.min && r.avg < b.max).length);
 
@@ -1265,6 +1359,7 @@
           <td><button class="unpaid-link" onclick="generateStudentReport('${s.qrCode}')" title="Download PDF report">📄</button></td>
         </tr>`;
     }).join("");
+    wireTopScrollbar("rosterScrollTop", "rosterScrollTopInner", "rosterTableWrap");
   }
 
   /* ============================================================
@@ -1569,6 +1664,7 @@
           <td><button class="unpaid-link" onclick="showUnpaidModal(${origIdx})">👁 Who Hasn't Paid</button></td>
         </tr>`;
     }).join("");
+    wireTopScrollbar("histScrollTop", "histScrollTopInner", "histTableWrap");
   }
 
   function showUnpaidModal(origIdx){
@@ -1700,6 +1796,7 @@
 
     if(!examStudents.length){
       body.innerHTML = `<tr><td colspan="${examList.length + 3}" style="text-align:center; color:var(--muted); padding:24px;">No students in this grade</td></tr>`;
+      wireTopScrollbar("examScrollTop", "examScrollTopInner", "examTableWrap");
       return;
     }
 
@@ -1708,6 +1805,7 @@
 
     if(!rowsToShow.length){
       body.innerHTML = `<tr><td colspan="${examList.length + 3}" style="text-align:center; color:var(--muted); padding:24px;">No students match "${q}"</td></tr>`;
+      wireTopScrollbar("examScrollTop", "examScrollTopInner", "examTableWrap");
       return;
     }
 
@@ -1729,6 +1827,7 @@
         <td><button class="unpaid-link" onclick="showStudentTrend('${s.qrCode}')" title="Show score trend">📈</button></td>
       </tr>`;
     }).join("");
+    wireTopScrollbar("examScrollTop", "examScrollTopInner", "examTableWrap");
   }
 
   /* ---------- Student trend chart ---------- */
