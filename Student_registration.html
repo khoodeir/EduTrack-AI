@@ -6,13 +6,14 @@
 <title>Student Registration</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&family=Cairo:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg-0:#faf6ec; --bg-1:#f3ecda; --bg-2:#ece1c8;
-  --card:rgba(255,253,247,0.72); --card-border:rgba(184,121,31,0.22);
-  --gold:#c8862f; --gold-light:#a86a1e; --gold-deep:#b8791f; --bronze:#a8783a;
-  --text:#3a2f1c; --muted:#8a7a5c; --border:rgba(184,121,31,0.22);
+  /* Deep Red / Off-White / Gray palette */
+  --bg-0:#f7f5f1; --bg-1:#f1eee8; --bg-2:#e9e3da;
+  --card:rgba(253,252,250,0.78); --card-border:rgba(139,30,30,0.22);
+  --gold:#8b1e1e; --gold-light:#7a1f1f; --gold-deep:#5e1414; --bronze:#7c7873;
+  --text:#2b2b2b; --muted:#7c7873; --border:rgba(139,30,30,0.20);
   --error:#c4485a; --success:#2f9e73; --radius:14px;
 }
 *{box-sizing:border-box;}
@@ -21,7 +22,12 @@ body{
   background: linear-gradient(165deg, var(--bg-0) 0%, var(--bg-1) 55%, var(--bg-2) 100%);
   font-family:'Inter', 'Segoe UI', Arial, sans-serif;
   display:flex; align-items:center; justify-content:center; padding:48px 16px; color:var(--text);
+  transition: background .2s ease;
 }
+[dir="rtl"] body{ font-family:'Cairo','Inter',sans-serif; }
+[dir="rtl"] h1,
+[dir="rtl"] #successView h2{ font-family:'Cairo','Cormorant Garamond',serif; }
+[dir="rtl"] label{ direction:rtl; }
 
 .card{
   position:relative; width:100%; max-width:540px;
@@ -29,12 +35,27 @@ body{
   -webkit-backdrop-filter: blur(16px) saturate(110%);
   backdrop-filter: blur(16px) saturate(110%);
   border-radius:20px; padding:46px 40px 36px;
-  box-shadow:0 18px 40px rgba(120,95,40,0.16);
+  box-shadow:0 18px 40px rgba(60,30,30,0.14);
   border:1px solid var(--card-border);
   animation:cardIn .5s ease both;
 }
 @keyframes cardIn{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:translateY(0); } }
 @media (prefers-reduced-motion: reduce){ .card{ animation:none; } }
+
+/* ===== Language toggle ===== */
+.lang-toggle{
+  position:absolute; top:18px; right:18px; display:flex; gap:3px;
+  background:rgba(139,30,30,0.07); border:1px solid var(--border);
+  border-radius:999px; padding:4px; z-index:5;
+}
+[dir="rtl"] .lang-toggle{ right:auto; left:18px; }
+.lang-toggle button{
+  border:none; background:transparent; padding:6px 13px; border-radius:999px;
+  font-family:inherit; font-size:11.5px; font-weight:700; color:var(--muted);
+  cursor:pointer; letter-spacing:.3px; transition:all .15s ease;
+}
+.lang-toggle button:hover{ color:var(--gold-light); }
+.lang-toggle button.active{ background:var(--gold-deep); color:#fdfcfa; }
 
 .title-wrap{ text-align:center; margin-bottom:6px; }
 .crest{
@@ -64,13 +85,16 @@ input[type="text"], input[type="tel"], select{
   transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;
   appearance:none; -webkit-appearance:none;
 }
-input::placeholder{ color:#a89a78; }
+input::placeholder{ color:#a89a94; }
 select{
-  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='8' viewBox='0 0 14 8'><path d='M1 1l6 6 6-6' stroke='%23c8862f' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='8' viewBox='0 0 14 8'><path d='M1 1l6 6 6-6' stroke='%238b1e1e' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
   background-repeat:no-repeat; background-position:right 16px center; padding-right:40px; cursor:pointer;
 }
-select:invalid{ color:#a89a78; }
-select option{ color:var(--text); background:#faf6ec; }
+[dir="rtl"] select{
+  background-position:left 16px center; padding-right:15px; padding-left:40px;
+}
+select:invalid{ color:#a89a94; }
+select option{ color:var(--text); background:#f7f5f1; }
 select option:checked, select option:hover{ background:var(--gold-deep); color:#f5f0e4; }
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
@@ -80,8 +104,8 @@ input:-webkit-autofill:focus{
   transition:background-color 9999s ease-in-out 0s;
   box-shadow:0 0 0 1000px rgba(255,255,255,0.55) inset;
 }
-input:hover, select:hover{ border-color:rgba(184,121,31,0.36); }
-input:focus, select:focus{ border-color:var(--gold); background:rgba(255,255,255,0.85); box-shadow:0 0 0 3px rgba(184,121,31,0.14); }
+input:hover, select:hover{ border-color:rgba(139,30,30,0.36); }
+input:focus, select:focus{ border-color:var(--gold); background:rgba(255,255,255,0.85); box-shadow:0 0 0 3px rgba(139,30,30,0.14); }
 input.invalid{ border-color:var(--error); }
 input.invalid:focus{ box-shadow:0 0 0 3px rgba(196,72,90,0.16); }
 
@@ -93,12 +117,12 @@ input.invalid:focus{ box-shadow:0 0 0 3px rgba(196,72,90,0.16); }
 button.submit{
   width:100%; padding:14px; margin-top:10px;
   background: linear-gradient(135deg, var(--gold-deep) 0%, var(--gold) 100%);
-  color:#241a05; border:none;
+  color:#fdf5f0; border:none;
   border-radius:10px; font-family:inherit; font-size:15.5px; font-weight:700; cursor:pointer;
-  letter-spacing:0.2px; box-shadow:0 6px 16px rgba(120,95,40,0.22);
+  letter-spacing:0.2px; box-shadow:0 6px 16px rgba(60,30,30,0.22);
   transition:filter .15s ease, box-shadow .15s ease;
 }
-button.submit:hover{ filter:brightness(1.06); box-shadow:0 8px 20px rgba(120,95,40,0.28); }
+button.submit:hover{ filter:brightness(1.06); box-shadow:0 8px 20px rgba(60,30,30,0.28); }
 button.submit:active{ filter:brightness(0.96); }
 button.submit:disabled{ opacity:0.5; cursor:not-allowed; box-shadow:none; }
 
@@ -109,7 +133,7 @@ button.submit:disabled{ opacity:0.5; cursor:not-allowed; box-shadow:none; }
 .status.success{ color:var(--success); background:rgba(47,158,115,0.1); border:1px solid rgba(47,158,115,0.28); display:block; }
 .status.failure{ color:var(--error); background:rgba(196,72,90,0.08); border:1px solid rgba(196,72,90,0.28); display:block; }
 
-@media (max-width:480px){ .card{ padding:34px 22px 28px; } h1{ font-size:25px; } }
+@media (max-width:480px){ .card{ padding:34px 22px 28px; } h1{ font-size:25px; } .lang-toggle{ top:12px; right:12px; } [dir="rtl"] .lang-toggle{ left:12px; } }
 
 #successView{ display:none; text-align:center; }
 .icon-circle{
@@ -140,7 +164,7 @@ button.submit:disabled{ opacity:0.5; cursor:not-allowed; box-shadow:none; }
   width:60px;
   height:60px;
   border-radius:50%;
-  background:#c8862f;
+  background:#8b1e1e;
   color:white;
   display:flex;
   align-items:center;
@@ -150,6 +174,7 @@ button.submit:disabled{ opacity:0.5; cursor:not-allowed; box-shadow:none; }
   box-shadow:0 8px 20px rgba(0,0,0,.25);
   z-index:9999;
 }
+[dir="rtl"] #chatButton{ right:auto; left:25px; }
 
 #chatWindow{
   position:fixed;
@@ -165,9 +190,10 @@ button.submit:disabled{ opacity:0.5; cursor:not-allowed; box-shadow:none; }
   overflow:hidden;
   z-index:9999;
 }
+[dir="rtl"] #chatWindow{ right:auto; left:25px; }
 
 #chatHeader{
-  background:#c8862f;
+  background:#8b1e1e;
   color:white;
   padding:15px;
   font-weight:bold;
@@ -197,7 +223,7 @@ button.submit:disabled{ opacity:0.5; cursor:not-allowed; box-shadow:none; }
 #sendChat{
   width:80px;
   border:none;
-  background:#c8862f;
+  background:#8b1e1e;
   color:white;
   cursor:pointer;
 }
@@ -209,19 +235,26 @@ button.submit:disabled{ opacity:0.5; cursor:not-allowed; box-shadow:none; }
 }
 
 .user{
-  background:#c8862f;
+  background:#8b1e1e;
   color:white;
   margin-left:40px;
 }
+[dir="rtl"] .user{ margin-left:0; margin-right:40px; }
 
 .bot{
   background:#eee;
   margin-right:40px;
 }
+[dir="rtl"] .bot{ margin-right:0; margin-left:40px; }
 </style>
 </head>
 <body>
 <div class="card">
+  <div class="lang-toggle" id="langToggle">
+    <button type="button" data-lang="en" class="active">EN</button>
+    <button type="button" data-lang="ar">AR</button>
+  </div>
+
   <div class="title-wrap">
     <div class="crest">
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -229,52 +262,52 @@ button.submit:disabled{ opacity:0.5; cursor:not-allowed; box-shadow:none; }
         <path d="M5 10.5V15c0 1.5 3 3.5 7 3.5s7-2 7-3.5v-4.5l-7 3.18-7-3.18z" fill="#1b1712" opacity="0.75"/>
       </svg>
     </div>
-    <h1>Student Registration</h1>
+    <h1 data-i18n="title">Student Registration</h1>
     <hr class="divider">
   </div>
-  <p class="subtitle">Fill out the form to register. Your QR code will be sent to your WhatsApp after submission.</p>
+  <p class="subtitle" data-i18n="subtitle">Fill out the form to register. Your QR code will be sent to your WhatsApp after submission.</p>
 
   <form id="regForm" novalidate>
     <div class="field" id="fullNameField">
-      <label for="fullName">Full Name</label>
-      <input type="text" id="fullName" name="fullName" placeholder="Enter student's full name" required>
-      <div class="hint">Letters only, no numbers or symbols</div>
-      <div class="error-msg">Full name must contain letters only</div>
+      <label for="fullName" data-i18n="labelFullName">Full Name</label>
+      <input type="text" id="fullName" name="fullName" data-i18n-ph="phFullName" placeholder="Enter student's full name" required>
+      <div class="hint" data-i18n="hintName">Letters only, no numbers or symbols</div>
+      <div class="error-msg" data-i18n="errName">Full name must contain letters only</div>
     </div>
 
     <div class="field" id="studentPhoneField">
-      <label for="studentPhone">Student Phone <span class="note">(Must have WhatsApp)</span></label>
-      <input type="tel" id="studentPhone" name="studentPhone" inputmode="numeric" maxlength="11" placeholder="01xxxxxxxxx" required>
-      <div class="hint">11 digits, starting with 01 (e.g. 01012345678)</div>
-      <div class="error-msg">Enter a valid 11-digit number starting with 01</div>
+      <label for="studentPhone"><span data-i18n="labelStudentPhone">Student Phone</span> <span class="note" data-i18n="noteWhatsapp">(Must have WhatsApp)</span></label>
+      <input type="tel" id="studentPhone" name="studentPhone" inputmode="numeric" maxlength="11" data-i18n-ph="phPhone" placeholder="01xxxxxxxxx" required>
+      <div class="hint" data-i18n="hintPhone">11 digits, starting with 01 (e.g. 01012345678)</div>
+      <div class="error-msg" data-i18n="errPhone">Enter a valid 11-digit number starting with 01</div>
     </div>
 
     <div class="field" id="parentPhoneField">
-      <label for="parentPhone">Parent Phone</label>
-      <input type="tel" id="parentPhone" name="parentPhone" inputmode="numeric" maxlength="11" placeholder="01xxxxxxxxx" required>
-      <div class="hint">11 digits, starting with 01 (e.g. 01012345678)</div>
-      <div class="error-msg">Enter a valid 11-digit number starting with 01</div>
+      <label for="parentPhone" data-i18n="labelParentPhone">Parent Phone</label>
+      <input type="tel" id="parentPhone" name="parentPhone" inputmode="numeric" maxlength="11" data-i18n-ph="phPhone" placeholder="01xxxxxxxxx" required>
+      <div class="hint" data-i18n="hintPhone">11 digits, starting with 01 (e.g. 01012345678)</div>
+      <div class="error-msg" data-i18n="errPhone">Enter a valid 11-digit number starting with 01</div>
     </div>
 
     <div class="field">
-      <label for="stage">Educational Stage</label>
+      <label for="stage" data-i18n="labelStage">Educational Stage</label>
       <select id="stage" name="stage" required>
-        <option value="" disabled selected>Select an option ...</option>
-        <option value="Secondary">Secondary</option>
+        <option value="" disabled selected data-i18n="selectPlaceholder">Select an option ...</option>
+        <option value="Secondary" data-i18n="stageSecondary">Secondary</option>
       </select>
     </div>
 
     <div class="field">
-      <label for="grade">Grade</label>
+      <label for="grade" data-i18n="labelGrade">Grade</label>
       <select id="grade" name="grade" required>
-        <option value="" disabled selected>Select an option ...</option>
-        <option value="First Grade">First Grade</option>
-        <option value="Second Grade">Second Grade</option>
-        <option value="Third Grade">Third Grade</option>
+        <option value="" disabled selected data-i18n="selectPlaceholder">Select an option ...</option>
+        <option value="First Grade" data-i18n="gradeFirst">First Grade</option>
+        <option value="Second Grade" data-i18n="gradeSecond">Second Grade</option>
+        <option value="Third Grade" data-i18n="gradeThird">Third Grade</option>
       </select>
     </div>
 
-    <button type="submit" class="submit" id="submitBtn">Submit</button>
+    <button type="submit" class="submit" id="submitBtn" data-i18n="btnSubmit">Submit</button>
     <div class="status" id="status"></div>
   </form>
 
@@ -284,18 +317,18 @@ button.submit:disabled{ opacity:0.5; cursor:not-allowed; box-shadow:none; }
         <path d="M5 13l4 4L19 7" stroke="#12281f" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </div>
-    <h2>Registration Submitted!</h2>
-    <p>Thanks for registering. Your QR code will be sent to your WhatsApp shortly.</p>
+    <h2 data-i18n="successTitle">Registration Submitted!</h2>
+    <p data-i18n="successText">Thanks for registering. Your QR code will be sent to your WhatsApp shortly.</p>
     <div class="whatsapp-note">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M17.5 14.4c-.3-.1-1.7-.8-2-1-.3-.1-.5-.1-.6.1-.2.3-.7 1-.9 1.2-.2.2-.3.2-.6.1-.3-.1-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.2-.4.1-.2 0-.4 0-.5-.1-.1-.6-1.5-.8-2-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.5-.1 1.7-.7 1.9-1.3.2-.7.2-1.2.2-1.3-.1-.1-.3-.2-.6-.3z" fill="#2f9e73"/>
         <path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.5 1.3 5L2 22l5.2-1.4c1.4.8 3.1 1.2 4.8 1.2 5.5 0 10-4.5 10-10S17.5 2 12 2z" stroke="#2f9e73" stroke-width="1.4" fill="none"/>
       </svg>
-      Sent to your WhatsApp
+      <span data-i18n="whatsappNote">Sent to your WhatsApp</span>
     </div>
   </div>
 
-  <div class="powered-by">Powered by <span>Milestones Group</span></div>
+  <div class="powered-by"><span data-i18n="poweredBy">Powered by</span> <span>Milestones Group</span></div>
 </div>
 <!-- Chat Button -->
 <div id="chatButton">💬</div>
@@ -303,18 +336,129 @@ button.submit:disabled{ opacity:0.5; cursor:not-allowed; box-shadow:none; }
 <!-- Chat Window -->
 <div id="chatWindow">
   <div id="chatHeader">
-    Assistant
+    <span data-i18n="chatAssistant">Assistant</span>
     <span id="closeChat">✖</span>
   </div>
 
   <div id="chatMessages"></div>
 
   <div id="chatInputArea">
-    <input type="text" id="chatInput" placeholder="Ask about your schedule...">
-    <button id="sendChat">Send</button>
+    <input type="text" id="chatInput" data-i18n-ph="chatPlaceholder" placeholder="Ask about your schedule...">
+    <button id="sendChat" data-i18n="chatSend">Send</button>
   </div>
 </div>
 <script>
+/* ============================================================
+   LANGUAGE (English / Arabic) — UI text only.
+   Does NOT touch WEBHOOK_URL, CHAT_WEBHOOK, payload field names,
+   or any fetch/n8n logic below — those stay exactly as they were.
+   ============================================================ */
+const I18N = {
+  en: {
+    title: "Student Registration",
+    subtitle: "Fill out the form to register. Your QR code will be sent to your WhatsApp after submission.",
+    labelFullName: "Full Name",
+    phFullName: "Enter student's full name",
+    hintName: "Letters only, no numbers or symbols",
+    errName: "Full name must contain letters only",
+    labelStudentPhone: "Student Phone",
+    noteWhatsapp: "(Must have WhatsApp)",
+    phPhone: "01xxxxxxxxx",
+    hintPhone: "11 digits, starting with 01 (e.g. 01012345678)",
+    errPhone: "Enter a valid 11-digit number starting with 01",
+    labelParentPhone: "Parent Phone",
+    labelStage: "Educational Stage",
+    labelGrade: "Grade",
+    selectPlaceholder: "Select an option ...",
+    stageSecondary: "Secondary",
+    gradeFirst: "First Grade",
+    gradeSecond: "Second Grade",
+    gradeThird: "Third Grade",
+    btnSubmit: "Submit",
+    submitting: "Submitting...",
+    successTitle: "Registration Submitted!",
+    successText: "Thanks for registering. Your QR code will be sent to your WhatsApp shortly.",
+    whatsappNote: "Sent to your WhatsApp",
+    poweredBy: "Powered by",
+    chatAssistant: "Assistant",
+    chatPlaceholder: "Ask about your schedule...",
+    chatSend: "Send",
+    errGeneric: "Something went wrong while submitting. Please try again.",
+    errRegistrationFailed: "Registration failed.",
+    chatNoResponse: "No response",
+    chatServerError: "Server Error"
+  },
+  ar: {
+    title: "تسجيل الطلاب",
+    subtitle: "املأ النموذج للتسجيل. هيتم إرسال كود الـ QR بتاعك على الواتساب بعد التسجيل.",
+    labelFullName: "الاسم بالكامل",
+    phFullName: "اكتب اسم الطالب بالكامل",
+    hintName: "حروف فقط، من غير أرقام أو رموز",
+    errName: "الاسم لازم يكون حروف فقط",
+    labelStudentPhone: "رقم هاتف الطالب",
+    noteWhatsapp: "(لازم يكون عليه واتساب)",
+    phPhone: "01xxxxxxxxx",
+    hintPhone: "11 رقم، تبدأ بـ 01 (مثال: 01012345678)",
+    errPhone: "اكتب رقم صحيح مكوّن من 11 رقم يبدأ بـ 01",
+    labelParentPhone: "رقم هاتف ولي الأمر",
+    labelStage: "المرحلة الدراسية",
+    labelGrade: "الصف",
+    selectPlaceholder: "اختر ...",
+    stageSecondary: "المرحلة الثانوية",
+    gradeFirst: "الصف الأول الثانوي",
+    gradeSecond: "الصف الثاني الثانوي",
+    gradeThird: "الصف الثالث الثانوي",
+    btnSubmit: "تسجيل",
+    submitting: "جاري الإرسال...",
+    successTitle: "تم التسجيل بنجاح!",
+    successText: "شكرًا لتسجيلك. هيتم إرسال كود الـ QR بتاعك على الواتساب قريبًا.",
+    whatsappNote: "تم الإرسال على الواتساب",
+    poweredBy: "بدعم من",
+    chatAssistant: "المساعد",
+    chatPlaceholder: "اسأل عن جدولك...",
+    chatSend: "إرسال",
+    errGeneric: "حصل خطأ أثناء الإرسال. حاول تاني.",
+    errRegistrationFailed: "فشل التسجيل.",
+    chatNoResponse: "لا يوجد رد",
+    chatServerError: "خطأ في السيرفر"
+  }
+};
+
+let currentLang = localStorage.getItem("regLang") || "en";
+
+function t(key){
+  return (I18N[currentLang] && I18N[currentLang][key] != null) ? I18N[currentLang][key] : (I18N.en[key] || key);
+}
+
+function applyTranslations(){
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  document.querySelectorAll("[data-i18n-ph]").forEach(el => {
+    el.placeholder = t(el.dataset.i18nPh);
+  });
+}
+
+function setLanguage(lang){
+  currentLang = (lang === "ar") ? "ar" : "en";
+  localStorage.setItem("regLang", currentLang);
+  document.documentElement.lang = currentLang;
+  document.documentElement.dir = currentLang === "ar" ? "rtl" : "ltr";
+  document.querySelectorAll("#langToggle button").forEach(b => {
+    b.classList.toggle("active", b.dataset.lang === currentLang);
+  });
+  applyTranslations();
+}
+
+document.querySelectorAll("#langToggle button").forEach(btn => {
+  btn.addEventListener("click", () => setLanguage(btn.dataset.lang));
+});
+
+setLanguage(currentLang);
+
+/* ============================================================
+   FORM VALIDATION + SUBMISSION (unchanged n8n integration below)
+   ============================================================ */
 const WEBHOOK_URL = "https://helmet-handrail-skipper.ngrok-free.dev/webhook/Student_Registration";
 const phoneRegex = /^01[0-9]{9}$/; // 11 digits total, starts with 01
 
@@ -367,7 +511,7 @@ async function extractErrorMessage(res){
   try{
     rawText = await res.text();
   } catch(e){
-    return 'Something went wrong while submitting. Please try again.';
+    return t('errGeneric');
   }
 
   if (rawText){
@@ -384,7 +528,7 @@ async function extractErrorMessage(res){
 
   return res.statusText
     ? `Submission failed: ${res.statusText}`
-    : 'Something went wrong while submitting. Please try again.';
+    : t('errGeneric');
 }
 
 form.addEventListener('submit', async (e) => {
@@ -410,7 +554,7 @@ form.addEventListener('submit', async (e) => {
   };
 
   submitBtn.disabled = true;
-  submitBtn.textContent = 'Submitting...';
+  submitBtn.textContent = t('submitting');
 
   try{
     const res = await fetch(WEBHOOK_URL, {
@@ -432,17 +576,17 @@ if (data.success === true) {
 
 } else {
 
-  statusEl.textContent = data.message || "Registration failed.";
+  statusEl.textContent = data.message || t('errRegistrationFailed');
   statusEl.className = "status failure";
 
   submitBtn.disabled = false;
-  submitBtn.textContent = "Submit";
+  submitBtn.textContent = t('btnSubmit');
 }
   } catch(err){
-    statusEl.textContent = 'Something went wrong while submitting. Please try again.';
+    statusEl.textContent = t('errGeneric');
     statusEl.classList.add('failure');
     submitBtn.disabled = false;
-    submitBtn.textContent = 'Submit';
+    submitBtn.textContent = t('btnSubmit');
   }
 });
   const CHAT_WEBHOOK = "https://helmet-handrail-skipper.ngrok-free.dev/webhook-test/chatbot";
@@ -499,13 +643,13 @@ async function sendMessage(){
     data.output ||
     data.reply ||
     data.message ||
-    "No response",
+    t('chatNoResponse'),
     "bot"
 );
 
   }catch(e){
 
-    addMessage("Server Error","bot");
+    addMessage(t('chatServerError'),"bot");
 
   }
 
