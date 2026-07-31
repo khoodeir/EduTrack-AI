@@ -157,6 +157,43 @@
 
   .table-wrap{ overflow-x:auto; border:1px solid var(--line); border-radius:12px; display:none; }
   .table-wrap.show{ display:block; }
+  .table-scroll-controls{
+  display:none;
+  align-items:center;
+  justify-content:flex-start;
+  margin-bottom:8px;
+}
+
+.table-scroll-controls.show{
+  display:flex;
+}
+
+.table-scroll-arrows{
+  display:flex;
+  gap:6px;
+}
+
+.table-scroll-btn{
+  width:38px;
+  height:32px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:var(--card);
+  color:var(--gold-2);
+  font-size:20px;
+  font-weight:700;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:var(--shadow-sm);
+  transition:all .15s ease;
+}
+
+.table-scroll-btn:hover{
+  background:var(--gold-soft);
+  border-color:var(--gold);
+}
   table{ width:100%; border-collapse:collapse; font-size:12.5px; min-width:760px; }
   thead th{
     text-align:start; padding:12px 14px; background:var(--paper); color:var(--gold-2);
@@ -298,7 +335,19 @@
 
     <div id="resultsWrap" style="display:none;">
       <div class="result-count" id="resultCount"></div>
-      <div class="table-wrap show">
+      <div class="table-scroll-controls show">
+  <div class="table-scroll-arrows">
+    <button class="table-scroll-btn" onclick="scrollTable('right')" title="يمين">
+      ←
+    </button>
+
+    <button class="table-scroll-btn" onclick="scrollTable('left')" title="شمال">
+      →
+    </button>
+  </div>
+</div>
+
+<div class="table-wrap show" id="studentTableWrap">
         <table>
           <thead>
             <tr>
@@ -692,6 +741,19 @@
         </tr>`;
     }).join("");
   }
+
+  function scrollTable(direction){
+  const table = document.getElementById("studentTableWrap");
+
+  if(!table) return;
+
+  const amount = 350;
+
+  table.scrollBy({
+    left: direction === "right" ? -amount : amount,
+    behavior: "smooth"
+  });
+}
 
   /* ---------- Student exam-score trend ---------- */
   let studentTrendChartInstance = null;
