@@ -258,12 +258,22 @@
       <p id="brandSubtitle">ابحث عن طالب بالاسم أو رقم الهاتف، لكل صف</p>
     </div>
   </div>
-  <div class="topbar-actions">
-    <span class="updated-note" id="updatedNote"></span>
-    <button class="icon-toggle-btn" id="langToggleBtn" onclick="toggleLang()" title="Switch language">EN</button>
-    <button class="icon-toggle-btn" id="darkModeToggle" onclick="toggleDarkMode()" title="Dark mode">🌙</button>
-  </div>
+  ```html
+<div class="topbar-actions">
+  <span class="updated-note" id="updatedNote"></span>
+
+  <a href="index.html" class="scanner-btn" id="scannerBtn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M15 18l-6-6 6-6"/>
+    </svg>
+    <span id="scannerBtnText">الرجوع إلى الإسكانر</span>
+  </a>
+
+  <button class="icon-toggle-btn" id="langToggleBtn" onclick="toggleLang()" title="Switch language">EN</button>
+  <button class="icon-toggle-btn" id="darkModeToggle" onclick="toggleDarkMode()" title="Dark mode">🌙</button>
 </div>
+```
+
 
 <div class="wrap">
   <div class="panel">
