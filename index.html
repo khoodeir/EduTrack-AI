@@ -36,19 +36,19 @@
     and the card carries a faint ruled-paper texture instead of a plain flat surface.
   */
   :root{
-    --ink:#2c3a2a;
-    --ink-2:#182619;
-    --muted:#7d8676;
-    --paper:#efe9da;
-    --card:#fbf8f0;
+    --ink:#2d2d2b;
+    --ink-2:#161615;
+    --muted:#8b8b85;
+    --paper:#f4f2ec;
+    --card:#fbfaf6;
     --field:#ffffff;
-    --line:rgba(44,58,42,0.16);
-    --gold-rgb:171,125,51;
-    --gold-2-rgb:138,98,36;
+    --line:rgba(45,45,43,0.14);
+    --gold-rgb:139,32,34;
+    --gold-2-rgb:107,24,26;
     --gold:rgb(var(--gold-rgb));
     --gold-2:rgb(var(--gold-2-rgb));
-    --gold-soft:rgba(var(--gold-rgb),0.10);
-    --gold-soft-2:rgba(var(--gold-rgb),0.17);
+    --gold-soft:rgba(var(--gold-rgb),0.08);
+    --gold-soft-2:rgba(var(--gold-rgb),0.15);
     --success-rgb:38,110,102;
     --warning-rgb:180,120,30;
     --error-rgb:167,58,46;
@@ -58,11 +58,11 @@
     --success-soft:rgba(var(--success-rgb),0.13);
     --warning-soft:rgba(var(--warning-rgb),0.14);
     --error-soft:rgba(var(--error-rgb),0.13);
-    --cream-bg-1:#e6e0cf;
-    --cream-bg-2:#efe9da;
-    --surface-off:#e9e3d3;
+    --cream-bg-1:#e8e5dd;
+    --cream-bg-2:#f4f2ec;
+    --surface-off:#eeece4;
     --scrim:rgba(20,27,18,0.55);
-    --btn-ink:#fbf8f0;
+    --btn-ink:#fbfaf6;
     --shadow-sm:0 1px 3px rgba(30,35,20,0.08);
     --shadow-md:0 8px 24px rgba(30,35,20,0.10);
     --shadow-lg:0 22px 52px rgba(24,30,18,0.16);
@@ -73,26 +73,26 @@
   }
 
   :root[data-theme="dark"]{
-    --ink:#e9e4d4;
-    --ink-2:#f8f4e8;
-    --muted:#9aa494;
-    --paper:#0f1611;
-    --card:#161f18;
-    --field:#1c261e;
+    --ink:#e6e3da;
+    --ink-2:#f7f5ee;
+    --muted:#a3a29a;
+    --paper:#1a1a19;
+    --card:#242423;
+    --field:#2a2a29;
     --line:rgba(255,255,255,0.08);
-    --gold-rgb:209,165,76;
-    --gold-2-rgb:183,138,52;
-    --gold-soft:rgba(var(--gold-rgb),0.13);
-    --gold-soft-2:rgba(var(--gold-rgb),0.20);
+    --gold-rgb:196,68,62;
+    --gold-2-rgb:168,50,46;
+    --gold-soft:rgba(var(--gold-rgb),0.14);
+    --gold-soft-2:rgba(var(--gold-rgb),0.22);
     --success-rgb:98,178,168;
     --warning-rgb:224,171,84;
     --error-rgb:224,120,105;
     --success-soft:rgba(var(--success-rgb),0.16);
     --warning-soft:rgba(var(--warning-rgb),0.16);
     --error-soft:rgba(var(--error-rgb),0.16);
-    --cream-bg-1:#0f1611;
-    --cream-bg-2:#141d16;
-    --surface-off:#131c15;
+    --cream-bg-1:#1a1a19;
+    --cream-bg-2:#212120;
+    --surface-off:#1f1f1e;
     --scrim:rgba(0,0,0,0.62);
     --shadow-sm:0 1px 3px rgba(0,0,0,0.35);
     --shadow-md:0 8px 24px rgba(0,0,0,0.4);
@@ -329,7 +329,7 @@
     border-radius:9px; color:var(--ink);
     font-family:'Manrope',sans-serif; font-size:14px;
     outline:none; appearance:none; cursor:pointer;
-    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%23ab7d33'/></svg>");
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%238b2022'/></svg>");
     background-repeat:no-repeat; background-position:right 14px center;
   }
   html[dir="rtl"] .grade-field select{ font-family:'Tajawal',sans-serif; background-position:left 14px center; }
@@ -591,8 +591,8 @@
   .theme-option:hover{ transform:translateY(-2px); }
   .theme-option.selected{ border-color:var(--gold); box-shadow:0 0 0 3px var(--gold-soft); }
   .theme-swatch{ height:34px; border-radius:7px; margin-bottom:6px; }
-  .theme-swatch.light{ background:linear-gradient(135deg,#fbf8f0,#e6e0cf); border:1px solid rgba(44,58,42,0.2); }
-  .theme-swatch.dark{ background:linear-gradient(135deg,#161f18,#0f1611); border:1px solid rgba(255,255,255,0.1); }
+  .theme-swatch.light{ background:linear-gradient(135deg,#fbfaf6,#e8e5dd); border:1px solid rgba(45,45,43,0.18); }
+  .theme-swatch.dark{ background:linear-gradient(135deg,#242423,#1a1a19); border:1px solid rgba(255,255,255,0.1); }
   .theme-option-label{ font-size:12px; font-weight:600; color:var(--ink); }
   html[dir="rtl"] .theme-option-label{ font-family:'Tajawal',sans-serif; }
   .lang-toggle{
@@ -614,7 +614,7 @@
   }
   html[dir="rtl"] .modal input, html[dir="rtl"] .modal select{ font-family:'Tajawal',sans-serif; }
   .modal select{ cursor:pointer; appearance:none;
-    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%23ab7d33'/></svg>");
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%238b2022'/></svg>");
     background-repeat:no-repeat; background-position:right 14px center;
   }
   html[dir="rtl"] .modal select{ background-position:left 14px center; }
@@ -722,8 +722,8 @@
 
   <div class="icon-circle">
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 3L1 8l11 5 9-4.09V17h2V8L12 3z" fill="#182619"/>
-      <path d="M5 10.18V14c0 1.86 3.13 4 7 4s7-2.14 7-4v-3.82l-7 3.18-7-3.18z" fill="#182619"/>
+      <path d="M12 3L1 8l11 5 9-4.09V17h2V8L12 3z" fill="#2d2d2b"/>
+      <path d="M5 10.18V14c0 1.86 3.13 4 7 4s7-2.14 7-4v-3.82l-7 3.18-7-3.18z" fill="#2d2d2b"/>
     </svg>
   </div>
   <div class="eyebrow" data-i18n="eyebrow_scanner">Live scanner</div>
@@ -743,7 +743,7 @@
   onclick="window.location.href='https://khoodeir.github.io/EduTrack-AI/Manage_exams.html'">
   <span>📝</span> <span data-i18n="btn_exam">Exam</span>
  </button>
-    <button type="button" class="tool-btn" onclick="window.location.href='dashboard.html'"><span>📊</span> <span data-i18n="btn_dash">Dashboard</span></button>
+    <button type="button" class="tool-btn" onclick="window.location.href='dashboard.html'"><span>📊</span> <span data-i18n="btn_dash">Dash</span></button>
   </div>
 
   <div class="mode-toggle">
@@ -809,8 +809,8 @@
   <div class="auth-card">
     <div class="icon-circle">
       <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 3L1 8l11 5 9-4.09V17h2V8L12 3z" fill="#182619"/>
-        <path d="M5 10.18V14c0 1.86 3.13 4 7 4s7-2.14 7-4v-3.82l-7 3.18-7-3.18z" fill="#182619"/>
+        <path d="M12 3L1 8l11 5 9-4.09V17h2V8L12 3z" fill="#2d2d2b"/>
+        <path d="M5 10.18V14c0 1.86 3.13 4 7 4s7-2.14 7-4v-3.82l-7 3.18-7-3.18z" fill="#2d2d2b"/>
       </svg>
     </div>
     <div class="eyebrow" data-i18n="auth_eyebrow">Sign in</div>
