@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,7 +8,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
 <!-- Speed up navigation to the other two pages: fetch them into the browser cache in the background -->
 <link rel="prefetch" href="index.html">
 <link rel="prefetch" href="dashboard.html">
@@ -19,30 +19,47 @@
 <link rel="preconnect" href="https://evbjulsahncllewwvlxp.supabase.co">
 <style>
   :root{
-    --ink:#2c2116; --ink-2:#3a2f1c;
-    --paper:#f4ecd8; --card:#fdfaf1;
-    --line:rgba(185,129,47,0.22);
-    --gold:#b9812f; --gold-2:#a5701f; --gold-soft:rgba(185,129,47,0.13);
+    --ink:#262624; --ink-2:#3a3835;
+    --paper:#f2efe8; --card:#faf8f3;
+    --line:rgba(38,38,36,0.16);
+    --gold:#8b1f1f; --gold-2:#6f1818; --gold-soft:rgba(139,31,31,0.13);
     --success:#2e7d52; --success-soft:rgba(46,125,82,0.12);
-    --error:#a3342a; --error-soft:rgba(163,52,42,0.11);
-    --muted:#8a7a63;
-    --cream-bg-1:#f4ecd8; --cream-bg-2:#f9f3e4;
-    --shadow-sm:0 1px 2px rgba(120,90,40,0.08);
-    --shadow-md:0 8px 24px rgba(120,90,40,0.12);
-    --shadow-lg:0 20px 50px rgba(120,90,40,0.16);
+    --error:#8b1f1f; --error-soft:rgba(139,31,31,0.11);
+    --muted:#6d6c68;
+    --cream-bg-1:#f2efe8; --cream-bg-2:#f7f4ee;
+    --on-accent:#f6f2ea;
+    --shadow-sm:0 1px 2px rgba(40,40,38,0.10);
+    --shadow-md:0 8px 24px rgba(40,40,38,0.14);
+    --shadow-lg:0 20px 50px rgba(40,40,38,0.18);
+  }
+  body.dark{
+    --ink:#eeece7; --ink-2:#e2dfd8;
+    --paper:#1a1a1a; --card:#232323;
+    --line:rgba(238,236,231,0.14);
+    --gold:#c0392b; --gold-2:#9c2f24; --gold-soft:rgba(192,57,43,0.20);
+    --success:#3fa873; --success-soft:rgba(63,168,115,0.18);
+    --error:#c0392b; --error-soft:rgba(192,57,43,0.18);
+    --muted:#a3a09a;
+    --cream-bg-1:#1a1a1a; --cream-bg-2:#212121;
+    --on-accent:#f6f2ea;
+    --shadow-sm:0 1px 2px rgba(0,0,0,0.35);
+    --shadow-md:0 8px 24px rgba(0,0,0,0.45);
+    --shadow-lg:0 20px 50px rgba(0,0,0,0.55);
   }
   *{ margin:0; padding:0; box-sizing:border-box; }
   html,body{ height:100%; }
   body{
     font-family:'Inter',sans-serif;
     background:
-      radial-gradient(circle at 15% 10%, rgba(185,129,47,0.10), transparent 45%),
-      radial-gradient(circle at 85% 90%, rgba(185,129,47,0.08), transparent 45%),
+      radial-gradient(circle at 15% 10%, rgba(139,31,31,0.08), transparent 45%),
+      radial-gradient(circle at 85% 90%, rgba(139,31,31,0.06), transparent 45%),
       linear-gradient(160deg, var(--cream-bg-1), var(--cream-bg-2));
     color:var(--ink);
     min-height:100vh;
     padding:32px 24px 64px;
+    transition:background .2s ease, color .2s ease;
   }
+  [dir="rtl"] body{ font-family:'Cairo','Inter',sans-serif; }
   .num{ font-family:'Space Grotesk',sans-serif; }
 
   .topbar{
@@ -54,31 +71,44 @@
     width:46px; height:46px; border-radius:50%; flex-shrink:0;
     background:var(--gold); opacity:0.92;
     display:flex; align-items:center; justify-content:center;
-    box-shadow:0 8px 18px rgba(185,129,47,0.35);
+    box-shadow:0 8px 18px rgba(139,31,31,0.35);
   }
   .brand-mark svg{ width:22px; height:22px; }
+  .brand-mark svg path{ stroke:var(--on-accent) !important; }
   .brand-eyebrow{ font-size:10.5px; letter-spacing:0.14em; text-transform:uppercase; color:var(--gold); font-weight:700; margin-bottom:2px; }
+  [dir="rtl"] .brand-eyebrow{ letter-spacing:0; }
   .brand h1{ font-family:'Cormorant Garamond',serif; font-size:26px; font-weight:700; color:var(--gold-2); letter-spacing:-0.01em; }
+  [dir="rtl"] .brand h1{ font-family:'Cairo',serif; letter-spacing:0; }
   .brand p{ font-size:12.5px; color:var(--muted); margin-top:2px; }
-  .topbar-actions{ display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+  .topbar-actions{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
   .updated-note{ font-size:11.5px; color:var(--muted); display:flex; align-items:center; gap:6px; }
   .updated-note::before{ content:""; width:6px; height:6px; border-radius:50%; background:var(--success); box-shadow:0 0 0 3px var(--success-soft); }
   .scanner-btn{
     display:inline-flex; align-items:center; gap:8px;
     padding:11px 18px; border-radius:10px;
     background:linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%);
-    color:#241a05; font-family:'Inter',sans-serif; font-size:13px; font-weight:700;
-    text-decoration:none; box-shadow:0 6px 16px rgba(185,129,47,0.28);
+    color:var(--on-accent); font-family:'Inter',sans-serif; font-size:13px; font-weight:700;
+    text-decoration:none; box-shadow:0 6px 16px rgba(139,31,31,0.28);
     transition:transform .15s ease, box-shadow .15s ease;
     white-space:nowrap;
   }
-  .scanner-btn:hover{ transform:translateY(-1px); box-shadow:0 8px 20px rgba(185,129,47,0.35); }
+  .scanner-btn:hover{ transform:translateY(-1px); box-shadow:0 8px 20px rgba(139,31,31,0.35); }
   .scanner-btn svg{ width:16px; height:16px; flex-shrink:0; }
+
+  .icon-toggle-btn{
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width:42px; height:42px; padding:0 14px; border-radius:10px;
+    border:1px solid var(--line); background:var(--card); color:var(--ink);
+    font-family:'Inter',sans-serif; font-size:14px; font-weight:700; cursor:pointer;
+    transition:all .15s ease;
+  }
+  .icon-toggle-btn:hover{ border-color:var(--gold); color:var(--gold-2); }
 
   .wrap{ max-width:1100px; margin:0 auto; }
   .panel{
     background:var(--card); border:1px solid var(--line); border-radius:16px;
     padding:26px; box-shadow:var(--shadow-lg);
+    transition:background .2s ease, border-color .2s ease;
   }
 
   .controls{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:20px; }
@@ -94,19 +124,22 @@
     background:var(--paper); font-family:'Inter',sans-serif; font-size:13.5px; outline:none; color:var(--ink);
     transition:border-color .15s ease, box-shadow .15s ease;
   }
+  [dir="rtl"] .search-box input{ font-family:'Cairo','Inter',sans-serif; padding:11px 38px 11px 15px; }
   .search-box input:focus{ border-color:var(--gold); box-shadow:0 0 0 3px var(--gold-soft); }
   .search-box::before{
     content:"⌕"; position:absolute; left:13px; top:50%; transform:translateY(-50%);
     color:var(--muted); font-size:15px; pointer-events:none;
   }
+  [dir="rtl"] .search-box::before{ left:auto; right:13px; }
   .pay-filter{ display:flex; gap:6px; }
   .pay-filter button{
     padding:10px 14px; border-radius:9px; border:1px solid var(--line); background:var(--paper);
     color:var(--muted); font-family:'Inter',sans-serif; font-size:12px; font-weight:600; cursor:pointer;
     transition:all .15s ease;
   }
+  [dir="rtl"] .pay-filter button{ font-family:'Cairo','Inter',sans-serif; }
   .pay-filter button:hover{ border-color:var(--gold); color:var(--ink); }
-  .pay-filter button.active{ background:linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%); color:#241a05; border-color:var(--gold); }
+  .pay-filter button.active{ background:linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%); color:var(--on-accent); border-color:var(--gold); }
 
   .result-count{ font-size:12px; color:var(--muted); margin-bottom:12px; }
 
@@ -117,7 +150,7 @@
   .state-msg.show{ display:flex; }
   .state-msg.err{ color:var(--error); flex-direction:column; gap:9px; }
   .state-msg .spinner{
-    width:18px; height:18px; border-radius:50%; border:2px solid rgba(185,129,47,0.18);
+    width:18px; height:18px; border-radius:50%; border:2px solid rgba(139,31,31,0.18);
     border-top-color:var(--gold); animation:spin .7s linear infinite; flex-shrink:0;
   }
   @keyframes spin{ to{ transform:rotate(360deg); } }
@@ -126,30 +159,31 @@
   .table-wrap.show{ display:block; }
   table{ width:100%; border-collapse:collapse; font-size:12.5px; min-width:760px; }
   thead th{
-    text-align:left; padding:12px 14px; background:var(--paper); color:var(--gold-2);
+    text-align:start; padding:12px 14px; background:var(--paper); color:var(--gold-2);
     font-weight:700; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em;
     border-bottom:1px solid var(--line); white-space:nowrap;
   }
+  [dir="rtl"] thead th{ letter-spacing:0; }
   tbody td{ padding:11px 14px; border-bottom:1px solid var(--line); color:var(--ink); white-space:nowrap; }
   tbody tr:last-child td{ border-bottom:none; }
   tbody tr{ transition:background .12s ease; }
-  tbody tr:hover{ background:rgba(185,129,47,0.07); }
+  tbody tr:hover{ background:rgba(139,31,31,0.06); }
   .chip{ display:inline-block; padding:3px 10px; border-radius:999px; font-size:11px; font-weight:700; }
   .chip.paid{ background:var(--success-soft); color:var(--success); }
   .chip.unpaid{ background:var(--error-soft); color:var(--error); }
-  .bar-track{ width:70px; height:6px; border-radius:4px; background:rgba(185,129,47,0.12); display:inline-block; vertical-align:middle; margin-right:7px; }
+  .bar-track{ width:70px; height:6px; border-radius:4px; background:rgba(139,31,31,0.10); display:inline-block; vertical-align:middle; margin-inline-end:7px; }
   .bar-fill{ height:100%; border-radius:4px; background:var(--gold); }
   .phone-link{
     font-size:11px; color:var(--muted); text-decoration:none; display:inline-block;
-    padding:3px 8px; border-radius:6px; background:rgba(185,129,47,0.07); transition:all .15s ease;
+    padding:3px 8px; border-radius:6px; background:rgba(139,31,31,0.06); transition:all .15s ease;
   }
   .phone-link:hover{ color:var(--gold-2); background:var(--gold-soft); }
   .grade-chip{
-    font-size:9.5px; font-weight:700; color:var(--gold-2); background:rgba(185,129,47,0.12);
+    font-size:9.5px; font-weight:700; color:var(--gold-2); background:rgba(139,31,31,0.12);
     padding:2px 7px; border-radius:999px;
   }
   .trend-btn{
-    border:none; background:rgba(185,129,47,0.1); color:var(--gold-2); cursor:pointer;
+    border:none; background:rgba(139,31,31,0.09); color:var(--gold-2); cursor:pointer;
     font-family:'Inter',sans-serif; font-weight:700; font-size:13px; padding:6px 11px; border-radius:8px;
     transition:all .15s ease;
   }
@@ -160,7 +194,7 @@
 
   /* ===== Modal ===== */
   .modal-overlay{
-    display:none; position:fixed; inset:0; background:rgba(44,33,22,0.45); z-index:80;
+    display:none; position:fixed; inset:0; background:rgba(20,20,18,0.5); z-index:80;
     align-items:center; justify-content:center; padding:20px;
   }
   .modal-overlay.show{ display:flex; }
@@ -174,6 +208,7 @@
     display:flex; align-items:center; gap:9px;
     font-family:'Cormorant Garamond',serif; font-weight:700; font-size:18px; color:var(--gold-2);
   }
+  [dir="rtl"] .section-title{ font-family:'Cairo',serif; }
   .chart-box{ position:relative; height:260px; }
   .chart-empty{
     position:absolute; inset:0; display:none; align-items:center; justify-content:center;
@@ -211,18 +246,20 @@
   <div class="brand">
     <div class="brand-mark">
       <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M4 19V9.5L12 4L20 9.5V19" stroke="#241a05" stroke-width="1.8" stroke-linejoin="round"/>
-        <path d="M9 19V13H15V19" stroke="#241a05" stroke-width="1.8" stroke-linejoin="round"/>
+        <path d="M4 19V9.5L12 4L20 9.5V19" stroke-width="1.8" stroke-linejoin="round"/>
+        <path d="M9 19V13H15V19" stroke-width="1.8" stroke-linejoin="round"/>
       </svg>
     </div>
     <div>
-      <div class="brand-eyebrow">Student lookup</div>
-      <h1>Student Search</h1>
-      <p>Find a student by name or phone, per grade</p>
+      <div class="brand-eyebrow" id="brandEyebrow">بحث عن طالب</div>
+      <h1 id="brandTitle">بحث الطلاب</h1>
+      <p id="brandSubtitle">ابحث عن طالب بالاسم أو رقم الهاتف، لكل صف</p>
     </div>
   </div>
   <div class="topbar-actions">
     <span class="updated-note" id="updatedNote"></span>
+    <button class="icon-toggle-btn" id="langToggleBtn" onclick="toggleLang()" title="Switch language">EN</button>
+    <button class="icon-toggle-btn" id="darkModeToggle" onclick="toggleDarkMode()" title="Dark mode">🌙</button>
     <a class="scanner-btn" href="index.html">
       <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/>
@@ -230,7 +267,7 @@
         <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/>
         <path d="M14 14h7v7h-7z" stroke="currentColor" stroke-width="1.8"/>
       </svg>
-      Attendance Scanner
+      <span id="scannerBtnText">ماسح الحضور</span>
     </a>
   </div>
 </div>
@@ -239,23 +276,23 @@
   <div class="panel">
     <div class="controls">
       <select class="grade-select" id="gradeSelect" onchange="onGradeChange()">
-        <option value="all">All Grades</option>
-        <option value="first">First Secondary</option>
-        <option value="second">Second Secondary</option>
-        <option value="third">Third Secondary</option>
+        <option value="all" id="optGradeAll">كل الصفوف</option>
+        <option value="first" id="optGradeFirst">الصف الأول الثانوي</option>
+        <option value="second" id="optGradeSecond">الصف الثاني الثانوي</option>
+        <option value="third" id="optGradeThird">الصف الثالث الثانوي</option>
       </select>
       <div class="search-box">
-        <input type="text" id="searchInput" placeholder="Search by name or phone…" oninput="renderResults()">
+        <input type="text" id="searchInput" placeholder="ابحث بالاسم أو رقم الهاتف…" oninput="renderResults()">
       </div>
       <div class="pay-filter" id="payFilter">
-        <button class="active" data-f="all" onclick="setPayFilter('all')">All</button>
-        <button data-f="paid" onclick="setPayFilter('paid')">Paid</button>
-        <button data-f="unpaid" onclick="setPayFilter('unpaid')">Unpaid</button>
+        <button class="active" data-f="all" id="filterAllBtn" onclick="setPayFilter('all')">الكل</button>
+        <button data-f="paid" id="filterPaidBtn" onclick="setPayFilter('paid')">مدفوع</button>
+        <button data-f="unpaid" id="filterUnpaidBtn" onclick="setPayFilter('unpaid')">غير مدفوع</button>
       </div>
     </div>
 
     <div class="state-msg show" id="loadingMsg">
-      <span class="spinner"></span> Loading data from Supabase…
+      <span class="spinner"></span> <span id="loadingMsgText">جاري تحميل البيانات من Supabase…</span>
     </div>
     <div class="state-msg err" id="errorMsg"></div>
 
@@ -265,17 +302,17 @@
         <table>
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Grade</th>
-              <th>Present</th>
-              <th>Absent</th>
-              <th>Attendance Rate</th>
-              <th>Student Phone</th>
-              <th>Parent Phone</th>
-              <th>Payment</th>
-              <th>Last Attendance</th>
-              <th>Exams</th>
-              <th>Show QR</th>
+              <th id="thName">الاسم</th>
+              <th id="thGrade">الصف</th>
+              <th id="thPresent">حضور</th>
+              <th id="thAbsent">غياب</th>
+              <th id="thRate">نسبة الحضور</th>
+              <th id="thStudentPhone">هاتف الطالب</th>
+              <th id="thParentPhone">هاتف ولي الأمر</th>
+              <th id="thPayment">الدفع</th>
+              <th id="thLast">آخر حضور</th>
+              <th id="thExams">الامتحانات</th>
+              <th id="thQr">عرض QR</th>
             </tr>
           </thead>
           <tbody id="resultsBody"></tbody>
@@ -283,7 +320,7 @@
       </div>
     </div>
   </div>
-  <div class="footer-note">Data is read live from Supabase using a read-only anon key</div>
+  <div class="footer-note"><span id="footerNoteText">يتم قراءة البيانات مباشرة من Supabase باستخدام مفتاح للقراءة فقط</span></div>
 </div>
 
 <!-- Student exam trend modal -->
@@ -294,11 +331,11 @@
       <button class="modal-close" onclick="closeStudentTrendModal()">×</button>
     </div>
     <div class="state-msg show" id="trendLoadingMsg">
-      <span class="spinner"></span> Loading exam scores…
+      <span class="spinner"></span> <span id="trendLoadingMsgText"></span>
     </div>
     <div class="chart-box" style="display:none;" id="trendChartWrap">
       <canvas id="studentTrendChart"></canvas>
-      <div class="chart-empty" id="studentTrendEmpty">No exam scores recorded yet for this student</div>
+      <div class="chart-empty" id="studentTrendEmpty"></div>
     </div>
     <div id="studentTrendSummary" style="margin-top:14px; font-size:12.5px; color:var(--muted); text-align:center;"></div>
   </div>
@@ -312,7 +349,7 @@
       <button class="modal-close" onclick="closeStudentGradesModal()">×</button>
     </div>
     <div class="state-msg show" id="gradesLoadingMsg">
-      <span class="spinner"></span> Loading exam scores…
+      <span class="spinner"></span> <span id="gradesLoadingMsgText"></span>
     </div>
     <div id="studentGradesBody" style="display:none;"></div>
   </div>
@@ -326,7 +363,7 @@
       <button class="modal-close" onclick="closeStudentQrModal()">×</button>
     </div>
     <div class="state-msg show" id="qrLoadingMsg">
-      <span class="spinner"></span> Loading QR code…
+      <span class="spinner"></span> <span id="qrLoadingMsgText"></span>
     </div>
     <div id="studentQrBody" style="display:none;"></div>
   </div>
@@ -368,12 +405,95 @@
     col: { id: "id", examId: "exam_id", studentCode: "student_code", score: "score" }
   };
 
-  const GRADE_LABELS = { first: "First Secondary", second: "Second Secondary", third: "Third Secondary" };
   const GRADES = ["first", "second", "third"];
 
+  /* ============================================================
+     TRANSLATIONS — Arabic (default) & English
+     ============================================================ */
+  const translations = {
+    en: {
+      eyebrow: "Student lookup", title: "Student Search",
+      subtitle: "Find a student by name or phone, per grade",
+      scannerBtn: "Attendance Scanner",
+      updatedPrefix: "Last updated: ",
+      gradeAll: "All Grades", gradeFirst: "First Secondary", gradeSecond: "Second Secondary", gradeThird: "Third Secondary",
+      searchPlaceholder: "Search by name or phone…",
+      filterAll: "All", filterPaid: "Paid", filterUnpaid: "Unpaid",
+      loadingData: "Loading data from Supabase…",
+      resultCount: (n) => `${n} student${n === 1 ? "" : "s"} found`,
+      noResults: "No matching results",
+      thName: "Name", thGrade: "Grade", thPresent: "Present", thAbsent: "Absent", thRate: "Attendance Rate",
+      thStudentPhone: "Student Phone", thParentPhone: "Parent Phone", thPayment: "Payment", thLast: "Last Attendance",
+      thExams: "Exams", thQr: "Show QR",
+      paid: "Paid", unpaid: "Unpaid",
+      footer: "Data is read live from Supabase using a read-only anon key",
+      trendTitleSuffix: " — Exams", gradesTitleSuffix: " — Grades", qrTitleSuffix: " — QR Code",
+      loadingExams: "Loading exam scores…", loadingQr: "Loading QR code…",
+      onlyOneExam: "Only one exam recorded so far — add another exam score to see a trend",
+      noExamsYet: "No exam scores recorded yet for this student",
+      noExamsGrade: "No exams recorded yet for this grade",
+      notEntered: "Not entered", average: "Average",
+      improvedBy: (d) => `▲ Improved by ${d}%`,
+      droppedBy: (d) => `▼ Dropped by ${d}%`,
+      noChange: "— No change",
+      fromTo: (a, b) => `from "${a}" to "${b}"`,
+      couldntLoad: "Couldn't load data from Supabase",
+      commonCauses: "Common causes: the table/column names in SCHEMA don't match your database, or Row Level Security is enabled on these tables without a SELECT policy for the anon role.",
+      couldntLoadExams: "Couldn't load exam scores: ",
+      couldntLoadGrades: "Couldn't load grades: ",
+      noQrSaved: "No QR code saved for this student",
+      openFullSize: "Open Full Size",
+      couldntLoadQr: "Couldn't load the QR image",
+      student: "Student", dash: "—"
+    },
+    ar: {
+      eyebrow: "بحث عن طالب", title: "بحث الطلاب",
+      subtitle: "ابحث عن طالب بالاسم أو رقم الهاتف، لكل صف",
+      scannerBtn: "ماسح الحضور",
+      updatedPrefix: "آخر تحديث: ",
+      gradeAll: "كل الصفوف", gradeFirst: "الصف الأول الثانوي", gradeSecond: "الصف الثاني الثانوي", gradeThird: "الصف الثالث الثانوي",
+      searchPlaceholder: "ابحث بالاسم أو رقم الهاتف…",
+      filterAll: "الكل", filterPaid: "مدفوع", filterUnpaid: "غير مدفوع",
+      loadingData: "جاري تحميل البيانات من Supabase…",
+      resultCount: (n) => `تم العثور على ${n} طالب`,
+      noResults: "لا توجد نتائج مطابقة",
+      thName: "الاسم", thGrade: "الصف", thPresent: "حضور", thAbsent: "غياب", thRate: "نسبة الحضور",
+      thStudentPhone: "هاتف الطالب", thParentPhone: "هاتف ولي الأمر", thPayment: "الدفع", thLast: "آخر حضور",
+      thExams: "الامتحانات", thQr: "عرض QR",
+      paid: "مدفوع", unpaid: "غير مدفوع",
+      footer: "يتم قراءة البيانات مباشرة من Supabase باستخدام مفتاح للقراءة فقط",
+      trendTitleSuffix: " — الامتحانات", gradesTitleSuffix: " — الدرجات", qrTitleSuffix: " — رمز QR",
+      loadingExams: "جاري تحميل درجات الامتحانات…", loadingQr: "جاري تحميل رمز QR…",
+      onlyOneExam: "تم تسجيل امتحان واحد فقط حتى الآن — أضف درجة امتحان أخرى لعرض المنحنى",
+      noExamsYet: "لا توجد درجات امتحانات مسجلة لهذا الطالب بعد",
+      noExamsGrade: "لا توجد امتحانات مسجلة لهذا الصف بعد",
+      notEntered: "لم تُدخل", average: "المتوسط",
+      improvedBy: (d) => `▲ تحسن بنسبة ${d}%`,
+      droppedBy: (d) => `▼ انخفض بنسبة ${d}%`,
+      noChange: "— لا تغيير",
+      fromTo: (a, b) => `من "${a}" إلى "${b}"`,
+      couldntLoad: "تعذر تحميل البيانات من Supabase",
+      commonCauses: "الأسباب الشائعة: أسماء الجداول أو الأعمدة في SCHEMA لا تطابق قاعدة بياناتك، أو تفعيل Row Level Security على هذه الجداول بدون سياسة SELECT لدور anon.",
+      couldntLoadExams: "تعذر تحميل درجات الامتحانات: ",
+      couldntLoadGrades: "تعذر تحميل الدرجات: ",
+      noQrSaved: "لا يوجد رمز QR محفوظ لهذا الطالب",
+      openFullSize: "فتح بالحجم الكامل",
+      couldntLoadQr: "تعذر تحميل صورة QR",
+      student: "طالب", dash: "—"
+    }
+  };
+
+  let currentLang = "ar";
   let currentGrade = "all";
   let payFilterState = "all";
   let students = [];
+
+  function t(){ return translations[currentLang]; }
+
+  function gradeLabel(g){
+    const tr = t();
+    return { first: tr.gradeFirst, second: tr.gradeSecond, third: tr.gradeThird }[g] || tr.dash;
+  }
 
   function isPaid(status){
     const s = String(status ?? "").trim().toLowerCase();
@@ -383,6 +503,71 @@
     const a = Number(att) || 0, b = Number(abs) || 0;
     const total = a + b;
     return total > 0 ? Math.round((a / total) * 100) : null;
+  }
+
+  /* ---------- Language & dark mode ---------- */
+  function toggleLang(){
+    setLang(currentLang === "ar" ? "en" : "ar");
+  }
+
+  function setLang(lang){
+    currentLang = lang;
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+    document.getElementById("langToggleBtn").textContent = lang === "ar" ? "EN" : "AR";
+    applyStaticTranslations();
+    renderResults();
+    try{ localStorage.setItem("studentSearchLang", lang); }catch(e){}
+  }
+
+  function toggleDarkMode(){
+    const on = !document.body.classList.contains("dark");
+    document.body.classList.toggle("dark", on);
+    document.getElementById("darkModeToggle").textContent = on ? "☀️" : "🌙";
+    try{ localStorage.setItem("studentSearchDarkMode", on ? "1" : "0"); }catch(e){}
+  }
+
+  function applyStaticTranslations(){
+    const tr = t();
+    document.getElementById("brandEyebrow").textContent = tr.eyebrow;
+    document.getElementById("brandTitle").textContent = tr.title;
+    document.getElementById("brandSubtitle").textContent = tr.subtitle;
+    document.getElementById("scannerBtnText").textContent = tr.scannerBtn;
+    document.getElementById("optGradeAll").textContent = tr.gradeAll;
+    document.getElementById("optGradeFirst").textContent = tr.gradeFirst;
+    document.getElementById("optGradeSecond").textContent = tr.gradeSecond;
+    document.getElementById("optGradeThird").textContent = tr.gradeThird;
+    document.getElementById("searchInput").placeholder = tr.searchPlaceholder;
+    document.getElementById("filterAllBtn").textContent = tr.filterAll;
+    document.getElementById("filterPaidBtn").textContent = tr.filterPaid;
+    document.getElementById("filterUnpaidBtn").textContent = tr.filterUnpaid;
+    document.getElementById("thName").textContent = tr.thName;
+    document.getElementById("thGrade").textContent = tr.thGrade;
+    document.getElementById("thPresent").textContent = tr.thPresent;
+    document.getElementById("thAbsent").textContent = tr.thAbsent;
+    document.getElementById("thRate").textContent = tr.thRate;
+    document.getElementById("thStudentPhone").textContent = tr.thStudentPhone;
+    document.getElementById("thParentPhone").textContent = tr.thParentPhone;
+    document.getElementById("thPayment").textContent = tr.thPayment;
+    document.getElementById("thLast").textContent = tr.thLast;
+    document.getElementById("thExams").textContent = tr.thExams;
+    document.getElementById("thQr").textContent = tr.thQr;
+    document.getElementById("footerNoteText").textContent = tr.footer;
+    document.getElementById("loadingMsgText").textContent = tr.loadingData;
+
+    const updatedEl = document.getElementById("updatedNote");
+    if(updatedEl.dataset.time) updatedEl.textContent = tr.updatedPrefix + updatedEl.dataset.time;
+  }
+
+  function onGradeChange(){
+    currentGrade = document.getElementById("gradeSelect").value;
+    loadData();
+  }
+
+  function setPayFilter(f){
+    payFilterState = f;
+    document.querySelectorAll("#payFilter button").forEach(b => b.classList.toggle("active", b.dataset.f === f));
+    renderResults();
   }
 
   async function fetchGrade(grade){
@@ -416,17 +601,6 @@
     });
   }
 
-  function onGradeChange(){
-    currentGrade = document.getElementById("gradeSelect").value;
-    loadData();
-  }
-
-  function setPayFilter(f){
-    payFilterState = f;
-    document.querySelectorAll("#payFilter button").forEach(b => b.classList.toggle("active", b.dataset.f === f));
-    renderResults();
-  }
-
   async function loadData(){
     const loadingEl = document.getElementById("loadingMsg");
     const errorEl = document.getElementById("errorMsg");
@@ -447,16 +621,16 @@
 
       renderResults();
       resultsWrap.style.display = "block";
-      document.getElementById("updatedNote").textContent =
-        "Last updated: " + new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+      const timeStr = new Date().toLocaleTimeString(currentLang === "ar" ? "ar-EG" : "en-US", { hour: "2-digit", minute: "2-digit" });
+      document.getElementById("updatedNote").dataset.time = timeStr;
+      document.getElementById("updatedNote").textContent = t().updatedPrefix + timeStr;
     }catch(err){
       console.error(err);
       errorEl.innerHTML = `
-        <div style="font-weight:700;">Couldn't load data from Supabase</div>
+        <div style="font-weight:700;">${t().couldntLoad}</div>
         <div style="font-size:12px; max-width:520px;">
           ${err.message || err}<br><br>
-          Common causes: the table/column names in SCHEMA don't match your database,
-          or Row Level Security is enabled on these tables without a SELECT policy for the anon role.
+          ${t().commonCauses}
         </div>`;
       errorEl.classList.add("show");
     }finally{
@@ -465,6 +639,7 @@
   }
 
   function renderResults(){
+    const tr = t();
     const q = document.getElementById("searchInput").value.trim().toLowerCase();
     let rows = students;
 
@@ -480,12 +655,11 @@
       );
     }
 
-    document.getElementById("resultCount").textContent =
-      `${rows.length} student${rows.length === 1 ? "" : "s"} found`;
+    document.getElementById("resultCount").textContent = tr.resultCount(rows.length);
 
     const body = document.getElementById("resultsBody");
     if(!rows.length){
-      body.innerHTML = `<tr><td colspan="11" style="text-align:center; color:var(--muted); padding:24px;">No matching results</td></tr>`;
+      body.innerHTML = `<tr><td colspan="11" style="text-align:center; color:var(--muted); padding:24px;">${tr.noResults}</td></tr>`;
       return;
     }
 
@@ -497,23 +671,23 @@
       const safeQrUrl = (s.qrUrl || "").replace(/'/g, "\\'");
       return `
         <tr>
-          <td style="font-weight:600;">${s.name || "—"}</td>
-          <td><span class="grade-chip">${GRADE_LABELS[s.grade] || "—"}</span></td>
+          <td style="font-weight:600;">${s.name || tr.dash}</td>
+          <td><span class="grade-chip">${gradeLabel(s.grade)}</span></td>
           <td>${s.attendanceCount}</td>
           <td>${s.absenceCount}</td>
           <td>
-            ${p != null ? `<span class="bar-track"><span class="bar-fill" style="width:${p}%;"></span></span>${p}%` : "—"}
+            ${p != null ? `<span class="bar-track"><span class="bar-fill" style="width:${p}%;"></span></span>${p}%` : tr.dash}
           </td>
-          <td>${s.studentPhone ? `<a class="phone-link" href="tel:${s.studentPhone}">${s.studentPhone}</a>` : "—"}</td>
-          <td>${s.parentPhone ? `<a class="phone-link" href="tel:${s.parentPhone}">${s.parentPhone}</a>` : "—"}</td>
-          <td>${hasPaymentRecord ? `<span class="chip ${paid ? 'paid' : 'unpaid'}">${paid ? 'Paid' : 'Unpaid'}</span>` : "—"}</td>
-          <td>${s.lastAttendance || "—"}</td>
+          <td>${s.studentPhone ? `<a class="phone-link" href="tel:${s.studentPhone}">${s.studentPhone}</a>` : tr.dash}</td>
+          <td>${s.parentPhone ? `<a class="phone-link" href="tel:${s.parentPhone}">${s.parentPhone}</a>` : tr.dash}</td>
+          <td>${hasPaymentRecord ? `<span class="chip ${paid ? 'paid' : 'unpaid'}">${paid ? tr.paid : tr.unpaid}</span>` : tr.dash}</td>
+          <td>${s.lastAttendance || tr.dash}</td>
           <td style="display:flex; gap:6px;">
-            <button class="trend-btn" onclick="showStudentTrend('${s.qrCode}','${s.grade}','${safeName}')" title="Show exam scores">📈</button>
-            <button class="trend-btn" onclick="showStudentGrades('${s.qrCode}','${s.grade}','${safeName}')" title="Show exam scores list">📋</button>
+            <button class="trend-btn" onclick="showStudentTrend('${s.qrCode}','${s.grade}','${safeName}')" title="${tr.thExams}">📈</button>
+            <button class="trend-btn" onclick="showStudentGrades('${s.qrCode}','${s.grade}','${safeName}')" title="${tr.thExams}">📋</button>
           </td>
           <td>
-            <button class="trend-btn" onclick="showStudentQr('${safeQrUrl}','${safeName}')" title="Show QR code">🔳</button>
+            <button class="trend-btn" onclick="showStudentQr('${safeQrUrl}','${safeName}')" title="${tr.thQr}">🔳</button>
           </td>
         </tr>`;
     }).join("");
@@ -522,7 +696,19 @@
   /* ---------- Student exam-score trend ---------- */
   let studentTrendChartInstance = null;
 
+  function chartThemeColors(){
+    const dark = document.body.classList.contains("dark");
+    return {
+      line: dark ? "rgba(192,57,43,0.95)" : "rgba(139,31,31,0.9)",
+      fill: dark ? "rgba(192,57,43,0.20)" : "rgba(139,31,31,0.15)",
+      point: dark ? "rgba(192,57,43,1)" : "rgba(139,31,31,1)",
+      grid: dark ? "rgba(238,236,231,0.10)" : "rgba(139,31,31,0.08)",
+      tick: dark ? "#eeece7" : "#262624"
+    };
+  }
+
   async function showStudentTrend(qrCode, grade, name){
+    const tr = t();
     const overlay = document.getElementById("studentTrendModalOverlay");
     const loadingEl = document.getElementById("trendLoadingMsg");
     const chartWrap = document.getElementById("trendChartWrap");
@@ -530,7 +716,8 @@
     const emptyEl = document.getElementById("studentTrendEmpty");
     const summaryEl = document.getElementById("studentTrendSummary");
 
-    document.getElementById("studentTrendTitle").textContent = `${name || "Student"} — Exams`;
+    document.getElementById("studentTrendTitle").textContent = `${name || tr.student}${tr.trendTitleSuffix}`;
+    document.getElementById("trendLoadingMsgText").textContent = tr.loadingExams;
     loadingEl.classList.add("show");
     chartWrap.style.display = "none";
     emptyEl.classList.remove("show");
@@ -573,9 +760,7 @@
 
       if(points.length < 2){
         canvas.style.display = "none";
-        emptyEl.textContent = points.length === 1
-          ? "Only one exam recorded so far — add another exam score to see a trend"
-          : "No exam scores recorded yet for this student";
+        emptyEl.textContent = points.length === 1 ? tr.onlyOneExam : tr.noExamsYet;
         emptyEl.classList.add("show");
         return;
       }
@@ -583,6 +768,7 @@
       canvas.style.display = "block";
       emptyEl.classList.remove("show");
 
+      const colors = chartThemeColors();
       studentTrendChartInstance = new Chart(canvas, {
         type: "line",
         data: {
@@ -590,9 +776,9 @@
           datasets: [{
             label: "Score",
             data: points.map(p => p.pct),
-            borderColor: "rgba(185,129,47,0.9)",
-            backgroundColor: "rgba(185,129,47,0.15)",
-            fill: true, tension: 0.3, pointRadius: 4, pointBackgroundColor: "rgba(185,129,47,1)"
+            borderColor: colors.line,
+            backgroundColor: colors.fill,
+            fill: true, tension: 0.3, pointRadius: 4, pointBackgroundColor: colors.point
           }]
         },
         options: {
@@ -605,24 +791,25 @@
             } } }
           },
           scales: {
-            y: { beginAtZero: true, max: 100, ticks: { callback: v => v + "%", font: { size: 10 } }, grid: { color: "rgba(185,129,47,0.08)" } },
-            x: { ticks: { font: { size: 10 } }, grid: { display: false } }
+            y: { beginAtZero: true, max: 100, ticks: { callback: v => v + "%", font: { size: 10 }, color: colors.tick }, grid: { color: colors.grid } },
+            x: { ticks: { font: { size: 10 }, color: colors.tick }, grid: { display: false } }
           }
         }
       });
 
       const first = points[0].pct, last = points[points.length - 1].pct;
       const diff = last - first;
-      if(diff > 0) summaryEl.innerHTML = `<span class="delta-badge up">▲ Improved by ${diff}%</span> from "${points[0].examName}" to "${points[points.length-1].examName}"`;
-      else if(diff < 0) summaryEl.innerHTML = `<span class="delta-badge down">▼ Dropped by ${Math.abs(diff)}%</span> from "${points[0].examName}" to "${points[points.length-1].examName}"`;
-      else summaryEl.innerHTML = `<span class="delta-badge flat">— No change</span> from "${points[0].examName}" to "${points[points.length-1].examName}"`;
+      const fromToStr = tr.fromTo(points[0].examName, points[points.length - 1].examName);
+      if(diff > 0) summaryEl.innerHTML = `<span class="delta-badge up">${tr.improvedBy(diff)}</span> ${fromToStr}`;
+      else if(diff < 0) summaryEl.innerHTML = `<span class="delta-badge down">${tr.droppedBy(Math.abs(diff))}</span> ${fromToStr}`;
+      else summaryEl.innerHTML = `<span class="delta-badge flat">${tr.noChange}</span> ${fromToStr}`;
 
     }catch(err){
       console.error(err);
       loadingEl.classList.remove("show");
       chartWrap.style.display = "block";
       canvas.style.display = "none";
-      emptyEl.textContent = "Couldn't load exam scores: " + (err.message || err);
+      emptyEl.textContent = tr.couldntLoadExams + (err.message || err);
       emptyEl.classList.add("show");
     }
   }
@@ -633,11 +820,13 @@
 
   /* ---------- Student exam grades — plain list (no chart) ---------- */
   async function showStudentGrades(qrCode, grade, name){
+    const tr = t();
     const overlay = document.getElementById("studentGradesModalOverlay");
     const loadingEl = document.getElementById("gradesLoadingMsg");
     const bodyEl = document.getElementById("studentGradesBody");
 
-    document.getElementById("studentGradesTitle").textContent = `${name || "Student"} — Grades`;
+    document.getElementById("studentGradesTitle").textContent = `${name || tr.student}${tr.gradesTitleSuffix}`;
+    document.getElementById("gradesLoadingMsgText").textContent = tr.loadingExams;
     loadingEl.classList.add("show");
     bodyEl.style.display = "none";
     bodyEl.innerHTML = "";
@@ -676,7 +865,7 @@
       bodyEl.style.display = "block";
 
       if(!rows.length){
-        bodyEl.innerHTML = `<div class="empty-note" style="text-align:center; color:var(--muted); padding:24px 0;">No exams recorded yet for this grade</div>`;
+        bodyEl.innerHTML = `<div style="text-align:center; color:var(--muted); padding:24px 0;">${tr.noExamsGrade}</div>`;
         return;
       }
 
@@ -688,21 +877,21 @@
           <div class="grade-list-row">
             <span class="exam-name">${r.examName}</span>
             <span class="exam-score">
-              ${r.raw != null ? `${r.raw} / ${r.max}` : `<span style="color:var(--muted); font-weight:600;">Not entered</span>`}
+              ${r.raw != null ? `${r.raw} / ${r.max}` : `<span style="color:var(--muted); font-weight:600;">${tr.notEntered}</span>`}
               ${r.pct != null ? `<span class="exam-pct">${r.pct}%</span>` : ""}
             </span>
           </div>
         `).join("") +
         `<div class="grades-avg-row">
-          <span style="font-weight:700; color:var(--gold-2);">Average</span>
-          <span class="exam-score">${avg != null ? avg + "%" : "—"}</span>
+          <span style="font-weight:700; color:var(--gold-2);">${tr.average}</span>
+          <span class="exam-score">${avg != null ? avg + "%" : tr.dash}</span>
         </div>`;
 
     }catch(err){
       console.error(err);
       loadingEl.classList.remove("show");
       bodyEl.style.display = "block";
-      bodyEl.innerHTML = `<div style="color:var(--error); font-size:12.5px; text-align:center; padding:16px 0;">Couldn't load grades: ${err.message || err}</div>`;
+      bodyEl.innerHTML = `<div style="color:var(--error); font-size:12.5px; text-align:center; padding:16px 0;">${tr.couldntLoadGrades}${err.message || err}</div>`;
     }
   }
 
@@ -712,11 +901,13 @@
 
   /* ---------- Student QR code ---------- */
   function showStudentQr(qrUrl, name){
+    const tr = t();
     const overlay = document.getElementById("studentQrModalOverlay");
     const loadingEl = document.getElementById("qrLoadingMsg");
     const bodyEl = document.getElementById("studentQrBody");
 
-    document.getElementById("studentQrTitle").textContent = `${name || "Student"} — QR Code`;
+    document.getElementById("studentQrTitle").textContent = `${name || tr.student}${tr.qrTitleSuffix}`;
+    document.getElementById("qrLoadingMsgText").textContent = tr.loadingQr;
     bodyEl.style.display = "none";
     bodyEl.innerHTML = "";
     loadingEl.classList.add("show");
@@ -725,7 +916,7 @@
     if(!qrUrl){
       loadingEl.classList.remove("show");
       bodyEl.style.display = "block";
-      bodyEl.innerHTML = `<div style="text-align:center; color:var(--muted); padding:24px 0;">No QR code saved for this student</div>`;
+      bodyEl.innerHTML = `<div style="text-align:center; color:var(--muted); padding:24px 0;">${tr.noQrSaved}</div>`;
       return;
     }
 
@@ -733,14 +924,32 @@
     bodyEl.style.display = "block";
     bodyEl.innerHTML = `
       <div class="qr-wrap">
-        <img src="${qrUrl}" alt="Student QR code" onerror="this.parentElement.innerHTML='<div style=&quot;color:var(--error); font-size:12.5px; text-align:center;&quot;>Couldn\\'t load the QR image</div>';">
-        <a class="scanner-btn" href="${qrUrl}" target="_blank" rel="noopener">Open Full Size</a>
+        <img src="${qrUrl}" alt="Student QR code" onerror="this.parentElement.innerHTML='<div style=&quot;color:var(--error); font-size:12.5px; text-align:center;&quot;>${tr.couldntLoadQr}</div>';">
+        <a class="scanner-btn" href="${qrUrl}" target="_blank" rel="noopener">${tr.openFullSize}</a>
       </div>`;
   }
 
   function closeStudentQrModal(){
     document.getElementById("studentQrModalOverlay").classList.remove("show");
   }
+
+  /* ---------- Init: restore saved language / dark-mode preference ---------- */
+  (function init(){
+    let savedLang = "ar", savedDark = false;
+    try{
+      savedLang = localStorage.getItem("studentSearchLang") || "ar";
+      savedDark = localStorage.getItem("studentSearchDarkMode") === "1";
+    }catch(e){}
+    currentLang = savedLang;
+    document.documentElement.lang = currentLang;
+    document.documentElement.dir = currentLang === "ar" ? "rtl" : "ltr";
+    document.getElementById("langToggleBtn").textContent = currentLang === "ar" ? "EN" : "AR";
+    if(savedDark){
+      document.body.classList.add("dark");
+      document.getElementById("darkModeToggle").textContent = "☀️";
+    }
+    applyStaticTranslations();
+  })();
 
   loadData();
 </script>
