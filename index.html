@@ -150,7 +150,7 @@
     transform:rotate(-4deg);
     box-shadow:0 6px 16px rgba(var(--gold-rgb),0.22);
   }
-  .icon-circle svg{ width:24px; height:24px; transform:rotate(4deg); }
+  .icon-circle svg{ width:24px; height:24px; transform:rotate(4deg); color:var(--ink-2); }
 
   .header-actions{
     position:absolute; top:18px; left:0; right:0; padding:0 22px;
@@ -722,8 +722,8 @@
 
   <div class="icon-circle">
     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 3L1 8l11 5 9-4.09V17h2V8L12 3z" fill="#2d2d2b"/>
-      <path d="M5 10.18V14c0 1.86 3.13 4 7 4s7-2.14 7-4v-3.82l-7 3.18-7-3.18z" fill="#2d2d2b"/>
+      <path d="M12 3L1 8l11 5 9-4.09V17h2V8L12 3z" fill="currentColor"/>
+      <path d="M5 10.18V14c0 1.86 3.13 4 7 4s7-2.14 7-4v-3.82l-7 3.18-7-3.18z" fill="currentColor"/>
     </svg>
   </div>
   <div class="eyebrow" data-i18n="eyebrow_scanner">Live scanner</div>
@@ -809,8 +809,8 @@
   <div class="auth-card">
     <div class="icon-circle">
       <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 3L1 8l11 5 9-4.09V17h2V8L12 3z" fill="#2d2d2b"/>
-        <path d="M5 10.18V14c0 1.86 3.13 4 7 4s7-2.14 7-4v-3.82l-7 3.18-7-3.18z" fill="#2d2d2b"/>
+        <path d="M12 3L1 8l11 5 9-4.09V17h2V8L12 3z" fill="currentColor"/>
+        <path d="M5 10.18V14c0 1.86 3.13 4 7 4s7-2.14 7-4v-3.82l-7 3.18-7-3.18z" fill="currentColor"/>
       </svg>
     </div>
     <div class="eyebrow" data-i18n="auth_eyebrow">Sign in</div>
@@ -1844,6 +1844,7 @@
   renderSessionBar();
   renderThemeOptions();
   renderLangButtons();
+  setLanguage(currentLang);
 
   initAuth();
 
