@@ -38,6 +38,11 @@
     --shadow-sm:0 1px 3px rgba(107,66,38,0.06);
     --shadow-md:0 8px 24px rgba(107,66,38,0.08);
     --shadow-lg:0 20px 50px rgba(107,66,38,0.10);
+    /* aliases so every component in this file resolves to the same warm
+       brown/cream palette used on the dashboard */
+    --accent:var(--gold);
+    --accent-2:var(--gold-2);
+    --glass-border:var(--line);
   }
   *{ margin:0; padding:0; box-sizing:border-box; }
   body{
@@ -189,9 +194,6 @@
     background:linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%);
     color:#ffffff;
     box-shadow:0 4px 12px rgba(139,94,60,0.2);
-  }
-    background:var(--accent);
-    color:var(--ink);
   }
   .mode-btn:not(.active):hover{ color:var(--accent); }
 
@@ -520,16 +522,8 @@
 
   @media (prefers-reduced-motion: reduce){
     .scan-line, .dot, .result-check, .spinner, .session-pulse, .container{
-    width:100%; max-width:480px;
-    background:var(--card);
-    border:1px solid var(--line);
-    border-radius:24px;
-    padding:48px 32px 32px;
-    text-align:center;
-    position:relative;
-    box-shadow:var(--shadow-lg);
-    animation:containerIn .4s ease;
-  }
+      animation:none !important;
+    }
   }
 
   .auth-overlay{
@@ -603,7 +597,6 @@
   </div>
   <div class="eyebrow">Live scanner</div>
   <h1>Student Attendance System</h1>
-  <h2 id="centerNameDisplay"></h2>
 
   <div class="session-bar" id="sessionBar">
     <button type="button" class="start-session-btn" id="startSessionBtn" onclick="startSession()">
@@ -619,7 +612,7 @@
   onclick="window.location.href='https://khoodeir.github.io/EduTrack-AI/Manage_exams.html'">
   <span>📝</span> Exam
  </button>
-    <button type="button" class="tool-btn" onclick="openDashboardGate()"><span>📊</span> Dash</button>
+    <button type="button" class="tool-btn" onclick="window.location.href='dashboard.html'"><span>📊</span> Dash</button>
   </div>
 
   <div class="mode-toggle">
@@ -727,9 +720,6 @@
       <div class="modal-title">Settings</div>
       <button class="modal-close" onclick="closeModal('settingsModal')">×</button>
     </div>
-    <label for="setCenterName">Center Name</label>
-    <input type="text" id="setCenterName" placeholder="e.g. Al Noor Center">
-
     <label for="setDefaultFee">Default Payment Amount (EGP)</label>
     <input type="number" id="setDefaultFee" placeholder="e.g. 300" min="0">
 
@@ -740,48 +730,7 @@
       <option value="third">Third Secondary</option>
     </select>
 
-    <label for="setAccentColor">Accent Color</label>
-    <input type="color" id="setAccentColor" value="#b9812f">
-
     <button class="modal-btn" onclick="saveSettings()">Save Settings</button>
-  </div>
-</div>
-
-<div class="modal-overlay" id="dashboardGateModal">
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title" id="dashboardGateTitle">🔒 Dashboard Access</div>
-      <button class="modal-close" onclick="closeDashboardGate()">×</button>
-    </div>
-
-    <div id="dashGateEnterSection">
-      <label for="dashboardPasswordInput">Password</label>
-      <input type="password" id="dashboardPasswordInput" placeholder="Enter password" autocomplete="off">
-      <div class="modal-error" id="dashboardGateError"></div>
-      <button class="modal-btn" onclick="checkDashboardPassword()">Open Dashboard</button>
-      <button type="button" class="link-btn" onclick="showChangePasswordForm()">Change Password</button>
-    </div>
-
-    <div id="dashGateSetSection" style="display:none;">
-      <label for="dashboardNewPasswordInput">Create a Password</label>
-      <input type="password" id="dashboardNewPasswordInput" placeholder="New password" autocomplete="off">
-      <label for="dashboardNewPasswordConfirm">Confirm Password</label>
-      <input type="password" id="dashboardNewPasswordConfirm" placeholder="Confirm password" autocomplete="off">
-      <div class="modal-error" id="dashboardSetError"></div>
-      <button class="modal-btn" onclick="setDashboardPassword()">Save Password</button>
-    </div>
-
-    <div id="dashGateChangeSection" style="display:none;">
-      <label for="dashboardCurrentPasswordInput">Current Password</label>
-      <input type="password" id="dashboardCurrentPasswordInput" placeholder="Current password" autocomplete="off">
-      <label for="dashboardChangeNewInput">New Password</label>
-      <input type="password" id="dashboardChangeNewInput" placeholder="New password" autocomplete="off">
-      <label for="dashboardChangeConfirmInput">Confirm New Password</label>
-      <input type="password" id="dashboardChangeConfirmInput" placeholder="Confirm new password" autocomplete="off">
-      <div class="modal-error" id="dashboardChangeError"></div>
-      <button class="modal-btn" onclick="submitChangePassword()">Save New Password</button>
-      <button type="button" class="link-btn" onclick="cancelChangePassword()">Cancel</button>
-    </div>
   </div>
 </div>
 
@@ -817,149 +766,6 @@
     const hasTZ = /Z$|[+-]\d{2}:?\d{2}$/.test(ts);
     return new Date(hasTZ ? ts : ts + 'Z').getTime();
   }
-
-  const DASHBOARD_URL = "dashboard.html";
-  const DASH_PW_KEY = "scanner_dashboard_pw_hash";
-
-  function simpleHash(str){
-    let hash = 0;
-    for(let i = 0; i < str.length; i++){
-      hash = ((hash << 5) - hash) + str.charCodeAt(i);
-      hash |= 0;
-    }
-    return String(hash);
-  }
-
-  function getStoredPasswordHash(){
-    try{ return localStorage.getItem(DASH_PW_KEY); }catch(e){ return null; }
-  }
-
-  function storePasswordHash(hash){
-    try{ localStorage.setItem(DASH_PW_KEY, hash); return true; }catch(e){ return false; }
-  }
-
-  function openDashboardGate(){
-    document.getElementById('dashboardGateError').textContent = "";
-    document.getElementById('dashboardSetError').textContent = "";
-    document.getElementById('dashboardPasswordInput').value = "";
-    document.getElementById('dashboardNewPasswordInput').value = "";
-    document.getElementById('dashboardNewPasswordConfirm').value = "";
-
-    if(getStoredPasswordHash()){
-      showEnterPasswordForm();
-    } else {
-      showSetPasswordForm();
-    }
-    openModal('dashboardGateModal');
-  }
-
-  function closeDashboardGate(){
-    closeModal('dashboardGateModal');
-  }
-
-  function showEnterPasswordForm(){
-    document.getElementById('dashboardGateTitle').textContent = "🔒 Dashboard Access";
-    document.getElementById('dashGateEnterSection').style.display = "";
-    document.getElementById('dashGateSetSection').style.display = "none";
-    document.getElementById('dashGateChangeSection').style.display = "none";
-    document.getElementById('dashboardGateError').textContent = "";
-    document.getElementById('dashboardPasswordInput').value = "";
-    setTimeout(()=> document.getElementById('dashboardPasswordInput').focus(), 50);
-  }
-
-  function showSetPasswordForm(){
-    document.getElementById('dashboardGateTitle').textContent = "🔒 Set a Dashboard Password";
-    document.getElementById('dashGateEnterSection').style.display = "none";
-    document.getElementById('dashGateSetSection').style.display = "";
-    document.getElementById('dashGateChangeSection').style.display = "none";
-    setTimeout(()=> document.getElementById('dashboardNewPasswordInput').focus(), 50);
-  }
-
-  function showChangePasswordForm(){
-    document.getElementById('dashboardGateTitle').textContent = "🔒 Change Password";
-    document.getElementById('dashGateEnterSection').style.display = "none";
-    document.getElementById('dashGateSetSection').style.display = "none";
-    document.getElementById('dashGateChangeSection').style.display = "";
-    document.getElementById('dashboardCurrentPasswordInput').value = "";
-    document.getElementById('dashboardChangeNewInput').value = "";
-    document.getElementById('dashboardChangeConfirmInput').value = "";
-    document.getElementById('dashboardChangeError').textContent = "";
-    setTimeout(()=> document.getElementById('dashboardCurrentPasswordInput').focus(), 50);
-  }
-
-  function cancelChangePassword(){
-    showEnterPasswordForm();
-  }
-
-  function setDashboardPassword(){
-    const pw = document.getElementById('dashboardNewPasswordInput').value;
-    const confirmPw = document.getElementById('dashboardNewPasswordConfirm').value;
-    const errEl = document.getElementById('dashboardSetError');
-    if(!pw){
-      errEl.textContent = "Please enter a password";
-      return;
-    }
-    if(pw !== confirmPw){
-      errEl.textContent = "Passwords don't match";
-      return;
-    }
-    if(!storePasswordHash(simpleHash(pw))){
-      errEl.textContent = "Couldn't save the password on this device";
-      return;
-    }
-    closeDashboardGate();
-    window.location.href = DASHBOARD_URL;
-  }
-
-  function checkDashboardPassword(){
-    const entered = document.getElementById('dashboardPasswordInput').value;
-    const stored = getStoredPasswordHash();
-    if(stored && simpleHash(entered) === stored){
-      closeDashboardGate();
-      window.location.href = DASHBOARD_URL;
-    } else {
-      document.getElementById('dashboardGateError').textContent = "Wrong password";
-    }
-  }
-
-  function submitChangePassword(){
-    const current = document.getElementById('dashboardCurrentPasswordInput').value;
-    const newPw = document.getElementById('dashboardChangeNewInput').value;
-    const confirmPw = document.getElementById('dashboardChangeConfirmInput').value;
-    const errEl = document.getElementById('dashboardChangeError');
-    const stored = getStoredPasswordHash();
-
-    if(!stored || simpleHash(current) !== stored){
-      errEl.textContent = "Current password is incorrect";
-      return;
-    }
-    if(!newPw){
-      errEl.textContent = "Please enter a new password";
-      return;
-    }
-    if(newPw !== confirmPw){
-      errEl.textContent = "New passwords don't match";
-      return;
-    }
-    storePasswordHash(simpleHash(newPw));
-    showToast("Password changed");
-    showEnterPasswordForm();
-  }
-
-  document.addEventListener('DOMContentLoaded', ()=>{
-    const gateModal = document.getElementById('dashboardGateModal');
-    if(!gateModal) return;
-    gateModal.addEventListener('keydown', (e)=>{
-      if(e.key !== 'Enter') return;
-      if(document.getElementById('dashGateEnterSection').style.display !== 'none'){
-        checkDashboardPassword();
-      } else if(document.getElementById('dashGateSetSection').style.display !== 'none'){
-        setDashboardPassword();
-      } else if(document.getElementById('dashGateChangeSection').style.display !== 'none'){
-        submitChangePassword();
-      }
-    });
-  });
 
   function showAuthOverlay(){
     document.getElementById('authOverlay').style.display = 'flex';
@@ -1159,10 +965,8 @@
   const RESULT_DISPLAY_MS = 4000;
 
   let settings = {
-    centerName: "",
     defaultFee: "",
-    defaultGrade: "first",
-    accentColor: "#b9812f"
+    defaultGrade: "first"
   };
 
   const savedSettings = localStorage.getItem("scannerSettings");
@@ -1207,13 +1011,8 @@
   }
 
   function applySettings(){
-    document.documentElement.style.setProperty('--accent', settings.accentColor);
-    const centerEl = document.getElementById("centerNameDisplay");
-    centerEl.textContent = settings.centerName || "";
-    document.getElementById("setCenterName").value = settings.centerName;
     document.getElementById("setDefaultFee").value = settings.defaultFee;
     document.getElementById("setDefaultGrade").value = settings.defaultGrade;
-    document.getElementById("setAccentColor").value = settings.accentColor;
 
     if(!settingsInitialized){
   const savedGrade = localStorage.getItem("selectedGrade");
@@ -1227,10 +1026,8 @@
   }
 
   function saveSettings(){
-    settings.centerName = document.getElementById("setCenterName").value.trim();
     settings.defaultFee = document.getElementById("setDefaultFee").value;
     settings.defaultGrade = document.getElementById("setDefaultGrade").value;
-    settings.accentColor = document.getElementById("setAccentColor").value;
 
     localStorage.setItem("scannerSettings", JSON.stringify(settings));
     applySettings();
