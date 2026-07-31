@@ -1,85 +1,147 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manage Exams</title>
+<title>إدارة الامتحانات</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="preconnect" href="https://evbjulsahncllewwvlxp.supabase.co">
 <style>
   :root{
-    --ink:#2c2116;
-    --ink-2:#3a2f1c;
-    --paper:#f4ecd8;
-    --card:#fdfaf1;
-    --line:rgba(185,129,47,0.22);
-    --gold:#b9812f;
-    --gold-2:#a5701f;
-    --gold-soft:rgba(185,129,47,0.13);
-    --success:#2e7d52;
-    --success-soft:rgba(46,125,82,0.12);
-    --error:#a3342a;
-    --error-soft:rgba(163,52,42,0.11);
-    --muted:#8a7a63;
-    --cream-bg-1:#f4ecd8;
-    --cream-bg-2:#f9f3e4;
-    --shadow-sm:0 1px 2px rgba(120,90,40,0.08);
-    --shadow-md:0 8px 24px rgba(120,90,40,0.12);
-    --shadow-lg:0 20px 50px rgba(120,90,40,0.16);
+    --ink:#262624; --ink-2:#3a3835;
+    --paper:#f2efe8; --card:#faf8f3;
+    --line:rgba(38,38,36,0.16);
+    --gold:#8b1f1f; --gold-2:#6f1818; --gold-soft:rgba(139,31,31,0.13);
+    --success:#2e7d52; --success-soft:rgba(46,125,82,0.12);
+    --error:#8b1f1f; --error-soft:rgba(139,31,31,0.11);
+    --muted:#6d6c68;
+    --cream-bg-1:#f2efe8; --cream-bg-2:#f7f4ee;
+    --on-accent:#f6f2ea;
+    --shadow-sm:0 1px 2px rgba(40,40,38,0.10);
+    --shadow-md:0 8px 24px rgba(40,40,38,0.14);
+    --shadow-lg:0 20px 50px rgba(40,40,38,0.18);
   }
+  body.dark{
+    --ink:#eeece7; --ink-2:#e2dfd8;
+    --paper:#1a1a1a; --card:#232323;
+    --line:rgba(238,236,231,0.14);
+    --gold:#c0392b; --gold-2:#9c2f24; --gold-soft:rgba(192,57,43,0.20);
+    --success:#3fa873; --success-soft:rgba(63,168,115,0.18);
+    --error:#c0392b; --error-soft:rgba(192,57,43,0.18);
+    --muted:#a3a09a;
+    --cream-bg-1:#1a1a1a; --cream-bg-2:#212121;
+    --on-accent:#f6f2ea;
+    --shadow-sm:0 1px 2px rgba(0,0,0,0.35);
+    --shadow-md:0 8px 24px rgba(0,0,0,0.45);
+    --shadow-lg:0 20px 50px rgba(0,0,0,0.55);
+  }
+
   *{ margin:0; padding:0; box-sizing:border-box; }
   html,body{ height:100%; }
   body{
     font-family:'Inter',sans-serif;
     background:
-      radial-gradient(circle at 15% 10%, rgba(185,129,47,0.10), transparent 45%),
-      radial-gradient(circle at 85% 90%, rgba(185,129,47,0.08), transparent 45%),
+      radial-gradient(circle at 15% 10%, rgba(139,31,31,0.08), transparent 45%),
+      radial-gradient(circle at 85% 90%, rgba(139,31,31,0.06), transparent 45%),
       linear-gradient(160deg, var(--cream-bg-1), var(--cream-bg-2));
     color:var(--ink);
     min-height:100vh;
     padding:32px 24px 64px;
+    transition:background .2s ease, color .2s ease;
   }
+  [dir="rtl"] body{ font-family:'Cairo','Inter',sans-serif; }
   .num{ font-family:'Space Grotesk',sans-serif; }
 
   /* ===== Header ===== */
   .topbar{
-    max-width:1200px; margin:0 auto 26px;
+    max-width:1100px; margin:0 auto 26px;
     display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
   }
   .brand{ display:flex; align-items:center; gap:14px; }
   .brand-mark{
     width:46px; height:46px; border-radius:50%; flex-shrink:0;
-    background:var(--gold);
-    opacity:0.92;
+    background:var(--gold); opacity:0.92;
     display:flex; align-items:center; justify-content:center;
-    box-shadow:0 8px 18px rgba(185,129,47,0.35);
-    font-size:20px;
+    box-shadow:0 8px 18px rgba(139,31,31,0.35);
   }
-  .brand-text{ text-align:left; }
-  .brand-eyebrow{
-    font-size:10.5px; letter-spacing:0.14em; text-transform:uppercase;
-    color:var(--gold); font-weight:700; margin-bottom:2px;
-  }
+  .brand-mark svg{ width:22px; height:22px; }
+  .brand-mark svg path{ stroke:var(--on-accent) !important; }
+  .brand-eyebrow{ font-size:10.5px; letter-spacing:0.14em; text-transform:uppercase; color:var(--gold); font-weight:700; margin-bottom:2px; }
+  [dir="rtl"] .brand-eyebrow{ letter-spacing:0; }
   .brand h1{ font-family:'Cormorant Garamond',serif; font-size:26px; font-weight:700; color:var(--gold-2); letter-spacing:-0.01em; }
+  [dir="rtl"] .brand h1{ font-family:'Cairo',serif; letter-spacing:0; }
   .brand p{ font-size:12.5px; color:var(--muted); margin-top:2px; }
-  .top-actions{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .topbar-actions{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+
   .back-btn{
     display:inline-flex; align-items:center; gap:8px;
     padding:11px 18px; border-radius:10px;
-    background:var(--card); border:1px solid var(--line);
-    color:var(--ink); font-family:'Inter',sans-serif; font-size:13px; font-weight:700;
-    text-decoration:none; transition:all .15s ease; white-space:nowrap;
+    background:linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%);
+    color:var(--on-accent); font-family:'Inter',sans-serif; font-size:13px; font-weight:700;
+    text-decoration:none; box-shadow:0 6px 16px rgba(139,31,31,0.28);
+    transition:transform .15s ease, box-shadow .15s ease;
+    white-space:nowrap;
   }
-  .back-btn:hover{ border-color:var(--gold); color:var(--gold-2); }
+  [dir="rtl"] .back-btn{ font-family:'Cairo','Inter',sans-serif; }
+  .back-btn:hover{ transform:translateY(-1px); box-shadow:0 8px 20px rgba(139,31,31,0.35); }
+  .back-btn svg{ width:16px; height:16px; flex-shrink:0; }
 
-  .wrap{ max-width:1200px; margin:0 auto; }
-  .tab-panel{
-    background:var(--card); border:1px solid var(--line); border-radius:16px;
-    padding:30px; box-shadow:var(--shadow-lg); position:relative;
+  .icon-toggle-btn{
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width:42px; height:42px; padding:0 14px; border-radius:10px;
+    border:1px solid var(--line); background:var(--card); color:var(--ink);
+    font-family:'Inter',sans-serif; font-size:14px; font-weight:700; cursor:pointer;
+    transition:all .15s ease;
   }
+  [dir="rtl"] .icon-toggle-btn{ font-family:'Cairo','Inter',sans-serif; font-size:13px; }
+  .icon-toggle-btn:hover{ border-color:var(--gold); color:var(--gold-2); }
+
+  .wrap{ max-width:1100px; margin:0 auto; }
+  .panel{
+    background:var(--card); border:1px solid var(--line); border-radius:16px;
+    padding:26px; box-shadow:var(--shadow-lg);
+    transition:background .2s ease, border-color .2s ease;
+  }
+
+  .controls{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:20px; }
+  .grade-select{
+    padding:11px 16px; border-radius:10px; border:1px solid var(--line); background:var(--paper);
+    color:var(--ink); font-family:'Inter',sans-serif; font-size:13.5px; font-weight:600; cursor:pointer; outline:none;
+    min-width:190px; transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  [dir="rtl"] .grade-select{ font-family:'Cairo','Inter',sans-serif; }
+  .grade-select:focus{ border-color:var(--gold); box-shadow:0 0 0 3px var(--gold-soft); }
+  .search-box{ flex:1; min-width:220px; position:relative; }
+  .search-box input{
+    width:100%; padding:11px 15px 11px 38px; border-radius:10px; border:1px solid var(--line);
+    background:var(--paper); font-family:'Inter',sans-serif; font-size:13.5px; outline:none; color:var(--ink);
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  [dir="rtl"] .search-box input{ font-family:'Cairo','Inter',sans-serif; padding:11px 38px 11px 15px; }
+  .search-box input:focus{ border-color:var(--gold); box-shadow:0 0 0 3px var(--gold-soft); }
+  .search-box::before{
+    content:"⌕"; position:absolute; left:13px; top:50%; transform:translateY(-50%);
+    color:var(--muted); font-size:15px; pointer-events:none;
+  }
+  [dir="rtl"] .search-box::before{ left:auto; right:13px; }
+
+  .add-exam-btn{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:11px 18px; border-radius:10px; border:none;
+    background:linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%);
+    color:var(--on-accent); font-family:'Inter',sans-serif; font-size:13px; font-weight:700;
+    cursor:pointer; box-shadow:0 6px 16px rgba(139,31,31,0.28);
+    transition:transform .15s ease, box-shadow .15s ease;
+    white-space:nowrap;
+  }
+  [dir="rtl"] .add-exam-btn{ font-family:'Cairo','Inter',sans-serif; }
+  .add-exam-btn:hover{ transform:translateY(-1px); box-shadow:0 8px 20px rgba(139,31,31,0.35); }
+  .add-exam-btn:disabled{ opacity:.6; cursor:default; transform:none; }
+
+  .result-count{ font-size:12px; color:var(--muted); margin-bottom:12px; }
 
   .state-msg{
     display:none; align-items:center; justify-content:center; gap:10px;
@@ -88,86 +150,35 @@
   .state-msg.show{ display:flex; }
   .state-msg.err{ color:var(--error); flex-direction:column; gap:9px; }
   .state-msg .spinner{
-    width:18px; height:18px; border-radius:50%; border:2px solid rgba(185,129,47,0.18);
+    width:18px; height:18px; border-radius:50%; border:2px solid rgba(139,31,31,0.18);
     border-top-color:var(--gold); animation:spin .7s linear infinite; flex-shrink:0;
   }
   @keyframes spin{ to{ transform:rotate(360deg); } }
+
   .content{ display:none; }
   .content.show{ display:block; }
 
-  .section-title{
-    display:flex; align-items:center; gap:9px;
-    font-family:'Cormorant Garamond',serif; font-weight:700; font-size:18px; color:var(--gold-2); margin-bottom:15px;
-  }
-  .section-title .tag{
-    font-family:'Inter',sans-serif; font-size:10px; font-weight:700; color:var(--gold); background:var(--gold-soft);
-    padding:3px 9px; border-radius:999px; letter-spacing:.03em; text-transform:uppercase;
-  }
-
+  /* ===== Score Entry Panel ===== */
   .chart-card{
     background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:19px;
     margin-bottom:22px;
   }
 
-  .hist-toolbar{
-    display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
-    margin-bottom:22px;
+  .section-title{
+    display:flex; align-items:center; gap:9px;
+    font-family:'Cormorant Garamond',serif; font-weight:700; font-size:18px; color:var(--gold-2);
+    margin-bottom:15px;
   }
-  .hist-toolbar .left{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-  .hist-select{
-    padding:10px 14px; border-radius:9px; border:1px solid var(--line); background:var(--card);
-    color:var(--ink); font-family:'Inter',sans-serif; font-size:12.5px; font-weight:600; cursor:pointer; outline:none;
+  [dir="rtl"] .section-title{ font-family:'Cairo',serif; }
+  .section-title .tag{
+    font-family:'Inter',sans-serif; font-size:10px; font-weight:700; color:var(--gold); background:var(--gold-soft);
+    padding:3px 9px; border-radius:999px; letter-spacing:.03em; text-transform:uppercase;
   }
-  .search-box{ flex:1; min-width:200px; position:relative; }
-  .search-box input{
-    width:100%; padding:10px 14px 10px 38px; border-radius:10px; border:1px solid var(--line);
-    background:var(--card); font-family:'Inter',sans-serif; font-size:13px; outline:none; color:var(--ink);
-    transition:border-color .15s ease, box-shadow .15s ease;
-  }
-  .search-box input:focus{ border-color:var(--gold); box-shadow:0 0 0 3px var(--gold-soft); }
-  .search-box::before{
-    content:"⌕"; position:absolute; left:13px; top:50%; transform:translateY(-50%);
-    color:var(--muted); font-size:15px; pointer-events:none;
-  }
-
-  .save-snapshot-btn{
-    display:flex; align-items:center; gap:8px; padding:10px 18px; border-radius:9px; border:none;
-    background:linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%); color:#241a05;
-    font-family:'Inter',sans-serif; font-weight:700; font-size:12.5px; cursor:pointer;
-    box-shadow:0 6px 16px rgba(120,95,40,0.2); transition:all .15s ease;
-  }
-  .save-snapshot-btn:hover{ filter:brightness(1.06); transform:translateY(-1px); }
-  .save-snapshot-btn:disabled{ opacity:.6; cursor:default; transform:none; }
-  .ghost-btn{
-    padding:10px 18px; border-radius:9px; border:1px solid var(--line); background:var(--card);
-    color:var(--ink); font-family:'Inter',sans-serif; font-weight:700; font-size:12.5px; cursor:pointer;
-    transition:all .15s ease;
-  }
-  .ghost-btn:hover{ border-color:var(--gold); }
-  .hist-table-note{ font-size:11px; color:var(--muted); margin-bottom:12px; }
-
-  .table-wrap{ overflow-x:auto; border:1px solid var(--line); border-radius:12px; }
-  table{ width:100%; border-collapse:collapse; font-size:12.5px; min-width:600px; }
-  thead th{
-    text-align:left; padding:12px 14px; background:var(--paper); color:var(--gold-2);
-    font-weight:700; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em;
-    border-bottom:1px solid var(--line); white-space:nowrap;
-  }
-  tbody td{ padding:11px 14px; border-bottom:1px solid var(--line); color:var(--ink); white-space:nowrap; }
-  tbody tr:last-child td{ border-bottom:none; }
-  tbody tr:hover{ background:rgba(185,129,47,0.07); }
-  .empty-note{ text-align:center; color:var(--muted); font-size:12.5px; padding:20px 0; }
-
-  .unpaid-link{
-    border:none; background:rgba(163,52,42,0.08); color:var(--error); cursor:pointer;
-    font-family:'Inter',sans-serif; font-weight:700; font-size:11.5px; padding:6px 11px; border-radius:8px;
-    transition:all .15s ease;
-  }
-  .unpaid-link:hover{ background:var(--error-soft); }
+  [dir="rtl"] .section-title .tag{ font-family:'Cairo','Inter',sans-serif; letter-spacing:0; }
 
   .list-row{
     display:flex; align-items:center; justify-content:space-between; gap:10px;
-    padding:10px 4px; border-bottom:1px solid var(--line); font-size:13px;
+    padding:11px 4px; border-bottom:1px solid var(--line); font-size:13px;
   }
   .list-row:last-child{ border-bottom:none; }
   .list-name .name{ font-weight:600; color:var(--ink); }
@@ -178,9 +189,55 @@
   }
   .score-input:focus{ border-color:var(--gold); box-shadow:0 0 0 3px var(--gold-soft); }
 
+  .action-btns{ display:flex; gap:10px; margin-top:14px; }
+  .save-btn{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:11px 18px; border-radius:10px; border:none;
+    background:linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%);
+    color:var(--on-accent); font-family:'Inter',sans-serif; font-weight:700; font-size:13px;
+    cursor:pointer; box-shadow:0 6px 16px rgba(139,31,31,0.28);
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  [dir="rtl"] .save-btn{ font-family:'Cairo','Inter',sans-serif; }
+  .save-btn:hover{ transform:translateY(-1px); box-shadow:0 8px 20px rgba(139,31,31,0.35); }
+  .save-btn:disabled{ opacity:.6; cursor:default; transform:none; }
+
+  .cancel-btn{
+    padding:11px 18px; border-radius:10px; border:1px solid var(--line); background:var(--card);
+    color:var(--ink); font-family:'Inter',sans-serif; font-weight:700; font-size:13px; cursor:pointer;
+    transition:all .15s ease;
+  }
+  [dir="rtl"] .cancel-btn{ font-family:'Cairo','Inter',sans-serif; }
+  .cancel-btn:hover{ border-color:var(--gold); color:var(--gold-2); }
+
+  /* ===== Table ===== */
+  .table-wrap{ overflow-x:auto; border:1px solid var(--line); border-radius:12px; }
+  .hist-table-note{ font-size:11px; color:var(--muted); margin-bottom:12px; }
+
+  table{ width:100%; border-collapse:collapse; font-size:12.5px; min-width:600px; }
+  thead th{
+    text-align:start; padding:12px 14px; background:var(--paper); color:var(--gold-2);
+    font-weight:700; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em;
+    border-bottom:1px solid var(--line); white-space:nowrap;
+  }
+  [dir="rtl"] thead th{ letter-spacing:0; }
+  tbody td{ padding:11px 14px; border-bottom:1px solid var(--line); color:var(--ink); white-space:nowrap; }
+  tbody tr:last-child td{ border-bottom:none; }
+  tbody tr{ transition:background .12s ease; }
+  tbody tr:hover{ background:rgba(139,31,31,0.06); }
+  .empty-note{ text-align:center; color:var(--muted); font-size:12.5px; padding:20px 0; }
+
+  .unpaid-link{
+    border:none; background:rgba(139,31,31,0.09); color:var(--gold-2); cursor:pointer;
+    font-family:'Inter',sans-serif; font-weight:700; font-size:11.5px; padding:6px 11px; border-radius:8px;
+    transition:all .15s ease;
+  }
+  [dir="rtl"] .unpaid-link{ font-family:'Cairo','Inter',sans-serif; }
+  .unpaid-link:hover{ background:var(--gold-soft); }
+
   /* ===== Modal ===== */
   .modal-overlay{
-    display:none; position:fixed; inset:0; background:rgba(44,33,22,0.45); z-index:80;
+    display:none; position:fixed; inset:0; background:rgba(20,20,18,0.5); z-index:80;
     align-items:center; justify-content:center; padding:20px;
   }
   .modal-overlay.show{ display:flex; }
@@ -191,62 +248,88 @@
   .modal-close{ border:none; background:none; font-size:22px; cursor:pointer; color:var(--muted); line-height:1; }
   .modal-close:hover{ color:var(--ink); }
 
-  .footer-note{ text-align:center; font-size:11.5px; color:var(--muted); margin-top:30px; display:flex; align-items:center; justify-content:center; gap:7px; }
+  .field-label{ font-size:10.5px; color:var(--muted); font-weight:700; letter-spacing:.06em; text-transform:uppercase; margin-bottom:6px; }
+  [dir="rtl"] .field-label{ letter-spacing:0; }
+
+  .modal-input{
+    width:100%; padding:11px 16px; border-radius:10px; border:1px solid var(--line); background:var(--paper);
+    color:var(--ink); font-family:'Inter',sans-serif; font-size:13px; outline:none;
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  [dir="rtl"] .modal-input{ font-family:'Cairo','Inter',sans-serif; }
+  .modal-input:focus{ border-color:var(--gold); box-shadow:0 0 0 3px var(--gold-soft); }
+
+  .footer-note{ text-align:center; font-size:11.5px; color:var(--muted); margin-top:24px; display:flex; align-items:center; justify-content:center; gap:7px; }
   .footer-note::before{ content:"🔒"; font-size:11px; }
+
+  @media (max-width:640px){
+    .controls{ flex-direction:column; align-items:stretch; }
+    .grade-select{ min-width:0; }
+  }
 </style>
 </head>
 <body>
 
 <div class="topbar">
   <div class="brand">
-    <div class="brand-mark">➕</div>
-    <div class="brand-text">
-      <div class="brand-eyebrow">Live insights</div>
-      <h1>Manage Exams</h1>
-      <p>Add exams and enter student scores</p>
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 19V9.5L12 4L20 9.5V19" stroke-width="1.8" stroke-linejoin="round"></path>
+        <path d="M9 19V13H15V19" stroke-width="1.8" stroke-linejoin="round"></path>
+      </svg>
+    </div>
+    <div>
+      <div class="brand-eyebrow" id="t_eyebrow">بيانات حية</div>
+      <h1 id="t_title">إدارة الامتحانات</h1>
+      <p id="t_subtitle">أضف امتحانات وسجّل درجات الطلاب</p>
     </div>
   </div>
-  <div class="top-actions">
-    <a class="back-btn" href="index.html">← Back to Scanner</a>
+  <div class="topbar-actions">
+    <button class="icon-toggle-btn" id="langToggleBtn" onclick="toggleLanguage()">EN</button>
+    <button class="icon-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()">🌙</button>
+    <a class="back-btn" href="index.html" id="t_back">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+      <span id="backBtnText">ماسح الحضور</span>
+    </a>
   </div>
 </div>
 
 <div class="wrap">
-  <div class="tab-panel">
+  <div class="panel">
 
     <div class="state-msg show" id="examManageLoadingMsg">
-      <span class="spinner"></span> Loading grades…
+      <span class="spinner"></span> <span id="t_loading">جاري تحميل الدرجات…</span>
     </div>
     <div class="state-msg err" id="examManageErrorMsg"></div>
 
     <div class="content" id="examManageContent">
 
-      <div class="hist-toolbar">
-        <div class="left">
-          <select class="hist-select" id="examManageGradeSelect" onchange="onExamManageGradeChange()">
-            <option value="first">First Secondary</option>
-            <option value="second">Second Secondary</option>
-            <option value="third">Third Secondary</option>
-          </select>
-          <div class="search-box" style="min-width:200px;">
-            <input type="text" id="examManageSearch" placeholder="Search by student name…" oninput="renderExamManageTable()">
-          </div>
+      <div class="controls">
+        <select class="grade-select" id="examManageGradeSelect" onchange="onExamManageGradeChange()">
+          <option value="first">الصف الأول الثانوي</option>
+          <option value="second">الصف الثاني الثانوي</option>
+          <option value="third">الصف الثالث الثانوي</option>
+        </select>
+        <div class="search-box">
+          <input type="text" id="examManageSearch" placeholder="ابحث باسم الطالب…" oninput="renderExamManageTable()">
         </div>
-        <button class="save-snapshot-btn" onclick="openAddExamModal()">➕ Add Exam</button>
+        <button class="add-exam-btn" onclick="openAddExamModal()" id="t_addExamBtn">➕ إضافة امتحان</button>
       </div>
 
       <div class="chart-card" id="examEntryPanel" style="display:none;">
         <div class="section-title" id="examEntryTitle"></div>
         <div id="examEntryBody"></div>
-        <div style="display:flex; gap:10px; margin-top:14px;">
-          <button class="save-snapshot-btn" id="saveExamEntryBtn" onclick="saveScoreEntry()">💾 Save Grades</button>
-          <button class="ghost-btn" onclick="cancelScoreEntry()">Cancel</button>
+        <div class="action-btns">
+          <button class="save-btn" id="saveExamEntryBtn" onclick="saveScoreEntry()">💾 <span id="t_saveGradesLabel">حفظ الدرجات</span></button>
+          <button class="cancel-btn" onclick="cancelScoreEntry()" id="t_cancelBtn">إلغاء</button>
         </div>
       </div>
 
       <div class="chart-card" style="margin-bottom:0;">
-        <div class="section-title">Manage Grades <span class="tag">Enter scores & manage exams</span></div>
-        <div class="hist-table-note">Each new exam is saved as a separate column, and old grades stay in place even after you add new exam scores.</div>
+        <div class="section-title"><span id="t_manageGradesTitle">إدارة الدرجات</span> <span class="tag" id="t_manageGradesTag">تسجيل الدرجات وإدارة الامتحانات</span></div>
+        <div class="hist-table-note" id="t_manageGradesNote">يُحفظ كل امتحان جديد في عمود مستقل، وتبقى الدرجات القديمة كما هي بعد إضافة امتحانات جديدة.</div>
         <div class="table-wrap">
           <table>
             <thead id="examManageTableHead"></thead>
@@ -258,34 +341,34 @@
     </div>
   </div>
 
-  <div class="footer-note">Changes are written live to Supabase</div>
+  <div class="footer-note" id="t_footerNote">يتم حفظ التغييرات مباشرة على Supabase</div>
 </div>
 
 <!-- Add exam modal -->
 <div class="modal-overlay" id="addExamModalOverlay" onclick="if(event.target===this) closeAddExamModal()">
   <div class="modal-box">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-      <div class="section-title" style="margin-bottom:0;">Add Exam</div>
+      <div class="section-title" style="margin-bottom:0;" id="t_addExamModalTitle">إضافة امتحان</div>
       <button class="modal-close" onclick="closeAddExamModal()">×</button>
     </div>
     <div style="display:flex; flex-direction:column; gap:14px;">
       <div>
-        <div style="font-size:10.5px; color:var(--muted); font-weight:700; letter-spacing:.06em; text-transform:uppercase; margin-bottom:6px;">Exam Name</div>
-        <input type="text" id="examNameInput" class="hist-select" style="width:100%;" placeholder="e.g. Quiz 1">
+        <div class="field-label" id="t_examNameLabel">اسم الامتحان</div>
+        <input type="text" id="examNameInput" class="modal-input" placeholder="مثال: اختبار قصير 1">
       </div>
       <div>
-        <div style="font-size:10.5px; color:var(--muted); font-weight:700; letter-spacing:.06em; text-transform:uppercase; margin-bottom:6px;">Maximum Score</div>
-        <input type="number" id="examMaxScoreInput" class="hist-select" style="width:100%;" value="100" min="1" step="1">
+        <div class="field-label" id="t_maxScoreLabel">الدرجة النهائية</div>
+        <input type="number" id="examMaxScoreInput" class="modal-input" value="100" min="1">
       </div>
       <div>
-        <div style="font-size:10.5px; color:var(--muted); font-weight:700; letter-spacing:.06em; text-transform:uppercase; margin-bottom:6px;">Grade</div>
-        <select id="examGradeInput" class="hist-select" style="width:100%;">
-          <option value="first">First Secondary</option>
-          <option value="second">Second Secondary</option>
-          <option value="third">Third Secondary</option>
+        <div class="field-label" id="t_gradeLabel">الصف الدراسي</div>
+        <select id="examGradeInput" class="grade-select" style="width:100%;">
+          <option value="first">الصف الأول الثانوي</option>
+          <option value="second">الصف الثاني الثانوي</option>
+          <option value="third">الصف الثالث الثانوي</option>
         </select>
       </div>
-      <button class="save-snapshot-btn" id="saveNewExamBtn" onclick="saveNewExam()" style="justify-content:center;">Save</button>
+      <button class="save-btn" id="saveNewExamBtn" onclick="saveNewExam()" style="justify-content:center;">حفظ</button>
     </div>
   </div>
 </div>
@@ -298,7 +381,6 @@
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2Ymp1bHNhaG5jbGxld3d2bHhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2NzE5MjUsImV4cCI6MjA5OTI0NzkyNX0.Xg9sU6ZenUU3kC2RNIbvZmK19KvE28MM2oyGcKNn8UA";
   const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // Change only the right-hand side here if your real column/table names differ.
   const SCHEMA = {
     attendanceTable: (g) => `attendance_${g}_secondary`,
     paymentsTable: (g) => `payments_${g}_secondary`,
@@ -316,7 +398,143 @@
     }
   };
 
-  const GRADE_LABELS = { first: "First Secondary", second: "Second Secondary", third: "Third Secondary" };
+  /* ============================================================
+     LANGUAGE + THEME (persisted in localStorage)
+     ============================================================ */
+  const STRINGS = {
+    ar: {
+      dir:"rtl", htmlLang:"ar",
+      eyebrow:"بيانات حية", title:"إدارة الامتحانات", subtitle:"أضف امتحانات وسجّل درجات الطلاب",
+      back:"ماسح الحضور",
+      langToggle:"EN", themeToggleDark:"☀️", themeToggleLight:"🌙",
+      searchPlaceholder:"ابحث باسم الطالب…",
+      addExamBtn:"➕ إضافة امتحان",
+      manageGradesTitle:"إدارة الدرجات", manageGradesTag:"تسجيل الدرجات وإدارة الامتحانات",
+      manageGradesNote:"يُحفظ كل امتحان جديد في عمود مستقل، وتبقى الدرجات القديمة كما هي بعد إضافة امتحانات جديدة.",
+      loading:"جاري تحميل الدرجات…",
+      errCouldntLoad:"تعذّر تحميل الدرجات",
+      errHint:"على الأغلب لأن جدولي \"exams\" أو \"exam_scores\" غير موجودين بعد، أو صلاحية anon role لا تسمح بالقراءة/الإضافة عليهما. راجع الكود لمعرفة تفاصيل الجداول المطلوبة.",
+      thName:"الاسم", thAverage:"المعدل",
+      noStudents:"لا يوجد طلاب في هذا الصف",
+      noMatch:(q)=>`لا يوجد طلاب مطابقين لـ "${q}"`,
+      enterBtn:"✏️ تسجيل", deleteBtnTitle:"حذف هذا الامتحان",
+      saveGrades:"💾 حفظ الدرجات", cancel:"إلغاء",
+      addExamModalTitle:"إضافة امتحان",
+      examNameLabel:"اسم الامتحان", examNamePlaceholder:"مثال: اختبار قصير 1",
+      maxScoreLabel:"الدرجة النهائية", gradeLabel:"الصف الدراسي",
+      saveBtn:"حفظ", saving:"جارٍ الحفظ…",
+      alertEnterName:"من فضلك أدخل اسم الامتحان", alertEnterMaxScore:"من فضلك أدخل درجة نهائية صحيحة",
+      alertSaveExamFail:(msg)=>`تعذّر حفظ الامتحان: ${msg}`,
+      alertSaveExamHint:"\nتأكد من وجود جدول \"exams\" مع صلاحيات SELECT/INSERT لدور anon.",
+      alertSaveScoresFail:(msg)=>`تعذّر حفظ الدرجات: ${msg}`,
+      alertDeleteFail:(msg)=>`تعذّر حذف الامتحان: ${msg}`,
+      confirmDelete:(name)=>`هل أنت متأكد من حذف "${name}"؟\n\nسيؤدي هذا إلى حذف الامتحان وكل درجات الطلاب المسجلة له نهائيًا، ولا يمكن التراجع عن ذلك.`,
+      enterGradesTitle:(name,max)=>`تسجيل الدرجات: ${name} (من ${max})`,
+      footerNote:"يتم حفظ التغييرات مباشرة على Supabase",
+      gradeOptions:{ first:"الصف الأول الثانوي", second:"الصف الثاني الثانوي", third:"الصف الثالث الثانوي" }
+    },
+    en: {
+      dir:"ltr", htmlLang:"en",
+      eyebrow:"Live data", title:"Manage Exams", subtitle:"Add exams and enter student scores",
+      back:"Attendance Scanner",
+      langToggle:"عربي", themeToggleDark:"☀️", themeToggleLight:"🌙",
+      searchPlaceholder:"Search by student name…",
+      addExamBtn:"➕ Add Exam",
+      manageGradesTitle:"Manage Grades", manageGradesTag:"Enter scores & manage exams",
+      manageGradesNote:"Each new exam is saved as a separate column, and old grades stay in place even after you add new exam scores.",
+      loading:"Loading grades…",
+      errCouldntLoad:"Couldn't load grades",
+      errHint:"This most likely means the \"exams\" or \"exam_scores\" tables don't exist yet, or the anon role doesn't have SELECT/INSERT permission for them. See the schema in the code comments.",
+      thName:"Name", thAverage:"Average",
+      noStudents:"No students in this grade",
+      noMatch:(q)=>`No students match "${q}"`,
+      enterBtn:"✏️ Enter", deleteBtnTitle:"Delete this exam",
+      saveGrades:"💾 Save Grades", cancel:"Cancel",
+      addExamModalTitle:"Add Exam",
+      examNameLabel:"Exam Name", examNamePlaceholder:"e.g. Quiz 1",
+      maxScoreLabel:"Maximum Score", gradeLabel:"Grade",
+      saveBtn:"Save", saving:"Saving…",
+      alertEnterName:"Please enter an exam name", alertEnterMaxScore:"Please enter a valid maximum score",
+      alertSaveExamFail:(msg)=>`Couldn't save the exam: ${msg}`,
+      alertSaveExamHint:"\nMake sure an \"exams\" table exists with SELECT/INSERT grants + policies for the anon role.",
+      alertSaveScoresFail:(msg)=>`Couldn't save grades: ${msg}`,
+      alertDeleteFail:(msg)=>`Couldn't delete the exam: ${msg}`,
+      confirmDelete:(name)=>`Are you sure you want to delete "${name}"?\n\nThis will permanently remove the exam and all student grades entered for it. This can't be undone.`,
+      enterGradesTitle:(name,max)=>`Enter Grades: ${name} (out of ${max})`,
+      footerNote:"Changes are written live to Supabase",
+      gradeOptions:{ first:"First Secondary", second:"Second Secondary", third:"Third Secondary" }
+    }
+  };
+
+  let currentLang = localStorage.getItem("eduTrackLang") || "ar";
+  let currentTheme = localStorage.getItem("eduTrackTheme") || "light";
+
+  function t(){ return STRINGS[currentLang]; }
+
+  function applyLanguage(){
+    const s = t();
+    document.documentElement.setAttribute("dir", s.dir);
+    document.documentElement.setAttribute("lang", s.htmlLang);
+
+    document.getElementById("t_eyebrow").textContent = s.eyebrow;
+    document.getElementById("t_title").textContent = s.title;
+    document.getElementById("t_subtitle").textContent = s.subtitle;
+    document.getElementById("t_back").innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+      <span>${s.back}</span>`;
+    document.getElementById("langToggleBtn").textContent = s.langToggle;
+    document.getElementById("examManageSearch").placeholder = s.searchPlaceholder;
+    document.getElementById("t_addExamBtn").textContent = s.addExamBtn;
+    document.getElementById("t_manageGradesTitle").textContent = s.manageGradesTitle;
+    document.getElementById("t_manageGradesTag").textContent = s.manageGradesTag;
+    document.getElementById("t_manageGradesNote").textContent = s.manageGradesNote;
+    document.getElementById("t_loading").textContent = s.loading;
+    document.getElementById("t_saveGradesLabel").textContent = s.saveGrades.replace("💾 ", "");
+    document.getElementById("t_cancelBtn").textContent = s.cancel;
+    document.getElementById("t_footerNote").textContent = s.footerNote;
+    document.getElementById("t_addExamModalTitle").textContent = s.addExamModalTitle;
+    document.getElementById("t_examNameLabel").textContent = s.examNameLabel;
+    document.getElementById("examNameInput").placeholder = s.examNamePlaceholder;
+    document.getElementById("t_maxScoreLabel").textContent = s.maxScoreLabel;
+    document.getElementById("t_gradeLabel").textContent = s.gradeLabel;
+    document.getElementById("saveNewExamBtn").textContent = s.saveBtn;
+
+    ["examManageGradeSelect","examGradeInput"].forEach(id => {
+      const sel = document.getElementById(id);
+      const prevVal = sel.value;
+      Array.from(sel.options).forEach(opt => { opt.textContent = s.gradeOptions[opt.value]; });
+      sel.value = prevVal;
+    });
+
+    renderExamManageTable();
+    const panel = document.getElementById("examEntryPanel");
+    if(panel.style.display === "block" && panel.dataset.examId){
+      openScoreEntryById(Number(panel.dataset.examId));
+    }
+  }
+
+  function toggleLanguage(){
+    currentLang = currentLang === "ar" ? "en" : "ar";
+    localStorage.setItem("eduTrackLang", currentLang);
+    applyLanguage();
+  }
+
+  function applyTheme(){
+    if(currentTheme === "dark"){
+      document.body.classList.add("dark");
+    } else {
+      document.body.classList.remove("dark");
+    }
+    document.getElementById("themeToggleBtn").textContent = currentTheme === "dark" ? "☀️" : "🌙";
+  }
+
+  function toggleTheme(){
+    currentTheme = currentTheme === "dark" ? "light" : "dark";
+    localStorage.setItem("eduTrackTheme", currentTheme);
+    applyTheme();
+  }
 
   /* ---------- Fetch + merge one grade (attendance + payment, tagged) ---------- */
   async function fetchGrade(grade){
@@ -351,32 +569,6 @@
 
   /* ============================================================
      EXAM GRADES (dynamic columns, driven by an "exams" table)
-     Needs two shared tables in Supabase (not one per grade):
-
-       create table exams (
-         id bigint generated always as identity primary key,
-         exam_name text not null,
-         max_score numeric not null default 100,
-         grade text not null,              -- 'first' | 'second' | 'third'
-         created_at timestamptz default now()
-       );
-
-       create table exam_scores (
-         id bigint generated always as identity primary key,
-         exam_id bigint not null references exams(id) on delete cascade,
-         student_code text not null,       -- matches qr_code in the attendance tables
-         score numeric not null,
-         created_at timestamptz default now()
-       );
-
-     Both need SELECT + INSERT (+ DELETE, for re-saving scores) policies
-     for the anon role. Adding a new exam just inserts one row into
-     `exams` — the grades table below generates its columns dynamically
-     from whatever exams exist for the selected grade, so no schema
-     change is needed each time a new exam is added.
-
-     This page writes to those tables; the read-only "Exam Grades" tab
-     on the main dashboard displays the results.
      ============================================================ */
   const EXAMS_SCHEMA = {
     table: "exams",
@@ -389,8 +581,8 @@
 
   let examGrade = "first";
   let examStudents = [];
-  let examList = [];    // rows from `exams` for the selected grade
-  let examScores = [];  // rows from `exam_scores` for those exams
+  let examList = [];
+  let examScores = [];
 
   function onExamManageGradeChange(){
     examGrade = document.getElementById("examManageGradeSelect").value;
@@ -429,12 +621,12 @@
       contentEl.classList.add("show");
     }catch(err){
       console.error(err);
+      const s = t();
       errorEl.innerHTML = `
-        <div style="font-weight:700;">Couldn't load grades</div>
+        <div style="font-weight:700;">${s.errCouldntLoad}</div>
         <div style="font-size:12px; max-width:520px;">
           ${err.message || err}<br><br>
-          This most likely means the "exams" or "exam_scores" tables don't exist yet, or the anon role
-          doesn't have SELECT/INSERT permission for them. See the schema in the code comments above.
+          ${s.errHint}
         </div>`;
       errorEl.classList.add("show");
     }finally{
@@ -449,35 +641,36 @@
     if(!head || !body) return;
     const ecol = EXAMS_SCHEMA.col;
     const scol = SCORES_SCHEMA.col;
+    const s = t();
 
     head.innerHTML = `<tr>
-      <th>Name</th>
+      <th>${s.thName}</th>
       ${examList.map(e => `
         <th>
           ${e[ecol.name]}
-          <button class="unpaid-link" style="margin-inline-start:6px; padding:2px 8px;" onclick="openScoreEntryById(${e[ecol.id]})">✏️ Enter</button>
-          <button class="unpaid-link" style="margin-inline-start:4px; padding:2px 8px;" onclick="confirmDeleteExam(${e[ecol.id]})" title="Delete this exam">🗑</button>
+          <button class="unpaid-link" style="margin-inline-start:6px; padding:2px 8px;" onclick="openScoreEntryById(${e[ecol.id]})">${s.enterBtn}</button>
+          <button class="unpaid-link" style="margin-inline-start:4px; padding:2px 8px;" onclick="confirmDeleteExam(${e[ecol.id]})" title="${s.deleteBtnTitle}">🗑</button>
         </th>`).join("")}
-      <th>Average</th>
+      <th>${s.thAverage}</th>
     </tr>`;
 
     if(!examStudents.length){
-      body.innerHTML = `<tr><td colspan="${examList.length + 2}" style="text-align:center; color:var(--muted); padding:24px;">No students in this grade</td></tr>`;
+      body.innerHTML = `<tr><td colspan="${examList.length + 2}" class="empty-note">${s.noStudents}</td></tr>`;
       return;
     }
 
     const q = (document.getElementById("examManageSearch")?.value || "").trim().toLowerCase();
-    const rowsToShow = q ? examStudents.filter(s => (s.name || "").toLowerCase().includes(q)) : examStudents;
+    const rowsToShow = q ? examStudents.filter(st => (st.name || "").toLowerCase().includes(q)) : examStudents;
 
     if(!rowsToShow.length){
-      body.innerHTML = `<tr><td colspan="${examList.length + 2}" style="text-align:center; color:var(--muted); padding:24px;">No students match "${q}"</td></tr>`;
+      body.innerHTML = `<tr><td colspan="${examList.length + 2}" class="empty-note">${s.noMatch(q)}</td></tr>`;
       return;
     }
 
-    body.innerHTML = rowsToShow.map(s => {
+    body.innerHTML = rowsToShow.map(st => {
       let sumPct = 0, cnt = 0;
       const cells = examList.map(e => {
-        const row = examScores.find(sc => sc[scol.examId] === e[ecol.id] && sc[scol.studentCode] === s.qrCode);
+        const row = examScores.find(sc => sc[scol.examId] === e[ecol.id] && sc[scol.studentCode] === st.qrCode);
         if(!row){ return `<td style="color:var(--muted); text-align:center;">☐</td>`; }
         const sc = Number(row[scol.score]);
         const mx = Number(e[ecol.maxScore]) || 100;
@@ -486,7 +679,7 @@
       }).join("");
       const avg = cnt ? Math.round(sumPct / cnt) : null;
       return `<tr>
-        <td style="font-weight:600;">${s.name || "—"}</td>
+        <td style="font-weight:600;">${st.name || "—"}</td>
         ${cells}
         <td>${avg != null ? avg + "%" : "—"}</td>
       </tr>`;
@@ -497,8 +690,8 @@
   function confirmDeleteExam(examId){
     const ecol = EXAMS_SCHEMA.col;
     const exam = examList.find(e => e[ecol.id] === examId);
-    const name = exam ? exam[ecol.name] : "this exam";
-    const ok = confirm(`Are you sure you want to delete "${name}"?\n\nThis will permanently remove the exam and all student grades entered for it. This can't be undone.`);
+    const name = exam ? exam[ecol.name] : "";
+    const ok = confirm(t().confirmDelete(name));
     if(ok) deleteExam(examId);
   }
 
@@ -506,12 +699,10 @@
     try{
       const scol = SCORES_SCHEMA.col;
       const ecol = EXAMS_SCHEMA.col;
-      // Delete scores first (in case there's no ON DELETE CASCADE set up on the FK).
       await supa.from(SCORES_SCHEMA.table).delete().eq(scol.examId, examId);
       const { error } = await supa.from(EXAMS_SCHEMA.table).delete().eq(ecol.id, examId);
       if(error) throw error;
 
-      // If the score-entry panel was open for this exam, close it.
       const panel = document.getElementById("examEntryPanel");
       if(panel.dataset.examId && Number(panel.dataset.examId) === examId){
         cancelScoreEntry();
@@ -519,7 +710,7 @@
 
       await loadExamGrades();
     }catch(err){
-      alert("Couldn't delete the exam: " + (err.message || err));
+      alert(t().alertDeleteFail(err.message || err));
     }
   }
 
@@ -535,14 +726,15 @@
   }
 
   async function saveNewExam(){
+    const s = t();
     const name = document.getElementById("examNameInput").value.trim();
     const maxScore = Number(document.getElementById("examMaxScoreInput").value);
     const grade = document.getElementById("examGradeInput").value;
-    if(!name){ alert("Please enter an exam name"); return; }
-    if(!maxScore || maxScore <= 0){ alert("Please enter a valid maximum score"); return; }
+    if(!name){ alert(s.alertEnterName); return; }
+    if(!maxScore || maxScore <= 0){ alert(s.alertEnterMaxScore); return; }
 
     const btn = document.getElementById("saveNewExamBtn");
-    btn.disabled = true; btn.textContent = "Saving…";
+    btn.disabled = true; btn.textContent = s.saving;
     try{
       const ecol = EXAMS_SCHEMA.col;
       const { data, error } = await supa.from(EXAMS_SCHEMA.table).insert([{
@@ -555,16 +747,15 @@
       document.getElementById("examManageGradeSelect").value = grade;
       await loadExamGrades();
 
-      // Jump straight into entering scores for the exam that was just created.
       const newExam = data && data[0];
       if(newExam) openScoreEntry(newExam);
     }catch(err){
-      alert("Couldn't save the exam: " + (err.message || err) +
+      alert(s.alertSaveExamFail(err.message || err) +
         (err.hint ? "\nHint: " + err.hint : "") +
         (err.details ? "\nDetails: " + err.details : "") +
-        "\n\nMake sure an \"exams\" table exists with SELECT/INSERT grants + policies for the anon role.");
+        s.alertSaveExamHint);
     }finally{
-      btn.disabled = false; btn.textContent = "Save";
+      btn.disabled = false; btn.textContent = s.saveBtn;
     }
   }
 
@@ -578,15 +769,16 @@
   function openScoreEntry(exam){
     const ecol = EXAMS_SCHEMA.col;
     const scol = SCORES_SCHEMA.col;
+    const s = t();
     const maxScore = exam[ecol.maxScore];
     const panel = document.getElementById("examEntryPanel");
-    document.getElementById("examEntryTitle").textContent = `Enter Grades: ${exam[ecol.name]} (out of ${maxScore})`;
-    document.getElementById("examEntryBody").innerHTML = examStudents.map(s => {
-      const existing = examScores.find(sc => sc[scol.examId] === exam[ecol.id] && sc[scol.studentCode] === s.qrCode);
+    document.getElementById("examEntryTitle").textContent = s.enterGradesTitle(exam[ecol.name], maxScore);
+    document.getElementById("examEntryBody").innerHTML = examStudents.map(st => {
+      const existing = examScores.find(sc => sc[scol.examId] === exam[ecol.id] && sc[scol.studentCode] === st.qrCode);
       return `
       <div class="list-row">
-        <div class="list-name"><span class="name">${s.name || "—"}</span></div>
-        <input type="number" class="score-input" data-code="${s.qrCode}" min="0" max="${maxScore}" step="0.5" placeholder="/ ${maxScore}" value="${existing ? existing[scol.score] : ''}">
+        <div class="list-name"><span class="name">${st.name || "—"}</span></div>
+        <input type="number" class="score-input" data-code="${st.qrCode}" min="0" max="${maxScore}" step="0.5" placeholder="/ ${maxScore}" value="${existing ? existing[scol.score] : ''}">
       </div>`;
     }).join("");
     panel.style.display = "block";
@@ -614,11 +806,10 @@
       });
     });
 
+    const s = t();
     const btn = document.getElementById("saveExamEntryBtn");
-    btn.disabled = true; btn.textContent = "Saving…";
+    btn.disabled = true; btn.textContent = s.saving;
     try{
-      // Clear any previous scores for this exam first, so re-saving just updates them
-      // (this also covers editing scores that were entered earlier).
       await supa.from(SCORES_SCHEMA.table).delete().eq(scol.examId, examId);
       if(rows.length){
         const { error } = await supa.from(SCORES_SCHEMA.table).insert(rows);
@@ -627,12 +818,15 @@
       cancelScoreEntry();
       await loadExamGrades();
     }catch(err){
-      alert("Couldn't save grades: " + (err.message || err));
+      alert(s.alertSaveScoresFail(err.message || err));
     }finally{
-      btn.disabled = false; btn.textContent = "💾 Save Grades";
+      btn.disabled = false; btn.textContent = s.saveGrades;
     }
   }
 
+  // init
+  applyTheme();
+  applyLanguage();
   loadExamGrades();
 </script>
 </body>
