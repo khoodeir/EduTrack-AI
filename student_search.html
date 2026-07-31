@@ -6,11 +6,17 @@
 <title>Student Search</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Speed up navigation to the other two pages: fetch them into the browser cache in the background -->
+<link rel="prefetch" href="index.html">
+<link rel="prefetch" href="dashboard.html">
+<!-- Warm up connections to the CDNs this page and the linked pages depend on -->
+<link rel="preconnect" href="https://unpkg.com">
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://evbjulsahncllewwvlxp.supabase.co">
 <style>
   :root{
     --ink:#262624; --ink-2:#3a3835;
@@ -74,11 +80,6 @@
   .brand h1{ font-family:'Cormorant Garamond',serif; font-size:26px; font-weight:700; color:var(--gold-2); letter-spacing:-0.01em; }
   [dir="rtl"] .brand h1{ font-family:'Cairo',serif; letter-spacing:0; }
   .brand p{ font-size:12.5px; color:var(--muted); margin-top:2px; }
-  .company-badge{
-    font-size:10px; font-weight:700; color:var(--gold); background:var(--gold-soft);
-    padding:3px 10px; border-radius:999px; letter-spacing:0.05em;
-    border:1px solid rgba(139,31,31,0.2);
-  }
   .topbar-actions{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
   .updated-note{ font-size:11.5px; color:var(--muted); display:flex; align-items:center; gap:6px; }
   .updated-note::before{ content:""; width:6px; height:6px; border-radius:50%; background:var(--success); box-shadow:0 0 0 3px var(--success-soft); }
@@ -156,7 +157,54 @@
 
   .table-wrap{ overflow-x:auto; border:1px solid var(--line); border-radius:12px; display:none; }
   .table-wrap.show{ display:block; }
-  table{ width:100%; border-collapse:collapse; font-size:12.5px; min-width:860px; }
+  .table-scroll-controls{
+  display:none;
+  align-items:center;
+  justify-content:flex-start;
+  margin-bottom:8px;
+}
+
+.table-scroll-controls.show{
+  display:flex;
+}
+
+.table-scroll-arrows{
+  display:flex;
+  gap:6px;
+}
+
+.table-scroll-btn{
+  width:42px;
+  height:42px;
+  border:1px solid var(--line);
+  border-radius:50%;
+  background:var(--card);
+  color:var(--gold-2);
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:var(--shadow-md);
+  transition:all .2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1.5px solid var(--gold-soft);
+}
+
+.table-scroll-btn:hover{
+  background:var(--gold);
+  color:var(--on-accent);
+  border-color:var(--gold);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.table-scroll-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+
+.table-scroll-arrows{
+  display:flex;
+  gap:12px;
+  padding: 4px;
+}
+  table{ width:100%; border-collapse:collapse; font-size:12.5px; min-width:760px; }
   thead th{
     text-align:start; padding:12px 14px; background:var(--paper); color:var(--gold-2);
     font-weight:700; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em;
@@ -170,14 +218,23 @@
   .chip{ display:inline-block; padding:3px 10px; border-radius:999px; font-size:11px; font-weight:700; }
   .chip.paid{ background:var(--success-soft); color:var(--success); }
   .chip.unpaid{ background:var(--error-soft); color:var(--error); }
-  .pdf-btn{
-    border:none; background:var(--gold-soft); color:var(--gold-2); cursor:pointer;
-    font-family:'Inter',sans-serif; font-weight:700; font-size:11px; padding:6px 11px; border-radius:8px;
-    transition:all .15s ease; display:inline-flex; align-items:center; gap:5px;
+  .bar-track{ width:70px; height:6px; border-radius:4px; background:rgba(139,31,31,0.10); display:inline-block; vertical-align:middle; margin-inline-end:7px; }
+  .bar-fill{ height:100%; border-radius:4px; background:var(--gold); }
+  .phone-link{
+    font-size:11px; color:var(--muted); text-decoration:none; display:inline-block;
+    padding:3px 8px; border-radius:6px; background:rgba(139,31,31,0.06); transition:all .15s ease;
   }
-  [dir="rtl"] .pdf-btn{ font-family:'Cairo','Inter',sans-serif; }
-  .pdf-btn:hover{ background:var(--gold); color:var(--on-accent); }
-  .pdf-btn svg{ width:14px; height:14px; }
+  .phone-link:hover{ color:var(--gold-2); background:var(--gold-soft); }
+  .grade-chip{
+    font-size:9.5px; font-weight:700; color:var(--gold-2); background:rgba(139,31,31,0.12);
+    padding:2px 7px; border-radius:999px;
+  }
+  .trend-btn{
+    border:none; background:rgba(139,31,31,0.09); color:var(--gold-2); cursor:pointer;
+    font-family:'Inter',sans-serif; font-weight:700; font-size:13px; padding:6px 11px; border-radius:8px;
+    transition:all .15s ease;
+  }
+  .trend-btn:hover{ background:var(--gold-soft); }
 
   .footer-note{ text-align:center; font-size:11.5px; color:var(--muted); margin-top:24px; display:flex; align-items:center; justify-content:center; gap:7px; }
   .footer-note::before{ content:"🔒"; font-size:11px; }
@@ -199,42 +256,30 @@
     font-family:'Cormorant Garamond',serif; font-weight:700; font-size:18px; color:var(--gold-2);
   }
   [dir="rtl"] .section-title{ font-family:'Cairo',serif; }
-
-  /* ===== PDF Report Modal ===== */
-  .pdf-modal-overlay{
-    display:none; position:fixed; inset:0; background:rgba(20,20,18,0.55); z-index:90;
-    align-items:center; justify-content:center; padding:20px;
+  .chart-box{ position:relative; height:260px; }
+  .chart-empty{
+    position:absolute; inset:0; display:none; align-items:center; justify-content:center;
+    color:var(--muted); font-size:12.5px; text-align:center; padding:0 20px;
   }
-  .pdf-modal-overlay.show{ display:flex; }
-  .pdf-modal-box{
-    background:var(--card); border-radius:16px; max-width:700px; width:100%; max-height:85vh;
-    overflow:auto; padding:28px; box-shadow:var(--shadow-lg); border:1px solid var(--line);
+  .chart-empty.show{ display:flex; }
+  .delta-badge{ font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:3px; }
+  .delta-badge.up{ color:var(--success); }
+  .delta-badge.down{ color:var(--error); }
+  .delta-badge.flat{ color:var(--muted); }
+  .grade-list-row{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:11px 4px; border-bottom:1px solid var(--line); font-size:13px;
   }
-  .pdf-preview-frame{
-    width:100%; height:500px; border:1px solid var(--line); border-radius:12px;
-    background:#fff; margin:16px 0;
+  .grade-list-row:last-child{ border-bottom:none; }
+  .grade-list-row .exam-name{ font-weight:600; color:var(--ink); }
+  .grade-list-row .exam-score{ font-family:'Space Grotesk',sans-serif; font-weight:700; color:var(--ink); flex-shrink:0; display:flex; align-items:center; gap:8px; }
+  .grade-list-row .exam-pct{ font-size:11px; color:var(--gold-2); background:var(--gold-soft); padding:2px 8px; border-radius:999px; font-weight:700; }
+  .grades-avg-row{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:12px 4px 2px; margin-top:6px; border-top:2px solid var(--line); font-size:13px;
   }
-  .pdf-actions{
-    display:flex; gap:12px; justify-content:flex-end;
-  }
-  .pdf-download-btn{
-    display:inline-flex; align-items:center; gap:8px;
-    padding:11px 18px; border-radius:10px;
-    background:linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%);
-    color:var(--on-accent); font-family:'Inter',sans-serif; font-size:13px; font-weight:700;
-    border:none; cursor:pointer; box-shadow:0 6px 16px rgba(139,31,31,0.28);
-    transition:transform .15s ease, box-shadow .15s ease;
-  }
-  .pdf-download-btn:hover{ transform:translateY(-1px); box-shadow:0 8px 20px rgba(139,31,31,0.35); }
-  .pdf-download-btn svg{ width:16px; height:16px; }
-  .pdf-close-btn{
-    border:1px solid var(--line); background:var(--card); color:var(--ink);
-    padding:11px 18px; border-radius:10px; cursor:pointer;
-    font-family:'Inter',sans-serif; font-size:13px; font-weight:700;
-    transition:all .15s ease;
-  }
-  [dir="rtl"] .pdf-close-btn{ font-family:'Cairo','Inter',sans-serif; }
-  .pdf-close-btn:hover{ border-color:var(--gold); color:var(--gold-2); }
+  .qr-wrap{ display:flex; flex-direction:column; align-items:center; gap:14px; padding:10px 0 4px; }
+  .qr-wrap img{ width:220px; height:220px; object-fit:contain; border:1px solid var(--line); border-radius:12px; background:#fff; padding:10px; }
 
   @media (max-width:640px){
     .controls{ flex-direction:column; align-items:stretch; }
@@ -258,22 +303,21 @@
       <p id="brandSubtitle">ابحث عن طالب بالاسم أو رقم الهاتف، لكل صف</p>
     </div>
   </div>
-  ```html
-<div class="topbar-actions">
-  <span class="updated-note" id="updatedNote"></span>
-
-  <a href="index.html" class="scanner-btn" id="scannerBtn">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M15 18l-6-6 6-6"/>
-    </svg>
-    <span id="scannerBtnText">الرجوع إلى الإسكانر</span>
-  </a>
-
-  <button class="icon-toggle-btn" id="langToggleBtn" onclick="toggleLang()" title="Switch language">EN</button>
-  <button class="icon-toggle-btn" id="darkModeToggle" onclick="toggleDarkMode()" title="Dark mode">🌙</button>
+  <div class="topbar-actions">
+    <span class="updated-note" id="updatedNote"></span>
+    <button class="icon-toggle-btn" id="langToggleBtn" onclick="toggleLang()" title="Switch language">EN</button>
+    <button class="icon-toggle-btn" id="darkModeToggle" onclick="toggleDarkMode()" title="Dark mode">🌙</button>
+    <a class="scanner-btn" href="index.html">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/>
+        <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/>
+        <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/>
+        <path d="M14 14h7v7h-7z" stroke="currentColor" stroke-width="1.8"/>
+      </svg>
+      <span id="scannerBtnText">ماسح الحضور</span>
+    </a>
+  </div>
 </div>
-```
-
 
 <div class="wrap">
   <div class="panel">
@@ -301,7 +345,19 @@
 
     <div id="resultsWrap" style="display:none;">
       <div class="result-count" id="resultCount"></div>
-      <div class="table-wrap show" id="studentTableWrap">
+      <div class="table-scroll-controls show">
+  <div class="table-scroll-arrows">
+    <button class="table-scroll-btn" onclick="scrollTable('right')" title="السابق">
+      <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+
+    <button class="table-scroll-btn" onclick="scrollTable('left')" title="التالي">
+      <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+  </div>
+</div>
+
+<div class="table-wrap show" id="studentTableWrap">
         <table>
           <thead>
             <tr>
@@ -310,8 +366,12 @@
               <th id="thPresent">حضور</th>
               <th id="thAbsent">غياب</th>
               <th id="thRate">نسبة الحضور</th>
+              <th id="thStudentPhone">هاتف الطالب</th>
+              <th id="thParentPhone">هاتف ولي الأمر</th>
               <th id="thPayment">الدفع</th>
-              <th id="thReport">التقرير</th>
+              <th id="thLast">آخر حضور</th>
+              <th id="thExams">الامتحانات</th>
+              <th id="thQr">عرض QR</th>
             </tr>
           </thead>
           <tbody id="resultsBody"></tbody>
@@ -322,34 +382,55 @@
   <div class="footer-note"><span id="footerNoteText">يتم قراءة البيانات مباشرة من Supabase باستخدام مفتاح للقراءة فقط</span></div>
 </div>
 
-<!-- PDF Report Modal -->
-<div class="pdf-modal-overlay" id="pdfReportModalOverlay">
-  <div class="pdf-modal-box">
+<!-- Student exam trend modal -->
+<div class="modal-overlay" id="studentTrendModalOverlay" onclick="if(event.target===this) closeStudentTrendModal()">
+  <div class="modal-box">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-      <div class="section-title" id="pdfReportTitle" style="margin-bottom:0;"></div>
-      <button class="modal-close" onclick="closePdfReportModal()">×</button>
+      <div class="section-title" id="studentTrendTitle" style="margin-bottom:0;"></div>
+      <button class="modal-close" onclick="closeStudentTrendModal()">×</button>
     </div>
-    <div class="state-msg show" id="pdfLoadingMsg">
-      <span class="spinner"></span> <span id="pdfLoadingMsgText"></span>
+    <div class="state-msg show" id="trendLoadingMsg">
+      <span class="spinner"></span> <span id="trendLoadingMsgText"></span>
     </div>
-    <iframe class="pdf-preview-frame" id="pdfPreviewFrame" style="display:none;"></iframe>
-    <div class="pdf-actions" id="pdfActions" style="display:none;">
-      <button class="pdf-download-btn" id="pdfDownloadBtn" onclick="downloadPdfReport()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-        </svg>
-        <span id="pdfDownloadBtnText">تحميل PDF</span>
-      </button>
-      <button class="pdf-close-btn" onclick="closePdfReportModal()">
-        <span id="pdfCloseBtnText">إغلاق</span>
-      </button>
+    <div class="chart-box" style="display:none;" id="trendChartWrap">
+      <canvas id="studentTrendChart"></canvas>
+      <div class="chart-empty" id="studentTrendEmpty"></div>
     </div>
+    <div id="studentTrendSummary" style="margin-top:14px; font-size:12.5px; color:var(--muted); text-align:center;"></div>
+  </div>
+</div>
+
+<!-- Student plain grades list modal -->
+<div class="modal-overlay" id="studentGradesModalOverlay" onclick="if(event.target===this) closeStudentGradesModal()">
+  <div class="modal-box">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <div class="section-title" id="studentGradesTitle" style="margin-bottom:0;"></div>
+      <button class="modal-close" onclick="closeStudentGradesModal()">×</button>
+    </div>
+    <div class="state-msg show" id="gradesLoadingMsg">
+      <span class="spinner"></span> <span id="gradesLoadingMsgText"></span>
+    </div>
+    <div id="studentGradesBody" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- Student QR code modal -->
+<div class="modal-overlay" id="studentQrModalOverlay" onclick="if(event.target===this) closeStudentQrModal()">
+  <div class="modal-box">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <div class="section-title" id="studentQrTitle" style="margin-bottom:0;"></div>
+      <button class="modal-close" onclick="closeStudentQrModal()">×</button>
+    </div>
+    <div class="state-msg show" id="qrLoadingMsg">
+      <span class="spinner"></span> <span id="qrLoadingMsgText"></span>
+    </div>
+    <div id="studentQrBody" style="display:none;"></div>
   </div>
 </div>
 
 <script>
   /* ============================================================
-     SUPABASE CONNECTION
+     SUPABASE CONNECTION — same database as the main dashboard
      ============================================================ */
   const SUPABASE_URL = "https://evbjulsahncllewwvlxp.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2Ymp1bHNhaG5jbGxld3d2bHhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2NzE5MjUsImV4cCI6MjA5OTI0NzkyNX0.Xg9sU6ZenUU3kC2RNIbvZmK19KvE28MM2oyGcKNn8UA";
@@ -361,15 +442,19 @@
     col: {
       fullName: "full_name",
       qrCode: "qr_code",
+      qrUrl: "qr_url",
       studentPhone: "student_phone",
       parentPhone: "parent_phone",
       attendanceCount: "attendance_count",
       absenceCount: "absence_count",
       lastAttendance: "last_attendance",
-      paymentStatus: "payment_status"
+      amountPaid: "amount_paid",
+      paymentStatus: "payment_status",
+      lastPaymentDate: "last_payment_date"
     }
   };
 
+  // Same shared exam tables used by the dashboard's "Exam Grades" tab.
   const EXAMS_SCHEMA = {
     table: "exams",
     col: { id: "id", name: "exam_name", maxScore: "max_score", grade: "grade", createdAt: "created_at" }
@@ -382,12 +467,14 @@
   const GRADES = ["first", "second", "third"];
 
   /* ============================================================
-     TRANSLATIONS
+     TRANSLATIONS — Arabic (default) & English
      ============================================================ */
   const translations = {
     en: {
       eyebrow: "Student lookup", title: "Student Search",
       subtitle: "Find a student by name or phone, per grade",
+      scannerBtn: "Attendance Scanner",
+      updatedPrefix: "Last updated: ",
       gradeAll: "All Grades", gradeFirst: "First Secondary", gradeSecond: "Second Secondary", gradeThird: "Third Secondary",
       searchPlaceholder: "Search by name or phone…",
       filterAll: "All", filterPaid: "Paid", filterUnpaid: "Unpaid",
@@ -395,27 +482,34 @@
       resultCount: (n) => `${n} student${n === 1 ? "" : "s"} found`,
       noResults: "No matching results",
       thName: "Name", thGrade: "Grade", thPresent: "Present", thAbsent: "Absent", thRate: "Attendance Rate",
-      thPayment: "Payment", thReport: "Report",
+      thStudentPhone: "Student Phone", thParentPhone: "Parent Phone", thPayment: "Payment", thLast: "Last Attendance",
+      thExams: "Exams", thQr: "Show QR",
       paid: "Paid", unpaid: "Unpaid",
       footer: "Data is read live from Supabase using a read-only anon key",
-      reportTitleSuffix: " — Student Report",
-      pdfLoading: "Generating PDF report…",
-      pdfDownload: "Download PDF",
-      pdfClose: "Close",
-      pdfReportHeading: "Student Report",
-      pdfGrade: "Grade", pdfPresent: "Present", pdfAbsent: "Absent",
-      pdfRate: "Attendance Rate", pdfPaid: "Paid", pdfUnpaid: "Unpaid",
-      pdfPayment: "Payment Status", pdfStudentPhone: "Student Phone",
-      pdfParentPhone: "Parent Phone", pdfLastAttendance: "Last Attendance",
-      pdfAttendance: "Attendance & Information",
-      pdfExam: "Exam", pdfScore: "Score", pdfPct: "Percentage",
-      pdfAvg: "Average", pdfFooter: "Confidential Report",
-      thExams: "Exams",
-      noExamsYet: "No exam scores recorded yet"
+      trendTitleSuffix: " — Exams", gradesTitleSuffix: " — Grades", qrTitleSuffix: " — QR Code",
+      loadingExams: "Loading exam scores…", loadingQr: "Loading QR code…",
+      onlyOneExam: "Only one exam recorded so far — add another exam score to see a trend",
+      noExamsYet: "No exam scores recorded yet for this student",
+      noExamsGrade: "No exams recorded yet for this grade",
+      notEntered: "Not entered", average: "Average",
+      improvedBy: (d) => `▲ Improved by ${d}%`,
+      droppedBy: (d) => `▼ Dropped by ${d}%`,
+      noChange: "— No change",
+      fromTo: (a, b) => `from "${a}" to "${b}"`,
+      couldntLoad: "Couldn't load data from Supabase",
+      commonCauses: "Common causes: the table/column names in SCHEMA don't match your database, or Row Level Security is enabled on these tables without a SELECT policy for the anon role.",
+      couldntLoadExams: "Couldn't load exam scores: ",
+      couldntLoadGrades: "Couldn't load grades: ",
+      noQrSaved: "No QR code saved for this student",
+      openFullSize: "Open Full Size",
+      couldntLoadQr: "Couldn't load the QR image",
+      student: "Student", dash: "—"
     },
     ar: {
       eyebrow: "بحث عن طالب", title: "بحث الطلاب",
       subtitle: "ابحث عن طالب بالاسم أو رقم الهاتف، لكل صف",
+      scannerBtn: "ماسح الحضور",
+      updatedPrefix: "آخر تحديث: ",
       gradeAll: "كل الصفوف", gradeFirst: "الصف الأول الثانوي", gradeSecond: "الصف الثاني الثانوي", gradeThird: "الصف الثالث الثانوي",
       searchPlaceholder: "ابحث بالاسم أو رقم الهاتف…",
       filterAll: "الكل", filterPaid: "مدفوع", filterUnpaid: "غير مدفوع",
@@ -423,50 +517,73 @@
       resultCount: (n) => `تم العثور على ${n} طالب`,
       noResults: "لا توجد نتائج مطابقة",
       thName: "الاسم", thGrade: "الصف", thPresent: "حضور", thAbsent: "غياب", thRate: "نسبة الحضور",
-      thPayment: "الدفع", thReport: "التقرير",
+      thStudentPhone: "هاتف الطالب", thParentPhone: "هاتف ولي الأمر", thPayment: "الدفع", thLast: "آخر حضور",
+      thExams: "الامتحانات", thQr: "عرض QR",
       paid: "مدفوع", unpaid: "غير مدفوع",
       footer: "يتم قراءة البيانات مباشرة من Supabase باستخدام مفتاح للقراءة فقط",
-      reportTitleSuffix: " — تقرير الطالب",
-      pdfLoading: "جاري توليد تقرير PDF…",
-      pdfDownload: "تحميل PDF",
-      pdfClose: "إغلاق",
-      pdfReportHeading: "تقرير الطالب",
-      pdfGrade: "الصف", pdfPresent: "حضور", pdfAbsent: "غياب",
-      pdfRate: "نسبة الحضور", pdfPaid: "مدفوع", pdfUnpaid: "غير مدفوع",
-      pdfPayment: "حالة الدفع", pdfStudentPhone: "هاتف الطالب",
-      pdfParentPhone: "هاتف ولي الأمر", pdfLastAttendance: "آخر حضور",
-      pdfAttendance: "الحضور والمعلومات",
-      pdfExam: "الامتحان", pdfScore: "الدرجة", pdfPct: "النسبة المئوية",
-      pdfAvg: "المتوسط", pdfFooter: "تقرير سري",
-      thExams: "الامتحانات",
-      noExamsYet: "لم يتم تسجيل درجات امتحانات بعد"
+      trendTitleSuffix: " — الامتحانات", gradesTitleSuffix: " — الدرجات", qrTitleSuffix: " — رمز QR",
+      loadingExams: "جاري تحميل درجات الامتحانات…", loadingQr: "جاري تحميل رمز QR…",
+      onlyOneExam: "تم تسجيل امتحان واحد فقط حتى الآن — أضف درجة امتحان أخرى لعرض المنحنى",
+      noExamsYet: "لا توجد درجات امتحانات مسجلة لهذا الطالب بعد",
+      noExamsGrade: "لا توجد امتحانات مسجلة لهذا الصف بعد",
+      notEntered: "لم تُدخل", average: "المتوسط",
+      improvedBy: (d) => `▲ تحسن بنسبة ${d}%`,
+      droppedBy: (d) => `▼ انخفض بنسبة ${d}%`,
+      noChange: "— لا تغيير",
+      fromTo: (a, b) => `من "${a}" إلى "${b}"`,
+      couldntLoad: "تعذر تحميل البيانات من Supabase",
+      commonCauses: "الأسباب الشائعة: أسماء الجداول أو الأعمدة في SCHEMA لا تطابق قاعدة بياناتك، أو تفعيل Row Level Security على هذه الجداول بدون سياسة SELECT لدور anon.",
+      couldntLoadExams: "تعذر تحميل درجات الامتحانات: ",
+      couldntLoadGrades: "تعذر تحميل الدرجات: ",
+      noQrSaved: "لا يوجد رمز QR محفوظ لهذا الطالب",
+      openFullSize: "فتح بالحجم الكامل",
+      couldntLoadQr: "تعذر تحميل صورة QR",
+      student: "طالب", dash: "—"
     }
   };
 
   let currentLang = "ar";
-  let currentPayFilter = "all";
   let currentGrade = "all";
+  let payFilterState = "all";
   let students = [];
-  let currentPdfBlob = null;
-  let currentPdfFilename = "";
 
-  function t() { return translations[currentLang]; }
+  function t(){ return translations[currentLang]; }
 
+  function gradeLabel(g){
+    const tr = t();
+    return { first: tr.gradeFirst, second: tr.gradeSecond, third: tr.gradeThird }[g] || tr.dash;
+  }
+
+  function isPaid(status){
+    const s = String(status ?? "").trim().toLowerCase();
+    return s === "paid" || s === "true" || s === "yes" || s === "1";
+  }
+  function pct(att, abs){
+    const a = Number(att) || 0, b = Number(abs) || 0;
+    const total = a + b;
+    return total > 0 ? Math.round((a / total) * 100) : null;
+  }
+
+  /* ---------- Language & dark mode ---------- */
   function toggleLang(){
-    currentLang = currentLang === "ar" ? "en" : "ar";
-    localStorage.setItem("studentSearchLang", currentLang);
-    document.documentElement.lang = currentLang;
-    document.documentElement.dir = currentLang === "ar" ? "rtl" : "ltr";
-    document.getElementById("langToggleBtn").textContent = currentLang === "ar" ? "EN" : "AR";
+    setLang(currentLang === "ar" ? "en" : "ar");
+  }
+
+  function setLang(lang){
+    currentLang = lang;
+    document.documentElement.lang = lang;
+    document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+    document.getElementById("langToggleBtn").textContent = lang === "ar" ? "EN" : "AR";
     applyStaticTranslations();
     renderResults();
+    try{ localStorage.setItem("studentSearchLang", lang); }catch(e){}
   }
 
   function toggleDarkMode(){
-    document.body.classList.toggle("dark");
-    const isDark = document.body.classList.contains("dark");
-    localStorage.setItem("studentSearchDarkMode", isDark ? "1" : "0");
-    document.getElementById("darkModeToggle").textContent = isDark ? "☀️" : "🌙";
+    const on = !document.body.classList.contains("dark");
+    document.body.classList.toggle("dark", on);
+    document.getElementById("darkModeToggle").textContent = on ? "☀️" : "🌙";
+    try{ localStorage.setItem("studentSearchDarkMode", on ? "1" : "0"); }catch(e){}
   }
 
   function applyStaticTranslations(){
@@ -474,6 +591,7 @@
     document.getElementById("brandEyebrow").textContent = tr.eyebrow;
     document.getElementById("brandTitle").textContent = tr.title;
     document.getElementById("brandSubtitle").textContent = tr.subtitle;
+    document.getElementById("scannerBtnText").textContent = tr.scannerBtn;
     document.getElementById("optGradeAll").textContent = tr.gradeAll;
     document.getElementById("optGradeFirst").textContent = tr.gradeFirst;
     document.getElementById("optGradeSecond").textContent = tr.gradeSecond;
@@ -482,359 +600,433 @@
     document.getElementById("filterAllBtn").textContent = tr.filterAll;
     document.getElementById("filterPaidBtn").textContent = tr.filterPaid;
     document.getElementById("filterUnpaidBtn").textContent = tr.filterUnpaid;
-    document.getElementById("loadingMsgText").textContent = tr.loadingData;
-    document.getElementById("footerNoteText").textContent = tr.footer;
     document.getElementById("thName").textContent = tr.thName;
     document.getElementById("thGrade").textContent = tr.thGrade;
     document.getElementById("thPresent").textContent = tr.thPresent;
     document.getElementById("thAbsent").textContent = tr.thAbsent;
     document.getElementById("thRate").textContent = tr.thRate;
+    document.getElementById("thStudentPhone").textContent = tr.thStudentPhone;
+    document.getElementById("thParentPhone").textContent = tr.thParentPhone;
     document.getElementById("thPayment").textContent = tr.thPayment;
-    document.getElementById("thReport").textContent = tr.thReport;
-    document.getElementById("pdfDownloadBtnText").textContent = tr.pdfDownload;
-    document.getElementById("pdfCloseBtnText").textContent = tr.pdfClose;
-  }
+    document.getElementById("thLast").textContent = tr.thLast;
+    document.getElementById("thExams").textContent = tr.thExams;
+    document.getElementById("thQr").textContent = tr.thQr;
+    document.getElementById("footerNoteText").textContent = tr.footer;
+    document.getElementById("loadingMsgText").textContent = tr.loadingData;
 
-  function gradeLabel(g){
-    const tr = t();
-    return { first: tr.gradeFirst, second: tr.gradeSecond, third: tr.gradeThird }[g] || g;
-  }
-
-  function isPaid(status){
-    return status && status.toLowerCase() === "paid";
-  }
-
-  function pct(present, absent){
-    const total = present + absent;
-    return total > 0 ? Math.round((present / total) * 100) : 0;
-  }
-
-  async function loadData(){
-    const tr = t();
-    try{
-      const grades = currentGrade === "all" ? GRADES : [currentGrade];
-      students = [];
-      
-      for(const grade of grades){
-        const { data, error } = await supa
-          .from(SCHEMA.attendanceTable(grade))
-          .select("*");
-        if(error) throw error;
-        if(data) students.push(...data.map(s => ({ ...s, grade })));
-      }
-      
-      document.getElementById("loadingMsg").classList.remove("show");
-      document.getElementById("resultsWrap").style.display = "block";
-      renderResults();
-    }catch(err){
-      console.error(err);
-      document.getElementById("loadingMsg").classList.remove("show");
-      document.getElementById("errorMsg").classList.add("show");
-      document.getElementById("errorMsg").textContent = tr.couldntLoad || "Error loading data";
-    }
+    const updatedEl = document.getElementById("updatedNote");
+    if(updatedEl.dataset.time) updatedEl.textContent = tr.updatedPrefix + updatedEl.dataset.time;
   }
 
   function onGradeChange(){
     currentGrade = document.getElementById("gradeSelect").value;
-    document.getElementById("loadingMsg").classList.add("show");
-    document.getElementById("resultsWrap").style.display = "none";
     loadData();
   }
 
   function setPayFilter(f){
-    currentPayFilter = f;
-    document.querySelectorAll(".pay-filter button").forEach(b => b.classList.remove("active"));
-    document.querySelector(`[data-f="${f}"]`).classList.add("active");
+    payFilterState = f;
+    document.querySelectorAll("#payFilter button").forEach(b => b.classList.toggle("active", b.dataset.f === f));
     renderResults();
+  }
+
+  async function fetchGrade(grade){
+    const [{ data: att, error: attErr }, { data: pay, error: payErr }] = await Promise.all([
+      supa.from(SCHEMA.attendanceTable(grade)).select("*"),
+      supa.from(SCHEMA.paymentsTable(grade)).select("*")
+    ]);
+    if(attErr) throw new Error(`(${SCHEMA.attendanceTable(grade)}) ${attErr.message}`);
+    if(payErr) throw new Error(`(${SCHEMA.paymentsTable(grade)}) ${payErr.message}`);
+
+    const col = SCHEMA.col;
+    const payByCode = {};
+    (pay || []).forEach(p => { payByCode[p[col.qrCode]] = p; });
+
+    return (att || []).map(a => {
+      const p = payByCode[a[col.qrCode]] || {};
+      return {
+        grade,
+        name: a[col.fullName] ?? "",
+        qrCode: a[col.qrCode] ?? "",
+        qrUrl: a[col.qrUrl] ?? "",
+        studentPhone: a[col.studentPhone] ?? "",
+        parentPhone: a[col.parentPhone] ?? "",
+        attendanceCount: Number(a[col.attendanceCount] || 0),
+        absenceCount: Number(a[col.absenceCount] || 0),
+        lastAttendance: a[col.lastAttendance] ?? "",
+        paymentStatus: p[col.paymentStatus] ?? "",
+        amountPaid: Number(p[col.amountPaid] || 0),
+        lastPaymentDate: p[col.lastPaymentDate] ?? ""
+      };
+    });
+  }
+
+  async function loadData(){
+    const loadingEl = document.getElementById("loadingMsg");
+    const errorEl = document.getElementById("errorMsg");
+    const resultsWrap = document.getElementById("resultsWrap");
+
+    loadingEl.classList.add("show");
+    errorEl.classList.remove("show");
+    resultsWrap.style.display = "none";
+
+    try{
+      const gradesToFetch = currentGrade === "all" ? GRADES : [currentGrade];
+      const results = await Promise.all(gradesToFetch.map(fetchGrade));
+      students = results.flat();
+
+      document.getElementById("searchInput").value = "";
+      payFilterState = "all";
+      document.querySelectorAll("#payFilter button").forEach(b => b.classList.toggle("active", b.dataset.f === "all"));
+
+      renderResults();
+      resultsWrap.style.display = "block";
+      const timeStr = new Date().toLocaleTimeString(currentLang === "ar" ? "ar-EG" : "en-US", { hour: "2-digit", minute: "2-digit" });
+      document.getElementById("updatedNote").dataset.time = timeStr;
+      document.getElementById("updatedNote").textContent = t().updatedPrefix + timeStr;
+    }catch(err){
+      console.error(err);
+      errorEl.innerHTML = `
+        <div style="font-weight:700;">${t().couldntLoad}</div>
+        <div style="font-size:12px; max-width:520px;">
+          ${err.message || err}<br><br>
+          ${t().commonCauses}
+        </div>`;
+      errorEl.classList.add("show");
+    }finally{
+      loadingEl.classList.remove("show");
+    }
   }
 
   function renderResults(){
     const tr = t();
-    const query = document.getElementById("searchInput").value.toLowerCase();
-    
-    let filtered = students.filter(s => {
-      const matchesQuery = !query || 
-        s[SCHEMA.col.fullName].toLowerCase().includes(query) ||
-        (s[SCHEMA.col.studentPhone] && s[SCHEMA.col.studentPhone].includes(query));
-      
-      const matchesPayment = currentPayFilter === "all" || 
-        (currentPayFilter === "paid" ? isPaid(s[SCHEMA.col.paymentStatus]) : !isPaid(s[SCHEMA.col.paymentStatus]));
-      
-      return matchesQuery && matchesPayment;
-    });
+    const q = document.getElementById("searchInput").value.trim().toLowerCase();
+    let rows = students;
 
-    document.getElementById("resultCount").textContent = tr.resultCount(filtered.length);
+    if(payFilterState === "paid") rows = rows.filter(s => isPaid(s.paymentStatus));
+    if(payFilterState === "unpaid") rows = rows.filter(s => !isPaid(s.paymentStatus));
 
-    const tbody = document.getElementById("resultsBody");
-    tbody.innerHTML = filtered.length === 0 
-      ? `<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--muted);">${tr.noResults}</td></tr>`
-      : filtered.map(s => {
-          const attendancePct = pct(s[SCHEMA.col.attendanceCount], s[SCHEMA.col.absenceCount]);
-          const paid = isPaid(s[SCHEMA.col.paymentStatus]);
-          return `
-            <tr>
-              <td>${s[SCHEMA.col.fullName]}</td>
-              <td>${gradeLabel(s.grade)}</td>
-              <td>${s[SCHEMA.col.attendanceCount]}</td>
-              <td>${s[SCHEMA.col.absenceCount]}</td>
-              <td>${attendancePct}%</td>
-              <td><span class="chip ${paid ? 'paid' : 'unpaid'}">${paid ? tr.paid : tr.unpaid}</span></td>
-              <td><button class="pdf-btn" onclick="showPdfReport('${s[SCHEMA.col.qrCode]}', '${s.grade}', '${s[SCHEMA.col.fullName].replace(/'/g, "\\'")}')">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                ${tr.pdfDownload}
-              </button></td>
-            </tr>
-          `;
-        }).join("");
+    if(q){
+      // Helper for phonetic matching between Arabic and English
+      const phonetic = (str) => {
+        if (!str) return "";
+        const map = {
+          'أ': 'a', 'إ': 'a', 'آ': 'a', 'ا': 'a', 'ب': 'b', 'ت': 't', 'ث': 'th', 'ج': 'j', 'ح': 'h', 'خ': 'kh',
+          'د': 'd', 'ذ': 'th', 'ر': 'r', 'ز': 'z', 'س': 's', 'ش': 'sh', 'ص': 's', 'ض': 'd', 'ط': 't', 'ظ': 'z',
+          'ع': 'a', 'غ': 'gh', 'ف': 'f', 'ق': 'q', 'ك': 'k', 'ل': 'l', 'م': 'm', 'ن': 'n', 'ه': 'h', 'و': 'w',
+          'ي': 'y', 'ى': 'a', 'ة': 'h', 'ئ': 'y', 'ؤ': 'o'
+        };
+        let normalized = str.split('').map(c => map[c] || c).join('').toLowerCase();
+        return normalized.replace(/[aeiou\s]/g, ''); // Remove vowels and spaces for rough phonetic match
+      };
+
+      const qPhonetic = phonetic(q);
+
+      rows = rows.filter(s => {
+        const name = (s.name || "").toLowerCase();
+        const namePhonetic = phonetic(name);
+        const studentPhone = (s.studentPhone || "");
+        const parentPhone = (s.parentPhone || "");
+        const qrCode = (s.qrCode || "").toLowerCase();
+
+        return name.includes(q) || (qPhonetic && namePhonetic.includes(qPhonetic)) ||
+               studentPhone.includes(q) ||
+               parentPhone.includes(q) ||
+               qrCode.includes(q);
+      });
+    }
+
+    document.getElementById("resultCount").textContent = tr.resultCount(rows.length);
+
+    const body = document.getElementById("resultsBody");
+    if(!rows.length){
+      body.innerHTML = `<tr><td colspan="11" style="text-align:center; color:var(--muted); padding:24px;">${tr.noResults}</td></tr>`;
+      return;
+    }
+
+    body.innerHTML = rows.map(s => {
+      const p = pct(s.attendanceCount, s.absenceCount);
+      const paid = isPaid(s.paymentStatus);
+      const hasPaymentRecord = s.paymentStatus !== "";
+      const safeName = (s.name || "").replace(/'/g, "\\'");
+      const safeQrUrl = (s.qrUrl || "").replace(/'/g, "\\'");
+      return `
+        <tr>
+          <td style="font-weight:600;">${s.name || tr.dash}</td>
+          <td><span class="grade-chip">${gradeLabel(s.grade)}</span></td>
+          <td>${s.attendanceCount}</td>
+          <td>${s.absenceCount}</td>
+          <td>
+            ${p != null ? `<span class="bar-track"><span class="bar-fill" style="width:${p}%;"></span></span>${p}%` : tr.dash}
+          </td>
+          <td>${s.studentPhone ? `<a class="phone-link" href="tel:${s.studentPhone}">${s.studentPhone}</a>` : tr.dash}</td>
+          <td>${s.parentPhone ? `<a class="phone-link" href="tel:${s.parentPhone}">${s.parentPhone}</a>` : tr.dash}</td>
+          <td>${hasPaymentRecord ? `<span class="chip ${paid ? 'paid' : 'unpaid'}">${paid ? tr.paid : tr.unpaid}</span>` : tr.dash}</td>
+          <td>${s.lastAttendance || tr.dash}</td>
+          <td style="display:flex; gap:6px;">
+            <button class="trend-btn" onclick="showStudentTrend('${s.qrCode}','${s.grade}','${safeName}')" title="${tr.thExams}">📈</button>
+            <button class="trend-btn" onclick="showStudentGrades('${s.qrCode}','${s.grade}','${safeName}')" title="${tr.thExams}">📋</button>
+          </td>
+          <td>
+            <button class="trend-btn" onclick="showStudentQr('${safeQrUrl}','${safeName}')" title="${tr.thQr}">🔳</button>
+          </td>
+        </tr>`;
+    }).join("");
   }
 
-  async function showPdfReport(qrCode, grade, name){
-    const tr = t();
-    const overlay = document.getElementById("pdfReportModalOverlay");
-    const loadingEl = document.getElementById("pdfLoadingMsg");
-    const frame = document.getElementById("pdfPreviewFrame");
-    const actions = document.getElementById("pdfActions");
+  function scrollTable(direction){
+  const table = document.getElementById("studentTableWrap");
 
-    document.getElementById("pdfReportTitle").textContent = `${name}${tr.reportTitleSuffix}`;
-    document.getElementById("pdfLoadingMsgText").textContent = tr.pdfLoading;
+  if(!table) return;
+
+  const amount = 350;
+
+  table.scrollBy({
+    left: direction === "right" ? -amount : amount,
+    behavior: "smooth"
+  });
+}
+
+  /* ---------- Student exam-score trend ---------- */
+  let studentTrendChartInstance = null;
+
+  function chartThemeColors(){
+    const dark = document.body.classList.contains("dark");
+    return {
+      line: dark ? "rgba(192,57,43,0.95)" : "rgba(139,31,31,0.9)",
+      fill: dark ? "rgba(192,57,43,0.20)" : "rgba(139,31,31,0.15)",
+      point: dark ? "rgba(192,57,43,1)" : "rgba(139,31,31,1)",
+      grid: dark ? "rgba(238,236,231,0.10)" : "rgba(139,31,31,0.08)",
+      tick: dark ? "#eeece7" : "#262624"
+    };
+  }
+
+  async function showStudentTrend(qrCode, grade, name){
+    const tr = t();
+    const overlay = document.getElementById("studentTrendModalOverlay");
+    const loadingEl = document.getElementById("trendLoadingMsg");
+    const chartWrap = document.getElementById("trendChartWrap");
+    const canvas = document.getElementById("studentTrendChart");
+    const emptyEl = document.getElementById("studentTrendEmpty");
+    const summaryEl = document.getElementById("studentTrendSummary");
+
+    document.getElementById("studentTrendTitle").textContent = `${name || tr.student}${tr.trendTitleSuffix}`;
+    document.getElementById("trendLoadingMsgText").textContent = tr.loadingExams;
     loadingEl.classList.add("show");
-    frame.style.display = "none";
-    actions.style.display = "none";
+    chartWrap.style.display = "none";
+    emptyEl.classList.remove("show");
+    summaryEl.textContent = "";
+    if(studentTrendChartInstance){ studentTrendChartInstance.destroy(); studentTrendChartInstance = null; }
     overlay.classList.add("show");
 
     try{
       const ecol = EXAMS_SCHEMA.col;
       const scol = SCORES_SCHEMA.col;
 
-      let examRows = [];
       const { data: exams, error: examsErr } = await supa
         .from(EXAMS_SCHEMA.table).select("*")
         .eq(ecol.grade, grade)
         .order(ecol.createdAt, { ascending: true });
-      
-      if(!examsErr && exams && exams.length){
+      if(examsErr) throw examsErr;
+
+      let scores = [];
+      if(exams && exams.length){
         const ids = exams.map(e => e[ecol.id]);
         const { data: scoreRows, error: scoresErr } = await supa
           .from(SCORES_SCHEMA.table).select("*")
           .in(scol.examId, ids)
           .eq(scol.studentCode, qrCode);
-        
-        if(!scoresErr && scoreRows){
-          examRows = exams.map(e => {
-            const row = scoreRows.find(sc => sc[scol.examId] === e[ecol.id]);
-            const mx = Number(e[ecol.maxScore]) || 100;
-            if(!row) return { examName: e[ecol.name], max: e[ecol.maxScore], raw: null, pct: null };
-            const sc = Number(row[scol.score]);
-            return { examName: e[ecol.name], max: e[ecol.maxScore], raw: row[scol.score], pct: isNaN(sc) ? null : Math.round((sc / mx) * 100) };
-          });
-        }
+        if(scoresErr) throw scoresErr;
+        scores = scoreRows || [];
       }
 
-      const student = students.find(s => s[SCHEMA.col.qrCode] === qrCode && s.grade === grade);
-      if(!student) throw new Error("Student not found");
+      const points = (exams || []).map(e => {
+        const row = scores.find(sc => sc[scol.examId] === e[ecol.id]);
+        if(!row) return null;
+        const sc = Number(row[scol.score]);
+        const mx = Number(e[ecol.maxScore]) || 100;
+        if(isNaN(sc)) return null;
+        return { examName: e[ecol.name], pct: Math.round((sc / mx) * 100), raw: row[scol.score], max: e[ecol.maxScore] };
+      }).filter(p => p != null);
 
-      const p = pct(student[SCHEMA.col.attendanceCount], student[SCHEMA.col.absenceCount]);
-      const paid = isPaid(student[SCHEMA.col.paymentStatus]);
-      const avg = examRows.filter(r => r.pct != null);
-      const avgScore = avg.length ? Math.round(avg.reduce((a,b) => a + b.pct, 0) / avg.length) : null;
+      loadingEl.classList.remove("show");
+      chartWrap.style.display = "block";
 
-      const isAr = currentLang === "ar";
-      const htmlContent = buildPdfHtml(tr, isAr, name, student, p, paid, paid ? tr.pdfPaid : tr.pdfUnpaid, examRows, avgScore);
+      if(points.length < 2){
+        canvas.style.display = "none";
+        emptyEl.textContent = points.length === 1 ? tr.onlyOneExam : tr.noExamsYet;
+        emptyEl.classList.add("show");
+        return;
+      }
 
-      const container = document.createElement("div");
-      container.style.cssText = "position:fixed; left:-9999px; top:0; width:595px; background:#fff; padding:0;";
-      container.innerHTML = htmlContent;
-      document.body.appendChild(container);
+      canvas.style.display = "block";
+      emptyEl.classList.remove("show");
 
-      await document.fonts.ready;
-      await new Promise(r => setTimeout(r, 800));
-
-      const canvas = await window.html2canvas(container, {
-        scale: 2,
-        backgroundColor: "#ffffff",
-        useCORS: true,
-        logging: false,
-        width: 595,
-        height: container.offsetHeight
+      const colors = chartThemeColors();
+      studentTrendChartInstance = new Chart(canvas, {
+        type: "line",
+        data: {
+          labels: points.map(p => p.examName),
+          datasets: [{
+            label: "Score",
+            data: points.map(p => p.pct),
+            borderColor: colors.line,
+            backgroundColor: colors.fill,
+            fill: true, tension: 0.3, pointRadius: 4, pointBackgroundColor: colors.point
+          }]
+        },
+        options: {
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: c => {
+              const p = points[c.dataIndex];
+              return `${p.raw} / ${p.max} (${p.pct}%)`;
+            } } }
+          },
+          scales: {
+            y: { beginAtZero: true, max: 100, ticks: { callback: v => v + "%", font: { size: 10 }, color: colors.tick }, grid: { color: colors.grid } },
+            x: { ticks: { font: { size: 10 }, color: colors.tick }, grid: { display: false } }
+          }
+        }
       });
 
-      document.body.removeChild(container);
-
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({ unit: 'pt', format: 'a4', orientation: 'portrait', compress: true });
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-      const imgWidth = pageWidth - 40;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      const imgData = canvas.toDataURL("image/png");
-
-      doc.addImage(imgData, "PNG", 20, 20, imgWidth, imgHeight);
-
-      if (imgHeight > pageHeight - 40) {
-        let heightLeft = imgHeight;
-        let position = 0;
-        while (heightLeft > 0) {
-          position = -(pageHeight - 40) * Math.floor((imgHeight - heightLeft) / (pageHeight - 40));
-          if (heightLeft < pageHeight - 40) break;
-          doc.addPage();
-          doc.addImage(imgData, "PNG", 20, position + 20, imgWidth, imgHeight);
-          heightLeft -= (pageHeight - 40);
-        }
-      }
-
-      const pdfBlob = doc.output('blob');
-      const pdfUrl = URL.createObjectURL(pdfBlob);
-      frame.src = pdfUrl;
-      frame.style.display = "block";
-      currentPdfBlob = pdfBlob;
-      currentPdfFilename = `report_${name}_${new Date().toISOString().split('T')[0]}.pdf`;
-      actions.style.display = "flex";
-      loadingEl.classList.remove("show");
+      const first = points[0].pct, last = points[points.length - 1].pct;
+      const diff = last - first;
+      const fromToStr = tr.fromTo(points[0].examName, points[points.length - 1].examName);
+      if(diff > 0) summaryEl.innerHTML = `<span class="delta-badge up">${tr.improvedBy(diff)}</span> ${fromToStr}`;
+      else if(diff < 0) summaryEl.innerHTML = `<span class="delta-badge down">${tr.droppedBy(Math.abs(diff))}</span> ${fromToStr}`;
+      else summaryEl.innerHTML = `<span class="delta-badge flat">${tr.noChange}</span> ${fromToStr}`;
 
     }catch(err){
       console.error(err);
       loadingEl.classList.remove("show");
-      frame.style.display = "block";
-      frame.srcdoc = `<div style="color:red; text-align:center; padding:40px; font-family:sans-serif;">Error generating PDF: ${err.message || err}</div>`;
-      actions.style.display = "flex";
+      chartWrap.style.display = "block";
+      canvas.style.display = "none";
+      emptyEl.textContent = tr.couldntLoadExams + (err.message || err);
+      emptyEl.classList.add("show");
     }
   }
 
-  function buildPdfHtml(tr, isAr, name, student, attendancePct, paid, paymentLabel, examRows, avgScore){
-    const dir = isAr ? "rtl" : "ltr";
-    const font = "'Noto Sans Arabic','Noto Sans','Arial','sans-serif'";
+  function closeStudentTrendModal(){
+    document.getElementById("studentTrendModalOverlay").classList.remove("show");
+  }
 
-    let examTableRows = examRows.map(r => `
-      <tr>
-        <td style="padding:10px 12px; border:1px solid #e0e0e0; text-align:center;">${r.examName}</td>
-        <td style="padding:10px 12px; border:1px solid #e0e0e0; text-align:center;">${r.raw != null ? r.raw + " / " + r.max : tr.notEntered || "—"}</td>
-        <td style="padding:10px 12px; border:1px solid #e0e0e0; text-align:center; font-weight:700; color:#8b1f1f;">${r.pct != null ? r.pct + "%" : "—"}</td>
-      </tr>
-    `).join("");
+  /* ---------- Student exam grades — plain list (no chart) ---------- */
+  async function showStudentGrades(qrCode, grade, name){
+    const tr = t();
+    const overlay = document.getElementById("studentGradesModalOverlay");
+    const loadingEl = document.getElementById("gradesLoadingMsg");
+    const bodyEl = document.getElementById("studentGradesBody");
 
-    return `
-      <!DOCTYPE html>
-      <html dir="${dir}" lang="${isAr ? 'ar' : 'en'}">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: ${font}; font-size: 11pt; color: #262624; line-height: 1.6; background: #f2efe8; padding: 0; }
-          .report-container { width: 595px; margin: 0 auto; background: #fff; padding: 40px; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
-          .report-header { text-align: center; border-bottom: 3px solid #8b1f1f; padding-bottom: 20px; margin-bottom: 30px; }
-          .report-title { font-size: 24pt; font-weight: 700; color: #8b1f1f; margin-bottom: 10px; letter-spacing: 1px; }
-          .student-name { font-size: 18pt; font-weight: 700; color: #262624; margin: 10px 0; }
-          .student-grade { font-size: 11pt; color: #6d6c68; margin-top: 5px; }
-          .section-title { font-size: 13pt; font-weight: 700; color: #8b1f1f; margin: 25px 0 12px 0; padding-bottom: 8px; border-bottom: 2px solid #8b1f1f; }
-          .info-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #d0d0d0; background: #fff; }
-          .info-table tr { border-bottom: 1px solid #d0d0d0; }
-          .info-table tr:last-child { border-bottom: none; }
-          .info-table tr:nth-child(odd) { background: #faf8f3; }
-          .info-table tr:nth-child(even) { background: #fff; }
-          .info-table td { padding: 12px 14px; border-right: 1px solid #d0d0d0; }
-          .info-table td:last-child { border-right: none; }
-          .info-table td:first-child { font-weight: 700; color: #6f1818; width: 35%; background: #f7f4ee; }
-          .info-table td:nth-child(3) { font-weight: 700; color: #6f1818; width: 35%; background: #f7f4ee; }
-          .exams-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #d0d0d0; }
-          .exams-table thead { background: #8b1f1f; color: #f6f2ea; }
-          .exams-table th { padding: 12px 14px; font-weight: 700; font-size: 10.5pt; text-transform: uppercase; letter-spacing: 0.5px; text-align: center; border: 1px solid #8b1f1f; }
-          .exams-table tbody tr:nth-child(odd) { background: #faf8f3; }
-          .exams-table tbody tr:nth-child(even) { background: #fff; }
-          .exams-table tbody tr:hover { background: rgba(139, 31, 31, 0.06); }
-          .exams-table tfoot tr { background: #f7f4ee; font-weight: 700; border-top: 2px solid #8b1f1f; }
-          .exams-table tfoot td { padding: 12px 14px; border: 1px solid #d0d0d0; text-align: center; }
-          .report-footer { text-align: center; margin-top: 30px; padding-top: 15px; border-top: 2px solid #8b1f1f; font-size: 9pt; color: #6d6c68; }
-          .status-badge { display: inline-block; padding: 4px 10px; border-radius: 4px; font-weight: 700; font-size: 10pt; }
-          .status-paid { background: rgba(46, 125, 82, 0.15); color: #2e7d52; }
-          .status-unpaid { background: rgba(139, 31, 31, 0.15); color: #8b1f1f; }
-          @media print { body { background: #fff; padding: 0; } .report-container { width: 100%; box-shadow: none; padding: 20px; } }
-        </style>
-      </head>
-      <body>
-        <div class="report-container">
-          <div class="report-header">
-            <div class="report-title">${tr.pdfReportHeading || 'Student Report'}</div>
-            <div class="student-name">${name}</div>
-            <div class="student-grade">${tr.pdfGrade || 'Grade'}: ${gradeLabel(student.grade)}</div>
+    document.getElementById("studentGradesTitle").textContent = `${name || tr.student}${tr.gradesTitleSuffix}`;
+    document.getElementById("gradesLoadingMsgText").textContent = tr.loadingExams;
+    loadingEl.classList.add("show");
+    bodyEl.style.display = "none";
+    bodyEl.innerHTML = "";
+    overlay.classList.add("show");
+
+    try{
+      const ecol = EXAMS_SCHEMA.col;
+      const scol = SCORES_SCHEMA.col;
+
+      const { data: exams, error: examsErr } = await supa
+        .from(EXAMS_SCHEMA.table).select("*")
+        .eq(ecol.grade, grade)
+        .order(ecol.createdAt, { ascending: true });
+      if(examsErr) throw examsErr;
+
+      let scores = [];
+      if(exams && exams.length){
+        const ids = exams.map(e => e[ecol.id]);
+        const { data: scoreRows, error: scoresErr } = await supa
+          .from(SCORES_SCHEMA.table).select("*")
+          .in(scol.examId, ids)
+          .eq(scol.studentCode, qrCode);
+        if(scoresErr) throw scoresErr;
+        scores = scoreRows || [];
+      }
+
+      const rows = (exams || []).map(e => {
+        const row = scores.find(sc => sc[scol.examId] === e[ecol.id]);
+        const mx = Number(e[ecol.maxScore]) || 100;
+        if(!row) return { examName: e[ecol.name], max: e[ecol.maxScore], raw: null, pct: null };
+        const sc = Number(row[scol.score]);
+        return { examName: e[ecol.name], max: e[ecol.maxScore], raw: row[scol.score], pct: isNaN(sc) ? null : Math.round((sc / mx) * 100) };
+      });
+
+      loadingEl.classList.remove("show");
+      bodyEl.style.display = "block";
+
+      if(!rows.length){
+        bodyEl.innerHTML = `<div style="text-align:center; color:var(--muted); padding:24px 0;">${tr.noExamsGrade}</div>`;
+        return;
+      }
+
+      const scored = rows.filter(r => r.pct != null);
+      const avg = scored.length ? Math.round(scored.reduce((a,b) => a + b.pct, 0) / scored.length) : null;
+
+      bodyEl.innerHTML =
+        rows.map(r => `
+          <div class="grade-list-row">
+            <span class="exam-name">${r.examName}</span>
+            <span class="exam-score">
+              ${r.raw != null ? `${r.raw} / ${r.max}` : `<span style="color:var(--muted); font-weight:600;">${tr.notEntered}</span>`}
+              ${r.pct != null ? `<span class="exam-pct">${r.pct}%</span>` : ""}
+            </span>
           </div>
-          
-          <div class="section-title">${tr.pdfAttendance || 'Attendance & Information'}</div>
-          <table class="info-table">
-            <tr>
-              <td>${tr.pdfPresent || 'Present'}</td>
-              <td>${student[SCHEMA.col.attendanceCount]}</td>
-              <td>${tr.pdfAbsent || 'Absent'}</td>
-              <td>${student[SCHEMA.col.absenceCount]}</td>
-            </tr>
-            <tr>
-              <td>${tr.pdfRate || 'Attendance Rate'}</td>
-              <td>${attendancePct != null ? attendancePct + "%" : "—"}</td>
-              <td>${tr.pdfPayment || 'Payment Status'}</td>
-              <td><span class="status-badge ${paid ? 'status-paid' : 'status-unpaid'}">${paymentLabel}</span></td>
-            </tr>
-            <tr>
-              <td>${tr.pdfStudentPhone || 'Student Phone'}</td>
-              <td>${student[SCHEMA.col.studentPhone] || "—"}</td>
-              <td>${tr.pdfParentPhone || 'Parent Phone'}</td>
-              <td>${student[SCHEMA.col.parentPhone] || "—"}</td>
-            </tr>
-            <tr>
-              <td>${tr.pdfLastAttendance || 'Last Attendance'}</td>
-              <td colspan="3">${student[SCHEMA.col.lastAttendance] || "—"}</td>
-            </tr>
-          </table>
-          
-          ${examRows.length > 0 ? `
-          <div class="section-title">${tr.thExams || 'Exams'}</div>
-          <table class="exams-table">
-            <thead>
-              <tr>
-                <th>${tr.pdfExam || 'Exam'}</th>
-                <th>${tr.pdfScore || 'Score'}</th>
-                <th>${tr.pdfPct || 'Percentage'}</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${examTableRows}
-            </tbody>
-            ${avgScore != null ? `
-            <tfoot>
-              <tr>
-                <td>${tr.pdfAvg || 'Average'}</td>
-                <td></td>
-                <td>${avgScore}%</td>
-              </tr>
-            </tfoot>` : ""}
-          </table>
-          ` : `<div style="text-align:center; color:#6d6c68; padding:20px; border:1px dashed #d0d0d0; border-radius:8px; margin:20px 0;">${tr.noExamsYet || 'No exams yet'}</div>`}
-          
-          <div class="report-footer">
-            ${tr.pdfFooter || 'Confidential Report'}
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
+        `).join("") +
+        `<div class="grades-avg-row">
+          <span style="font-weight:700; color:var(--gold-2);">${tr.average}</span>
+          <span class="exam-score">${avg != null ? avg + "%" : tr.dash}</span>
+        </div>`;
+
+    }catch(err){
+      console.error(err);
+      loadingEl.classList.remove("show");
+      bodyEl.style.display = "block";
+      bodyEl.innerHTML = `<div style="color:var(--error); font-size:12.5px; text-align:center; padding:16px 0;">${tr.couldntLoadGrades}${err.message || err}</div>`;
+    }
   }
 
-  function downloadPdfReport(){
-    if(!currentPdfBlob) return;
-    const url = URL.createObjectURL(currentPdfBlob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = currentPdfFilename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  function closeStudentGradesModal(){
+    document.getElementById("studentGradesModalOverlay").classList.remove("show");
   }
 
-  function closePdfReportModal(){
-    document.getElementById("pdfReportModalOverlay").classList.remove("show");
-    currentPdfBlob = null;
+  /* ---------- Student QR code ---------- */
+  function showStudentQr(qrUrl, name){
+    const tr = t();
+    const overlay = document.getElementById("studentQrModalOverlay");
+    const loadingEl = document.getElementById("qrLoadingMsg");
+    const bodyEl = document.getElementById("studentQrBody");
+
+    document.getElementById("studentQrTitle").textContent = `${name || tr.student}${tr.qrTitleSuffix}`;
+    document.getElementById("qrLoadingMsgText").textContent = tr.loadingQr;
+    bodyEl.style.display = "none";
+    bodyEl.innerHTML = "";
+    loadingEl.classList.add("show");
+    overlay.classList.add("show");
+
+    if(!qrUrl){
+      loadingEl.classList.remove("show");
+      bodyEl.style.display = "block";
+      bodyEl.innerHTML = `<div style="text-align:center; color:var(--muted); padding:24px 0;">${tr.noQrSaved}</div>`;
+      return;
+    }
+
+    loadingEl.classList.remove("show");
+    bodyEl.style.display = "block";
+    bodyEl.innerHTML = `
+      <div class="qr-wrap">
+        <img src="${qrUrl}" alt="Student QR code" onerror="this.parentElement.innerHTML='<div style=&quot;color:var(--error); font-size:12.5px; text-align:center;&quot;>${tr.couldntLoadQr}</div>';">
+        <a class="scanner-btn" href="${qrUrl}" target="_blank" rel="noopener">${tr.openFullSize}</a>
+      </div>`;
   }
 
+  function closeStudentQrModal(){
+    document.getElementById("studentQrModalOverlay").classList.remove("show");
+  }
+
+  /* ---------- Init: restore saved language / dark-mode preference ---------- */
   (function init(){
     let savedLang = "ar", savedDark = false;
     try{
