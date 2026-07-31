@@ -6,7 +6,8 @@
 <title>Student Search</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-<script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1280,34 +1281,61 @@
 
       // Generate PDF HTML
       const isAr = currentLang === "ar";
-      const html = buildPdfHtml(tr, isAr, name, student, p, paid, paid ? tr.pdfPaid : tr.pdfUnpaid, examRows, avgScore);
+      const htmlContent = buildPdfHtml(tr, isAr, name, student, p, paid, paid ? tr.pdfPaid : tr.pdfUnpaid, examRows, avgScore);
 
-      // Create PDF via jsPDF
+      // Render HTML to a hidden container, then capture with html2canvas
+      const container = document.createElement("div");
+      container.style.cssText = "position:fixed; left:-9999px; top:0; width:595px; background:#fff;";
+      container.innerHTML = htmlContent;
+      document.body.appendChild(container);
+
+      // Wait for fonts to load
+      await document.fonts.ready;
+      await new Promise(r => setTimeout(r, 500));
+
+      const canvas = await window.html2canvas(container, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+        logging: false
+      });
+
+      // Remove hidden container
+      document.body.removeChild(container);
+
+      // Create PDF with jsPDF and embed the canvas image
       const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({
-        unit: 'pt',
-        format: 'a4',
-        orientation: 'portrait'
-      });
+      const doc = new jsPDF({ unit: 'pt', format: 'a4', orientation: 'portrait' });
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const imgWidth = pageWidth - 40;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const imgData = canvas.toDataURL("image/png");
 
-      // Use html-to-pdf via jsPDF html method
-      await doc.html(html, {
-        callback: function(doc) {
-          const pdfBlob = doc.output('blob');
-          const pdfUrl = URL.createObjectURL(pdfBlob);
-          frame.src = pdfUrl;
-          frame.style.display = "block";
-          currentPdfBlob = pdfBlob;
-          currentPdfFilename = `report_${name || qrCode}_${new Date().toISOString().split('T')[0]}.pdf`;
-          actions.style.display = "flex";
-          loadingEl.classList.remove("show");
-        },
-        x: 30,
-        y: 30,
-        width: 535,
-        windowWidth: 535,
-        autoPaging: 'text'
-      });
+      // Add first page
+      doc.addImage(imgData, "PNG", 20, 20, imgWidth, imgHeight);
+
+      // Handle overflow pages if content is taller than one page
+      if (imgHeight > pageHeight - 40) {
+        let heightLeft = imgHeight;
+        let position = 0;
+        while (heightLeft > 0) {
+          position = -(pageHeight - 40) * Math.floor((imgHeight - heightLeft) / (pageHeight - 40));
+          if (heightLeft < pageHeight - 40) break;
+          doc.addPage();
+          doc.addImage(imgData, "PNG", 20, position + 20, imgWidth, imgHeight);
+          heightLeft -= (pageHeight - 40);
+        }
+      }
+
+      const pdfBlob = doc.output('blob');
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      frame.src = pdfUrl;
+      frame.style.display = "block";
+      currentPdfBlob = pdfBlob;
+      currentPdfFilename = `report_${name || qrCode}_${new Date().toISOString().split('T')[0]}.pdf`;
+      actions.style.display = "flex";
+      loadingEl.classList.remove("show");
 
     }catch(err){
       console.error(err);
