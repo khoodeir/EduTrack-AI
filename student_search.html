@@ -6,6 +6,8 @@
 <title>Student Search</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -204,7 +206,7 @@
   gap:12px;
   padding: 4px;
 }
-  table{ width:100%; border-collapse:collapse; font-size:12.5px; min-width:760px; }
+  table{ width:100%; border-collapse:collapse; font-size:12.5px; min-width:820px; }
   thead th{
     text-align:start; padding:12px 14px; background:var(--paper); color:var(--gold-2);
     font-weight:700; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em;
@@ -281,9 +283,70 @@
   .qr-wrap{ display:flex; flex-direction:column; align-items:center; gap:14px; padding:10px 0 4px; }
   .qr-wrap img{ width:220px; height:220px; object-fit:contain; border:1px solid var(--line); border-radius:12px; background:#fff; padding:10px; }
 
+  /* ===== Student report ===== */
+  .report-modal-box{ max-width:480px; }
+  #studentReportPrintArea{
+    background:var(--card); border-radius:10px; padding:6px 2px 2px;
+  }
+  .report-header{ text-align:center; padding-bottom:6px; }
+  .report-header h2{
+    font-family:'Cormorant Garamond',serif; color:var(--gold-2); font-size:25px; font-weight:700;
+  }
+  [dir="rtl"] .report-header h2{ font-family:'Cairo',serif; }
+  .report-student-name{
+    font-size:18px; font-weight:700; color:var(--ink); text-align:center; margin-top:14px; text-transform:capitalize;
+  }
+  .report-grade{ text-align:center; color:var(--muted); font-size:12px; margin-top:3px; }
+  .report-section-title{
+    color:var(--gold-2); font-weight:700; font-size:13.5px; letter-spacing:.02em;
+    border-bottom:2px solid var(--gold); padding-bottom:7px; margin:22px 0 14px;
+  }
+  .report-info-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px 22px; font-size:12.5px; }
+  .report-info-grid .field .label{ font-weight:700; color:var(--ink); }
+  .report-info-grid .field .value{ color:var(--ink-2); }
+  .report-info-grid .field .value.paid{ color:var(--success); font-weight:700; }
+  .report-info-grid .field .value.unpaid{ color:var(--error); font-weight:700; }
+  .report-exams-table{ width:100%; border-collapse:collapse; font-size:12.5px; margin-top:4px; }
+  .report-exams-table thead th{
+    background:var(--gold-2); color:var(--on-accent); padding:9px 12px; text-align:start;
+    font-size:10px; text-transform:uppercase; letter-spacing:.05em; font-weight:700;
+  }
+  [dir="rtl"] .report-exams-table thead th{ letter-spacing:0; }
+  .report-exams-table thead th:first-child{ border-start-start-radius:6px; }
+  .report-exams-table thead th:last-child{ border-start-end-radius:6px; }
+  .report-exams-table tbody td{ padding:9px 12px; border-bottom:1px solid var(--line); }
+  .report-exams-table tbody tr:nth-child(even){ background:rgba(139,31,31,0.045); }
+  .report-avg-row td{ font-weight:700; border-top:2px solid var(--ink); border-bottom:none !important; padding-top:11px !important; }
+  .report-actions{ display:flex; gap:10px; margin-top:22px; }
+  .report-actions button, .report-actions a{
+    flex:1; display:inline-flex; align-items:center; justify-content:center; gap:7px;
+    padding:11px 14px; border-radius:10px; font-family:'Inter',sans-serif; font-size:13px; font-weight:700;
+    cursor:pointer; border:1px solid var(--line); background:var(--paper); color:var(--ink);
+    transition:all .15s ease; text-decoration:none;
+  }
+  [dir="rtl"] .report-actions button, [dir="rtl"] .report-actions a{ font-family:'Cairo','Inter',sans-serif; }
+  .report-actions button:hover, .report-actions a:hover{ border-color:var(--gold); color:var(--gold-2); }
+  .report-actions .primary{
+    background:linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%); color:var(--on-accent); border-color:var(--gold);
+  }
+  .report-actions .primary:hover{ color:var(--on-accent); opacity:.92; }
+  .report-actions svg{ width:15px; height:15px; flex-shrink:0; }
+
+  @media print{
+    body *{ visibility:hidden; }
+    #studentReportPrintArea, #studentReportPrintArea *{ visibility:visible; }
+    #studentReportPrintArea{
+      position:absolute; top:0; left:0; width:100%; padding:24px;
+    }
+    .modal-overlay{ position:static !important; background:none !important; padding:0 !important; }
+    .modal-box{ box-shadow:none !important; border:none !important; max-height:none !important; overflow:visible !important; }
+    .report-actions{ display:none !important; }
+  }
+
   @media (max-width:640px){
     .controls{ flex-direction:column; align-items:stretch; }
     .grade-select{ min-width:0; }
+    .report-info-grid{ grid-template-columns:1fr; }
   }
 </style>
 </head>
@@ -372,6 +435,7 @@
               <th id="thLast">آخر حضور</th>
               <th id="thExams">الامتحانات</th>
               <th id="thQr">عرض QR</th>
+              <th id="thReport">التقرير</th>
             </tr>
           </thead>
           <tbody id="resultsBody"></tbody>
@@ -425,6 +489,31 @@
       <span class="spinner"></span> <span id="qrLoadingMsgText"></span>
     </div>
     <div id="studentQrBody" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- Student full report modal -->
+<div class="modal-overlay" id="studentReportModalOverlay" onclick="if(event.target===this) closeStudentReportModal()">
+  <div class="modal-box report-modal-box">
+    <div style="display:flex; justify-content:flex-end; margin-bottom:2px;">
+      <button class="modal-close" onclick="closeStudentReportModal()">×</button>
+    </div>
+    <div class="state-msg show" id="reportLoadingMsg">
+      <span class="spinner"></span> <span id="reportLoadingMsgText"></span>
+    </div>
+    <div id="studentReportBody" style="display:none;">
+      <div id="studentReportPrintArea"></div>
+      <div class="report-actions">
+        <button class="primary" onclick="downloadStudentReport()" id="reportDownloadBtn">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3v13m0 0l-4.5-4.5M12 16l4.5-4.5M4 20h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="reportDownloadBtnText">تحميل</span>
+        </button>
+        <button onclick="printStudentReport()" id="reportPrintBtn">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-5a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-2M6 14h12v7H6z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="reportPrintBtnText">طباعة</span>
+        </button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -483,7 +572,7 @@
       noResults: "No matching results",
       thName: "Name", thGrade: "Grade", thPresent: "Present", thAbsent: "Absent", thRate: "Attendance Rate",
       thStudentPhone: "Student Phone", thParentPhone: "Parent Phone", thPayment: "Payment", thLast: "Last Attendance",
-      thExams: "Exams", thQr: "Show QR",
+      thExams: "Exams", thQr: "Show QR", thReport: "Report",
       paid: "Paid", unpaid: "Unpaid",
       footer: "Data is read live from Supabase using a read-only anon key",
       trendTitleSuffix: " — Exams", gradesTitleSuffix: " — Grades", qrTitleSuffix: " — QR Code",
@@ -503,7 +592,16 @@
       noQrSaved: "No QR code saved for this student",
       openFullSize: "Open Full Size",
       couldntLoadQr: "Couldn't load the QR image",
-      student: "Student", dash: "—"
+      student: "Student", dash: "—",
+      reportTitle: "Student Report",
+      attendanceInfoTitle: "Attendance & Info",
+      examsSectionTitle: "Exams",
+      present: "Present", absent: "Absent", attendanceRate: "Attendance Rate", paymentStatusLabel: "Payment Status",
+      studentPhoneLabel: "Student Phone", parentPhoneLabel: "Parent Phone", lastAttendanceLabel: "Last Attendance",
+      gradeLabelPrefix: "Grade: ",
+      examColHeader: "Exam", scoreColHeader: "Score", percentageColHeader: "Percentage",
+      downloadBtn: "Download", printBtn: "Print",
+      loadingReport: "Loading report…", couldntLoadReport: "Couldn't load the report: "
     },
     ar: {
       eyebrow: "بحث عن طالب", title: "بحث الطلاب",
@@ -518,7 +616,7 @@
       noResults: "لا توجد نتائج مطابقة",
       thName: "الاسم", thGrade: "الصف", thPresent: "حضور", thAbsent: "غياب", thRate: "نسبة الحضور",
       thStudentPhone: "هاتف الطالب", thParentPhone: "هاتف ولي الأمر", thPayment: "الدفع", thLast: "آخر حضور",
-      thExams: "الامتحانات", thQr: "عرض QR",
+      thExams: "الامتحانات", thQr: "عرض QR", thReport: "التقرير",
       paid: "مدفوع", unpaid: "غير مدفوع",
       footer: "يتم قراءة البيانات مباشرة من Supabase باستخدام مفتاح للقراءة فقط",
       trendTitleSuffix: " — الامتحانات", gradesTitleSuffix: " — الدرجات", qrTitleSuffix: " — رمز QR",
@@ -538,7 +636,16 @@
       noQrSaved: "لا يوجد رمز QR محفوظ لهذا الطالب",
       openFullSize: "فتح بالحجم الكامل",
       couldntLoadQr: "تعذر تحميل صورة QR",
-      student: "طالب", dash: "—"
+      student: "طالب", dash: "—",
+      reportTitle: "تقرير الطالب",
+      attendanceInfoTitle: "الحضور والبيانات",
+      examsSectionTitle: "الامتحانات",
+      present: "حضور", absent: "غياب", attendanceRate: "نسبة الحضور", paymentStatusLabel: "حالة الدفع",
+      studentPhoneLabel: "هاتف الطالب", parentPhoneLabel: "هاتف ولي الأمر", lastAttendanceLabel: "آخر حضور",
+      gradeLabelPrefix: "الصف: ",
+      examColHeader: "الامتحان", scoreColHeader: "الدرجة", percentageColHeader: "النسبة",
+      downloadBtn: "تحميل", printBtn: "طباعة",
+      loadingReport: "جاري تحميل التقرير…", couldntLoadReport: "تعذر تحميل التقرير: "
     }
   };
 
@@ -546,6 +653,7 @@
   let currentGrade = "all";
   let payFilterState = "all";
   let students = [];
+  let currentReportStudentName = "";
 
   function t(){ return translations[currentLang]; }
 
@@ -562,6 +670,11 @@
     const a = Number(att) || 0, b = Number(abs) || 0;
     const total = a + b;
     return total > 0 ? Math.round((a / total) * 100) : null;
+  }
+  function maskPhone(phone){
+    const s = String(phone || "");
+    if(s.length <= 3) return s;
+    return s.slice(0, 3) + "*".repeat(s.length - 3);
   }
 
   /* ---------- Language & dark mode ---------- */
@@ -611,8 +724,11 @@
     document.getElementById("thLast").textContent = tr.thLast;
     document.getElementById("thExams").textContent = tr.thExams;
     document.getElementById("thQr").textContent = tr.thQr;
+    document.getElementById("thReport").textContent = tr.thReport;
     document.getElementById("footerNoteText").textContent = tr.footer;
     document.getElementById("loadingMsgText").textContent = tr.loadingData;
+    document.getElementById("reportDownloadBtnText").textContent = tr.downloadBtn;
+    document.getElementById("reportPrintBtnText").textContent = tr.printBtn;
 
     const updatedEl = document.getElementById("updatedNote");
     if(updatedEl.dataset.time) updatedEl.textContent = tr.updatedPrefix + updatedEl.dataset.time;
@@ -739,7 +855,7 @@
 
     const body = document.getElementById("resultsBody");
     if(!rows.length){
-      body.innerHTML = `<tr><td colspan="11" style="text-align:center; color:var(--muted); padding:24px;">${tr.noResults}</td></tr>`;
+      body.innerHTML = `<tr><td colspan="12" style="text-align:center; color:var(--muted); padding:24px;">${tr.noResults}</td></tr>`;
       return;
     }
 
@@ -768,6 +884,9 @@
           </td>
           <td>
             <button class="trend-btn" onclick="showStudentQr('${safeQrUrl}','${safeName}')" title="${tr.thQr}">🔳</button>
+          </td>
+          <td>
+            <button class="trend-btn" onclick="showStudentReport('${s.qrCode}','${s.grade}','${safeName}')" title="${tr.thReport}">🧾</button>
           </td>
         </tr>`;
     }).join("");
@@ -1024,6 +1143,150 @@
 
   function closeStudentQrModal(){
     document.getElementById("studentQrModalOverlay").classList.remove("show");
+  }
+
+  /* ---------- Student full report (print / download) ---------- */
+  async function showStudentReport(qrCode, grade, name){
+    const tr = t();
+    const overlay = document.getElementById("studentReportModalOverlay");
+    const loadingEl = document.getElementById("reportLoadingMsg");
+    const bodyEl = document.getElementById("studentReportBody");
+    const printArea = document.getElementById("studentReportPrintArea");
+
+    document.getElementById("reportLoadingMsgText").textContent = tr.loadingReport;
+    loadingEl.classList.add("show");
+    bodyEl.style.display = "none";
+    printArea.innerHTML = "";
+    currentReportStudentName = name || tr.student;
+    overlay.classList.add("show");
+
+    try{
+      const s = students.find(x => x.qrCode === qrCode && x.grade === grade) || {};
+
+      const ecol = EXAMS_SCHEMA.col;
+      const scol = SCORES_SCHEMA.col;
+
+      const { data: exams, error: examsErr } = await supa
+        .from(EXAMS_SCHEMA.table).select("*")
+        .eq(ecol.grade, grade)
+        .order(ecol.createdAt, { ascending: true });
+      if(examsErr) throw examsErr;
+
+      let scores = [];
+      if(exams && exams.length){
+        const ids = exams.map(e => e[ecol.id]);
+        const { data: scoreRows, error: scoresErr } = await supa
+          .from(SCORES_SCHEMA.table).select("*")
+          .in(scol.examId, ids)
+          .eq(scol.studentCode, qrCode);
+        if(scoresErr) throw scoresErr;
+        scores = scoreRows || [];
+      }
+
+      const examRows = (exams || []).map(e => {
+        const row = scores.find(sc => sc[scol.examId] === e[ecol.id]);
+        const mx = Number(e[ecol.maxScore]) || 100;
+        if(!row) return { examName: e[ecol.name], max: e[ecol.maxScore], raw: null, pct: null };
+        const sc = Number(row[scol.score]);
+        return { examName: e[ecol.name], max: e[ecol.maxScore], raw: row[scol.score], pct: isNaN(sc) ? null : Math.round((sc / mx) * 100) };
+      });
+      const scored = examRows.filter(r => r.pct != null);
+      const avg = scored.length ? Math.round(scored.reduce((a,b) => a + b.pct, 0) / scored.length) : null;
+
+      const p = pct(s.attendanceCount, s.absenceCount);
+      const paid = isPaid(s.paymentStatus);
+      const hasPaymentRecord = (s.paymentStatus ?? "") !== "";
+
+      const examsHtml = examRows.length
+        ? `<table class="report-exams-table">
+            <thead>
+              <tr>
+                <th>${tr.examColHeader}</th>
+                <th>${tr.scoreColHeader}</th>
+                <th>${tr.percentageColHeader}</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${examRows.map(r => `
+                <tr>
+                  <td>${r.examName}</td>
+                  <td>${r.raw != null ? `${r.raw} / ${r.max}` : tr.notEntered}</td>
+                  <td>${r.pct != null ? r.pct + "%" : tr.dash}</td>
+                </tr>`).join("")}
+              <tr class="report-avg-row">
+                <td>${tr.average}</td>
+                <td></td>
+                <td>${avg != null ? avg + "%" : tr.dash}</td>
+              </tr>
+            </tbody>
+          </table>`
+        : `<div style="text-align:center; color:var(--muted); padding:16px 0; font-size:12.5px;">${tr.noExamsGrade}</div>`;
+
+      printArea.innerHTML = `
+        <div class="report-header">
+          <h2>${tr.reportTitle}</h2>
+        </div>
+        <div class="report-student-name">${name || tr.student}</div>
+        <div class="report-grade">${tr.gradeLabelPrefix}${gradeLabel(grade)}</div>
+
+        <div class="report-section-title">${tr.attendanceInfoTitle}</div>
+        <div class="report-info-grid">
+          <div class="field"><span class="label">${tr.present}: </span><span class="value">${s.attendanceCount ?? 0}</span></div>
+          <div class="field"><span class="label">${tr.absent}: </span><span class="value">${s.absenceCount ?? 0}</span></div>
+          <div class="field"><span class="label">${tr.attendanceRate}: </span><span class="value">${p != null ? p + "%" : tr.dash}</span></div>
+          <div class="field"><span class="label">${tr.paymentStatusLabel}: </span><span class="value ${hasPaymentRecord ? (paid ? 'paid' : 'unpaid') : ''}">${hasPaymentRecord ? (paid ? tr.paid : tr.unpaid) : tr.dash}</span></div>
+          <div class="field"><span class="label">${tr.studentPhoneLabel}: </span><span class="value">${s.studentPhone || tr.dash}</span></div>
+          <div class="field"><span class="label">${tr.parentPhoneLabel}: </span><span class="value">${s.parentPhone ? maskPhone(s.parentPhone) : tr.dash}</span></div>
+          <div class="field" style="grid-column:1 / -1;"><span class="label">${tr.lastAttendanceLabel}: </span><span class="value">${s.lastAttendance || tr.dash}</span></div>
+        </div>
+
+        <div class="report-section-title">${tr.examsSectionTitle}</div>
+        ${examsHtml}
+      `;
+
+      loadingEl.classList.remove("show");
+      bodyEl.style.display = "block";
+
+    }catch(err){
+      console.error(err);
+      loadingEl.classList.remove("show");
+      bodyEl.style.display = "block";
+      printArea.innerHTML = `<div style="color:var(--error); font-size:12.5px; text-align:center; padding:16px 0;">${tr.couldntLoadReport}${err.message || err}</div>`;
+    }
+  }
+
+  function closeStudentReportModal(){
+    document.getElementById("studentReportModalOverlay").classList.remove("show");
+  }
+
+  function printStudentReport(){
+    window.print();
+  }
+
+  async function downloadStudentReport(){
+    const el = document.getElementById("studentReportPrintArea");
+    const btn = document.getElementById("reportDownloadBtn");
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    try{
+      const bg = document.body.classList.contains("dark") ? "#1a1a1a" : "#f2efe8";
+      const canvas = await html2canvas(el, { scale: 2, backgroundColor: bg, useCORS: true });
+      const imgData = canvas.toDataURL("image/png");
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF("p", "pt", "a4");
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const margin = 30;
+      const imgWidth = pageWidth - margin * 2;
+      const imgHeight = canvas.height * imgWidth / canvas.width;
+      pdf.addImage(imgData, "PNG", margin, margin, imgWidth, imgHeight);
+      const safeName = (currentReportStudentName || "student").trim().replace(/\s+/g, "-");
+      pdf.save(`${safeName}-report.pdf`);
+    }catch(err){
+      console.error(err);
+    }finally{
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
+    }
   }
 
   /* ---------- Init: restore saved language / dark-mode preference ---------- */
