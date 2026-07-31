@@ -1,1456 +1,322 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Live Dashboard</title>
+<title>تقرير الطالب | بوابة ولي الأمر</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Cairo:wght@500;600;700&display=swap" rel="stylesheet">
-<!-- Speed up navigation to the other two pages: fetch them into the browser cache in the background -->
-<link rel="prefetch" href="index.html">
-<link rel="prefetch" href="student_search.html">
-<link rel="prefetch" href="manage_exams.html">
-<!-- Warm up connections to the CDNs this page and the linked pages depend on -->
-<link rel="preconnect" href="https://unpkg.com">
-<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-<link rel="preconnect" href="https://evbjulsahncllewwvlxp.supabase.co">
 <style>
   :root{
-    /* Deep Red / Off-White / Gray Palette */
-    --ink:#2B2B2B;
-    --ink-2:#7A1F1F;
-    --paper:#F7F5F1;
-    --card:#FDFCFA;
-    --line:#DAD5CD;
-    --gold:#8B1E1E;
-    --gold-2:#5E1414;
-    --gold-soft:rgba(139,30,30,0.10);
-    --success:#2F9E73;
-    --success-soft:rgba(47,158,115,0.15);
-    --warning:#E8A44A;
-    --warning-soft:rgba(232,164,74,0.15);
-    --error:#C4485A;
-    --error-soft:rgba(196,72,90,0.15);
-    --muted:#7C7873;
-    --cream-bg-1:#F7F5F1;
-    --cream-bg-2:#FDFCFA;
-    --shadow-sm:0 2px 8px rgba(0,0,0,0.08);
-    --shadow-md:0 4px 16px rgba(0,0,0,0.12);
-    --shadow-lg:0 8px 24px rgba(0,0,0,0.16);
+    --ink:#2B2B2B; --ink-2:#7A1F1F; --paper:#F7F5F1; --card:#FDFCFA; --line:#DAD5CD;
+    --gold:#8B1E1E; --gold-2:#5E1414; --gold-soft:rgba(139,30,30,0.10);
+    --success:#2F9E73; --success-soft:rgba(47,158,115,0.15);
+    --warning:#E8A44A; --warning-soft:rgba(232,164,74,0.15);
+    --error:#C4485A; --error-soft:rgba(196,72,90,0.15);
+    --muted:#7C7873; --cream-bg-1:#F7F5F1; --cream-bg-2:#FDFCFA;
+    --shadow-sm:0 2px 8px rgba(0,0,0,0.08); --shadow-md:0 4px 16px rgba(0,0,0,0.12); --shadow-lg:0 8px 24px rgba(0,0,0,0.16);
   }
-  /* ===== Dark mode palette - Warm Luxury ===== */
- [data-theme="dark"]{
-    --ink:#F1EEEA;
-    --ink-2:#E2B9B9;
-    --paper:#221F1E;
-    --card:#302B2A;
-    --line:#463F3D;
-    --gold:#C24545;
-    --gold-2:#D97575;
-    --gold-soft:rgba(194,69,69,0.14);
-    --success:#4CAF50;
-    --success-soft:rgba(76,175,80,0.15);
-    --warning:#FFD835;
-    --warning-soft:rgba(255,216,53,0.15);
-    --error:#EF5350;
-    --error-soft:rgba(239,83,80,0.15);
-    --muted:#9C9691;
-    --cream-bg-1:#171515;
-    --cream-bg-2:#1F1B1A;
-    --shadow-sm:0 1px 2px rgba(0,0,0,0.4);
-    --shadow-md:0 8px 24px rgba(0,0,0,0.5);
-    --shadow-lg:0 20px 50px rgba(0,0,0,0.6);
-  }
-  [data-theme="dark"] .scanner-btn,
-  [data-theme="dark"] .refresh-btn,
-  [data-theme="dark"] .save-snapshot-btn,
-  [data-theme="dark"] .pay-filter button.active{ color:#1a1612; }
-  [data-theme="dark"] .kpi-value,
-  [data-theme="dark"] tbody td{ color:var(--ink); }
   *{ margin:0; padding:0; box-sizing:border-box; }
   html,body{ height:100%; }
   body{
-    font-family:'Inter',sans-serif;
+    font-family:'Cairo','Inter',sans-serif;
     background:
-     radial-gradient(circle at 15% 10%, rgba(139,30,30,0.04), transparent 45%),
+      radial-gradient(circle at 15% 10%, rgba(139,30,30,0.05), transparent 45%),
       radial-gradient(circle at 85% 90%, rgba(90,90,90,0.03), transparent 45%),
       linear-gradient(160deg, var(--cream-bg-1), var(--cream-bg-2));
-    color:var(--ink);
-    min-height:100vh;
-    padding:32px 24px 64px;
-    transition:background .25s ease, color .25s ease;
+    color:var(--ink); min-height:100vh; padding:32px 20px 64px;
   }
-  [dir="rtl"] body{ font-family:'Cairo','Inter',sans-serif; }
-  [dir="rtl"] .brand h1,
-  [dir="rtl"] .section-title{ font-family:'Cairo','Cormorant Garamond',serif; }
-  [dir="rtl"] .search-box input{ padding:10px 38px 10px 14px; }
-  [dir="rtl"] .search-box::before{ left:auto; right:13px; }
-  [dir="rtl"] thead th{ text-align:right; }
-  [dir="rtl"] .bar-track{ margin-right:0; margin-left:7px; }
   .num{ font-family:'Space Grotesk',sans-serif; }
-  .serif{ font-family:'Cormorant Garamond',serif; }
+  .wrap{ max-width:880px; margin:0 auto; }
 
-  .login-screen{
-    position:fixed;
-    inset:0;
-    background:#0d1117;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    z-index:99999;
-}
-
-.login-card{
-    width:400px;
-    max-width:95%;
-    background:#161b22;
-    padding:30px;
-    border-radius:15px;
-    text-align:center;
-    box-shadow:0 0 30px rgba(0,0,0,.4);
-}
-
-.login-card h2{
-    color:white;
-    margin-bottom:10px;
-}
-
-.login-card p{
-    color:#bbb;
-    margin-bottom:20px;
-}
-
-.login-card input{
-    width:100%;
-    padding:12px;
-    border-radius:10px;
-    border:none;
-    background:#222;
-    color:white;
-    font-size:16px;
-}
-
-.login-card button{
-    width:100%;
-    padding:12px;
-    border:none;
-    border-radius:10px;
-    background:#2563eb;
-    color:white;
-    cursor:pointer;
-    font-size:16px;
-}
-
-.login-card button:hover{
-    background:#1d4ed8;
-}
-
-  /* ===== Header ===== */
-  .topbar{
-    max-width:1200px; margin:0 auto 26px; margin-left:260px;
-    display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
-    transition: margin 0.3s ease;
-  }
-  [dir="rtl"] .topbar { margin-left: auto; margin-right: 260px; }
-  
-  .sidebar-toggle {
-    background: var(--gold-soft);
-    border: 1px solid var(--line);
-    color: var(--gold-2);
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    flex-shrink: 0;
-  }
-  .sidebar-toggle:hover {
-    background: var(--gold);
-    color: #fff;
-    border-color: var(--gold);
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-sm);
-  }
-  .sidebar-toggle svg { width: 20px; height: 20px; }
-  .brand{ display:flex; align-items:center; gap:14px; }
+  /* Header */
+  .topbar{ display:flex; align-items:center; gap:14px; margin-bottom:28px; justify-content:center; text-align:center; flex-direction:column; }
   .brand-mark{
-    width:46px; height:46px; border-radius:50%; flex-shrink:0;
-    background:var(--gold);
-    opacity:0.92;
-    display:flex; align-items:center; justify-content:center;
-    box-shadow:0 8px 18px rgba(107,66,38,0.25);
+    width:56px; height:56px; border-radius:50%; background:var(--gold); opacity:0.92;
+    display:flex; align-items:center; justify-content:center; box-shadow:0 8px 18px rgba(107,66,38,0.25);
   }
-  .brand-mark svg{ width:22px; height:22px; }
-  .brand-text{ text-align:left; }
-  .brand-eyebrow{
-    font-size:10.5px; letter-spacing:0.14em; text-transform:uppercase;
-    color:var(--gold); font-weight:600; margin-bottom:2px; opacity:0.8;
-  }
-  .brand h1{ font-family:'Cormorant Garamond',serif; font-size:26px; font-weight:700; color:var(--gold-2); letter-spacing:-0.01em; }
-  .brand p{ font-size:12.5px; color:var(--muted); margin-top:2px; }
-  .top-actions{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
-  .updated-note{ font-size:11.5px; color:var(--muted); display:flex; align-items:center; gap:6px; }
-  .updated-note::before{
-    content:""; width:6px; height:6px; border-radius:50%; background:var(--success);
-    box-shadow:0 0 0 3px var(--success-soft);
-  }
-  .scanner-btn{
-    display:inline-flex; align-items:center; gap:8px;
-    padding:11px 18px; border-radius:10px;
-    background:linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%);
-    color:#ffffff; font-family:'Inter',sans-serif; font-size:13px; font-weight:600;
-    text-decoration:none; box-shadow:0 6px 16px rgba(107,66,38,0.22);
-    transition:transform .15s ease, box-shadow .15s ease;
-    white-space:nowrap;
-  }
-  .scanner-btn:hover{ transform:translateY(-1px); box-shadow:0 8px 20px rgba(107,66,38,0.28); }
-  .scanner-btn svg{ width:16px; height:16px; flex-shrink:0; }
-  .refresh-btn{
-    display:flex; align-items:center; gap:8px;
-    padding:11px 20px; border-radius:10px; border:none;
-    background:linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%);
-    color:#ffffff; font-family:'Inter',sans-serif;
-    font-weight:600; font-size:13px; cursor:pointer; transition:all .18s ease;
-    box-shadow:0 6px 16px rgba(107,66,38,0.18);
-  }
-  .refresh-btn:hover{ filter:brightness(1.06); transform:translateY(-1px); box-shadow:0 8px 20px rgba(107,66,38,0.24); }
-  .refresh-btn:active{ transform:translateY(0); filter:brightness(0.96); }
-  .refresh-btn .spin{ display:inline-block; }
-  .refresh-btn.loading .spin{ animation:spin .8s linear infinite; }
-  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .brand-mark svg{ width:26px; height:26px; }
+  .topbar h1{ font-family:'Cairo','Cormorant Garamond',serif; font-size:26px; font-weight:700; color:var(--gold-2); margin-top:14px; }
+  .topbar p{ font-size:13px; color:var(--muted); margin-top:4px; }
 
-
-
-  /* ===== Ledger tab grade switcher (signature element) ===== */
-  .tab-row{
-    display:flex; flex-direction:column; gap:2px; margin-bottom:0; 
-    padding: 0 24px 40px 32px;
-    width:240px; position:fixed; left:0; top:140px; bottom:0; z-index:10;
-    border-right: 1px solid var(--line);
-    overflow-y: auto;
-    scrollbar-width: none; /* Hide scrollbar for Chrome/Safari */
-  }
-  .tab-row::-webkit-scrollbar { display: none; }
-  
-  [dir="rtl"] .tab-row {
-    left: auto; right: 0;
-    padding: 0 32px 40px 24px;
-    border-right: none;
-    border-left: 1px solid var(--line);
-  }
-  .tab{
-    position:relative; cursor:pointer; user-select:none;
-    padding:10px 16px; margin:0;
-    background:var(--card); color:var(--muted); font-weight:500; font-size:13px;
-    border-radius:10px; border:1px solid var(--line);
-    transition:all .18s ease; z-index:1;
-    text-align:left; white-space:nowrap; 
-    min-height:44px; display:flex; align-items:center; justify-content:flex-start;
-    width: 100%; gap: 10px;
-  }
-  [dir="rtl"] .tab { text-align: right; }
-  .tab:hover{ color:var(--ink); background:var(--paper); border-color:var(--gold); }
-  .tab.active{
-    background:linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%);
-    color:#ffffff; z-index:5;
-    box-shadow:var(--shadow-md);
-    border-color:var(--gold);
-  }
-  .tab.active::after{
-    content:""; position:absolute; right: -25px; top:50%; transform:translateY(-50%);
-    width: 4px; height: 24px; background: var(--gold);
-    border-radius: 4px 0 0 4px;
-  }
-  [dir="rtl"] .tab.active::after {
-    right: auto; left: -25px;
-    border-radius: 0 4px 4px 0;
-  }
-  .tab-group-label{
-    font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em;
-    color:var(--gold); margin-top:20px; margin-bottom:4px; padding:0 16px;
-    opacity:0.6; min-height:30px; display:flex; align-items:center; cursor:pointer;
-    transition:all .18s ease; user-select:none;
-  }
-  .tab-group-label:first-child{ margin-top:0; }
-  .tab-group-label:hover{ opacity:1; }
-  .tab-group{
-    display:flex; flex-direction:column; gap:8px; margin-bottom:8px;
-    max-height:1000px; overflow:hidden; transition:max-height .3s ease, margin-bottom .3s ease;
-  }
-  .tab-group.collapsed{
-    max-height:0; margin-bottom:0; overflow:hidden;
-  }
-  .wrap{
-    max-width:1200px; margin:0 auto; margin-left:260px;
-    transition: margin 0.3s ease;
-  }
-  [dir="rtl"] .wrap { margin-left: auto; margin-right: 260px; }
-
-  /* Collapsed Sidebar Logic */
-  body.sidebar-collapsed .tab-row {
-    transform: translateX(-260px);
-    opacity: 0;
-    pointer-events: none;
-  }
-  [dir="rtl"] body.sidebar-collapsed .tab-row {
-    transform: translateX(260px);
-  }
-  body.sidebar-collapsed .topbar,
-  body.sidebar-collapsed .wrap {
-    margin-left: auto;
-    margin-right: auto;
-  }
-  
-  .tab-row { transition: transform 0.3s ease, opacity 0.3s ease; }
-  .tab-panel{
+  /* Search card */
+  .search-card{
     background:var(--card); border:1px solid var(--line); border-radius:16px;
-    padding:30px; box-shadow:var(--shadow-lg); position:relative; z-index:4;
+    padding:24px; box-shadow:var(--shadow-lg); margin-bottom:24px;
   }
+  .search-card label{ font-size:12.5px; font-weight:700; color:var(--gold-2); display:block; margin-bottom:8px; }
+  .search-row{ display:flex; gap:10px; flex-wrap:wrap; }
+  .search-row input{
+    flex:1; min-width:220px; padding:14px 16px; border-radius:11px; border:1px solid var(--line);
+    background:var(--paper); font-family:'Cairo','Inter',sans-serif; font-size:15px; color:var(--ink); outline:none;
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  .search-row input:focus{ border-color:var(--gold); box-shadow:0 0 0 3px var(--gold-soft); }
+  .search-btn{
+    padding:14px 26px; border-radius:11px; border:none; cursor:pointer;
+    background:linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%); color:#fff;
+    font-family:'Cairo','Inter',sans-serif; font-weight:700; font-size:14.5px;
+    display:flex; align-items:center; gap:8px; transition:all .18s ease;
+    box-shadow:0 6px 16px rgba(107,66,38,0.22); white-space:nowrap;
+  }
+  .search-btn:hover{ transform:translateY(-1px); box-shadow:0 8px 20px rgba(107,66,38,0.28); }
+  .search-btn:disabled{ opacity:.6; cursor:default; transform:none; }
+  .search-hint{ font-size:11.5px; color:var(--muted); margin-top:10px; }
 
+  /* States */
   .state-msg{
     display:none; align-items:center; justify-content:center; gap:10px;
-    padding:64px 10px; color:var(--muted); font-size:13.5px; text-align:center;
+    padding:48px 10px; color:var(--muted); font-size:14px; text-align:center; flex-direction:column;
   }
   .state-msg.show{ display:flex; }
-  .state-msg.err{ color:var(--error); flex-direction:column; gap:9px; }
-  .state-msg .spinner{
-    width:18px; height:18px; border-radius:50%;     border:2px solid rgba(139,94,60,0.12);
-    border-top-color:var(--gold); animation:spin .7s linear infinite; flex-shrink:0;
+  .state-msg.err{ color:var(--error); }
+  .spinner{
+    width:20px; height:20px; border-radius:50%; border:2px solid rgba(139,30,30,0.12);
+    border-top-color:var(--gold); animation:spin .7s linear infinite;
   }
-  .content{ display:none; }
-  .content.show{ display:block; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
 
-  /* ===== KPI cards ===== */
-  .kpi-grid{ display:grid; grid-template-columns:repeat(5,1fr); gap:16px; margin-bottom:28px; }
+  /* Multi-match picker */
+  .picker{ display:flex; flex-direction:column; gap:10px; margin-bottom:24px; }
+  .picker-item{
+    background:var(--card); border:1px solid var(--line); border-radius:13px; padding:16px 18px;
+    display:flex; align-items:center; justify-content:space-between; cursor:pointer; gap:12px;
+    transition:all .15s ease;
+  }
+  .picker-item:hover{ border-color:var(--gold); box-shadow:var(--shadow-sm); transform:translateY(-1px); }
+  .picker-item .pname{ font-weight:700; font-size:15px; }
+  .picker-item .pgrade{ font-size:12px; color:var(--muted); margin-top:3px; }
+  .picker-item .arrow{ font-size:18px; color:var(--gold); }
+
+  /* Report */
+  .report{ display:none; }
+  .report.show{ display:block; }
+  .report-head{
+    display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;
+    background:var(--card); border:1px solid var(--line); border-radius:16px; padding:22px 24px;
+    box-shadow:var(--shadow-lg); margin-bottom:20px;
+  }
+  .report-head .name{ font-family:'Cairo','Cormorant Garamond',serif; font-size:23px; font-weight:700; color:var(--gold-2); }
+  .report-head .grade-tag{
+    font-size:11.5px; font-weight:700; color:var(--gold); background:var(--gold-soft);
+    padding:4px 12px; border-radius:999px; display:inline-block; margin-top:6px;
+  }
+  .back-btn{
+    padding:10px 16px; border-radius:9px; border:1px solid var(--line); background:var(--paper);
+    color:var(--ink); font-family:inherit; font-weight:700; font-size:12.5px; cursor:pointer;
+  }
+  .back-btn:hover{ border-color:var(--gold); }
+  .pdf-btn{
+    padding:10px 18px; border-radius:9px; border:none; cursor:pointer;
+    background:linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%); color:#fff;
+    font-family:inherit; font-weight:700; font-size:12.5px; display:flex; align-items:center; gap:7px;
+    box-shadow:0 6px 14px rgba(107,66,38,0.2);
+  }
+  .head-actions{ display:flex; gap:10px; flex-wrap:wrap; }
+
+  .kpi-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px; }
   .kpi-card{
-    background:var(--paper); border:1px solid var(--line); border-radius:16px;
-    padding:20px; position:relative; overflow:hidden; transition:box-shadow .18s ease, transform .18s ease;
+    background:var(--paper); border:1px solid var(--line); border-radius:15px; padding:18px;
+    transition:box-shadow .18s ease, transform .18s ease;
   }
   .kpi-card:hover{ box-shadow:var(--shadow-md); transform:translateY(-2px); }
-  .kpi-card::before{
-    content:""; position:absolute; top:0; left:0; right:0; height:3px;
-    background:linear-gradient(90deg, var(--gold), transparent);
-    opacity:0; transition:opacity .18s ease;
-  }
-  .kpi-card:hover::before{ opacity:1; }
-  .kpi-label{ font-size:10.5px; color:var(--muted); font-weight:700; letter-spacing:.06em; text-transform:uppercase; margin-bottom:10px; }
-  .kpi-value{ font-size:26px; font-weight:700; color:var(--ink); line-height:1; }
-  .kpi-sub{ font-size:11px; color:var(--muted); margin-top:8px; line-height:1.4; }
-  .kpi-card.seal{
-    display:flex; align-items:center; gap:13px; justify-content:flex-start;
-  }
-  .seal-ring{ position:relative; width:58px; height:58px; flex-shrink:0; }
-  .seal-ring svg{ transform:rotate(-90deg); }
-  .seal-ring .bg{ stroke:rgba(139,94,60,0.10); }
-  .seal-ring .fg{ stroke:var(--gold); stroke-linecap:round; transition:stroke-dashoffset .6s ease; }
-  .seal-pct{
-    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-    font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:13px; color:var(--ink);
-  }
+  .kpi-label{ font-size:10.5px; color:var(--muted); font-weight:700; letter-spacing:.04em; margin-bottom:9px; }
+  .kpi-value{ font-size:23px; font-weight:700; color:var(--ink); }
+  .kpi-sub{ font-size:11px; color:var(--muted); margin-top:7px; }
 
-  /* ===== Section headers ===== */
+  .two-col{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px; }
+  .chart-card{ background:var(--paper); border:1px solid var(--line); border-radius:15px; padding:18px; }
   .section-title{
-    display:flex; align-items:center; gap:9px;
-    font-family:'Cormorant Garamond',serif; font-weight:700; font-size:18px; color:var(--gold-2); margin-bottom:15px;
+    display:flex; align-items:center; gap:8px; font-family:'Cairo','Cormorant Garamond',serif;
+    font-weight:700; font-size:16.5px; color:var(--gold-2); margin-bottom:13px;
   }
-  .section-title .tag{
-    font-family:'Inter',sans-serif; font-size:10px; font-weight:700; color:var(--gold); background:var(--gold-soft);
-    padding:3px 9px; border-radius:999px; letter-spacing:.03em; text-transform:uppercase; opacity:0.85;
-  }
-
-  .two-col{ display:grid; grid-template-columns:1.2fr 1fr; gap:16px; margin-bottom:28px; }
-  .chart-card{
-    background:var(--paper); border:1px solid var(--line); border-radius:16px; padding:20px;
-    transition:box-shadow .18s ease;
-  }
-  .chart-card:hover{ box-shadow:var(--shadow-sm); }
-  .chart-box{ position:relative; height:220px; }
+  .chart-box{ position:relative; height:200px; }
   .chart-empty{
     position:absolute; inset:0; display:none; align-items:center; justify-content:center;
-    color:var(--muted); font-size:12.5px; text-align:center; padding:0 20px;
+    color:var(--muted); font-size:12px; text-align:center; padding:0 16px;
   }
   .chart-empty.show{ display:flex; }
 
-  /* ===== Lists ===== */
-  .list-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:28px; }
-  .list-card{ background:var(--paper); border:1px solid var(--line); border-radius:16px; padding:20px; }
-  .list-row{
-    display:flex; align-items:center; justify-content:space-between; gap:10px;
-    padding:10px 4px; border-bottom:1px solid var(--line); font-size:13px;
-  }
-  .list-row:last-child{ border-bottom:none; }
-  .list-name{ display:flex; align-items:center; gap:9px; min-width:0; }
-  .list-name .name{ font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:150px; }
-  .list-name .grade-chip{
-    font-size:9.5px; font-weight:600; color:var(--gold-2); background:rgba(139,94,60,0.08);
-    padding:2px 7px; border-radius:999px; flex-shrink:0;
-  }
-  .rank{
-    display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px;
-    border-radius:6px; font-size:10.5px; font-weight:700; background:var(--gold-soft); color:var(--gold);
-    flex-shrink:0; font-family:'Space Grotesk',sans-serif; opacity:0.75;
-  }
-  .val{ font-family:'Space Grotesk',sans-serif; font-weight:700; color:var(--ink); flex-shrink:0; }
-  .val.low{ color:var(--error); }
-  .val.high{ color:var(--success); }
-  .phone-link{
-    font-size:11px; color:var(--muted); text-decoration:none; display:inline-block;
-    padding:3px 8px; border-radius:6px; background:rgba(139,94,60,0.05); transition:all .15s ease;
-    cursor:pointer;
-  }
-  .phone-link:hover{ color:var(--gold-2); background:var(--gold-soft); }
-  .empty-note{ text-align:center; color:var(--muted); font-size:12.5px; padding:20px 0; }
+  .contact-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px; }
+  .contact-card{ background:var(--paper); border:1px solid var(--line); border-radius:15px; padding:16px 18px; }
+  .contact-card .lbl{ font-size:11px; color:var(--muted); font-weight:700; margin-bottom:5px; }
+  .contact-card .val{ font-size:14.5px; font-weight:700; color:var(--ink); }
+  .contact-card a{ color:var(--gold-2); text-decoration:none; }
+  .contact-card a:hover{ text-decoration:underline; }
 
-  /* ===== Roster table ===== */
-  .roster-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:15px; flex-wrap:wrap; }
-  .search-box{ flex:1; min-width:220px; position:relative; }
-  .search-box input{
-    width:100%; padding:10px 14px 10px 38px; border-radius:10px; border:1px solid var(--line);
-    background:var(--card); font-family:'Inter',sans-serif; font-size:13px; outline:none; color:var(--ink);
-    transition:border-color .15s ease, box-shadow .15s ease;
-  }
-  .search-box input:focus{ border-color:var(--gold); box-shadow:0 0 0 3px var(--gold-soft); }
-  .search-box::before{
-    content:"⌕"; position:absolute; left:13px; top:50%; transform:translateY(-50%);
-    color:var(--muted); font-size:15px; pointer-events:none;
-  }
-  .pay-filter{ display:flex; gap:6px; }
-  .pay-filter button{
-    padding:9px 14px; border-radius:9px; border:1px solid var(--line); background:var(--card);
-    color:var(--muted); font-family:'Inter',sans-serif; font-size:12px; font-weight:600; cursor:pointer;
-    transition:all .15s ease;
-  }
-  .pay-filter button:hover{ border-color:var(--gold); color:var(--ink); }
-  .pay-filter button.active{ background:linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%); color:#ffffff; border-color:var(--gold); }
-
-  .table-scroll-top{ overflow-x:auto; overflow-y:hidden; height:16px; margin-bottom:2px; }
-  .table-scroll-top-inner{ height:1px; }
-  .table-wrap{ overflow-x:auto; border:1px solid var(--line); border-radius:16px; }
-  table{ width:100%; border-collapse:collapse; font-size:12.5px; min-width:760px; }
+  .exam-card{ background:var(--paper); border:1px solid var(--line); border-radius:15px; padding:20px; }
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
   thead th{
-    text-align:left; padding:12px 14px; background:var(--paper); color:var(--gold-2);
-    font-weight:700; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em;
-    border-bottom:1px solid var(--line); white-space:nowrap; position:sticky; top:0;
+    text-align:right; padding:10px 12px; background:var(--card); color:var(--gold-2);
+    font-weight:700; font-size:11px; border-bottom:1px solid var(--line);
   }
-  tbody td{ padding:11px 14px; border-bottom:1px solid var(--line); color:var(--ink); white-space:nowrap; }
+  tbody td{ padding:10px 12px; border-bottom:1px solid var(--line); color:var(--ink); }
   tbody tr:last-child td{ border-bottom:none; }
-  tbody tr{ transition:background .12s ease; }
-  tbody tr:hover{ background:rgba(139,94,60,0.03); }
   .chip{ display:inline-block; padding:3px 10px; border-radius:999px; font-size:11px; font-weight:700; }
   .chip.paid{ background:var(--success-soft); color:var(--success); }
   .chip.unpaid{ background:var(--error-soft); color:var(--error); }
-  .bar-track{ width:70px; height:6px; border-radius:4px; background:rgba(139,94,60,0.08); display:inline-block; vertical-align:middle; margin-right:7px; }
-  .bar-fill{ height:100%; border-radius:4px; background:var(--gold); }
-  .excel-btn{
-    padding:10px 16px; border-radius:9px; border:1px solid var(--line); background:var(--card);
-    color:var(--ink); font-family:'Inter',sans-serif; font-weight:700; font-size:12.5px; cursor:pointer;
-    transition:all .15s ease; display:inline-flex; align-items:center; gap:6px; text-decoration:none;
-  }
-  .excel-btn:hover{ border-color:var(--success); color:var(--success); }
+  .empty-note{ text-align:center; color:var(--muted); font-size:12.5px; padding:18px 0; }
 
-  .footer-note{ text-align:center; font-size:11.5px; color:var(--muted); margin-top:30px; display:flex; align-items:center; justify-content:center; gap:7px; opacity:0.6; }
+  .footer-note{
+    text-align:center; font-size:11.5px; color:var(--muted); margin-top:26px;
+    display:flex; align-items:center; justify-content:center; gap:7px; opacity:0.65;
+  }
   .footer-note::before{ content:"🔒"; font-size:11px; }
 
-  /* ===== History / Archive tab ===== */
-  .tab.history-tab, .tab.exams-tab, .tab.settings-tab { margin-inline-start: 0; }
-  .tab.history-tab::before, .tab.exams-tab::before, .tab.settings-tab::before { content: none; }
-
-  /* ===== Settings tab (redesigned to match the reference purple/navy dashboard) ===== */
-  #settingsView{
-    --sv-navy:#2a2520;
-    --sv-navy-2:#1a1612;
-    --sv-purple:#8b5e3c;
-    --sv-purple-2:#6b4226;
-    --sv-bg:#f0ebe5;
-    --sv-card:#ffffff;
-    --sv-ink:#4a4a4a;
-    --sv-muted:#8a8a8a;
-    --sv-line:#e4ddd4;
-    --sv-shadow:0 10px 30px rgba(107,66,38,0.06);
-    background:var(--sv-bg);
-    margin:-30px;
-    padding:30px;
-    border-radius:0 16px 16px 16px;
-  }
-  [data-theme="dark"] #settingsView{
-    --sv-bg:#1a1612;
-    --sv-card:#2a2520;
-    --sv-line:#3a3328;
-    --sv-ink:#e0d8cc;
-    --sv-muted:#9a9080;
-    --sv-shadow:0 10px 30px rgba(0,0,0,0.4);
-  }
-  .sv-hero{
-    background:linear-gradient(135deg, #2a2520 0%, #5c3d24 100%);
-    border-radius:20px; padding:26px 28px; color:#fff;
-    display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap;
-    margin-bottom:22px; box-shadow:var(--sv-shadow);
-  }
-  [data-theme="dark"] .sv-hero{ background:linear-gradient(135deg, #14120f 0%, #2a2520 100%); }
-  .sv-hero-left{ display:flex; align-items:center; gap:16px; }
-  .sv-hero-avatar{
-    width:52px; height:52px; border-radius:50%; flex-shrink:0;
-    background:linear-gradient(135deg, var(--sv-purple), var(--sv-purple-2));
-    display:flex; align-items:center; justify-content:center; font-size:22px;
-    box-shadow:0 6px 16px rgba(107,66,38,0.35);
-  }
-  .sv-hero-title{ font-family:'Cormorant Garamond',serif; font-weight:700; font-size:21px; }
-  [dir="rtl"] .sv-hero-title{ font-family:'Cairo','Cormorant Garamond',serif; }
-  .sv-hero-sub{ font-size:12.5px; color:rgba(255,255,255,0.65); margin-top:3px; }
-  .sv-hero-pill{
-    background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.16);
-    padding:8px 16px; border-radius:999px; font-size:11.5px; font-weight:600;
-    display:flex; align-items:center; gap:7px; white-space:nowrap;
-  }
-  .sv-hero-pill::before{
-    content:""; width:7px; height:7px; border-radius:50%; background:#4fd991;
-    box-shadow:0 0 0 3px rgba(79,217,145,0.25);
-  }
-  #settingsView .settings-grid{ gap:18px; }
-  #settingsView .settings-card{
-    background:var(--sv-card); border:1px solid var(--sv-line); border-radius:20px;
-    padding:24px; box-shadow:var(--sv-shadow); transition:transform .18s ease, box-shadow .18s ease;
-  }
-  #settingsView .settings-card:hover{ transform:translateY(-2px); }
-  #settingsView .settings-card-icon{
-    width:44px; height:44px; border-radius:14px;
-    background:linear-gradient(135deg, var(--sv-purple), var(--sv-purple-2));
-    color:#fff; font-size:18px; box-shadow:0 6px 14px rgba(107,66,38,0.25);
-  }
-  #settingsView .settings-card-title{ color:var(--sv-ink); }
-  #settingsView .settings-card-sub{ color:var(--sv-muted); }
-  #settingsView .settings-row{
-    background:var(--sv-bg); border:1px solid var(--sv-line); border-radius:14px;
-  }
-  #settingsView .settings-row-label{ color:var(--sv-ink); }
-  #settingsView .settings-row-desc{ color:var(--sv-muted); }
-  #settingsView .switch .slider{ background:#e0d8cc; }
-  [data-theme="dark"] #settingsView .switch .slider{ background:rgba(201,168,130,0.15); }
-  #settingsView .switch input:checked + .slider{ background:linear-gradient(135deg, var(--sv-navy), var(--sv-purple)); }
-  #settingsView .switch .slider::before{ box-shadow:0 2px 6px rgba(30,27,57,0.25); }
-  #settingsView .lang-switch{ background:var(--sv-bg); border:1px solid var(--sv-line); border-radius:14px; }
-  #settingsView .lang-switch button{ color:var(--sv-muted); border-radius:10px; }
-  #settingsView .lang-switch button:hover{ color:var(--sv-ink); }
-  #settingsView .lang-switch button.active{
-    background:linear-gradient(135deg, var(--sv-navy), var(--sv-purple)); color:#fff;
-    box-shadow:0 6px 14px rgba(107,66,38,0.30);
-  }
-  #settingsView .theme-preview button{ border-radius:16px; border:2px solid var(--sv-line); background:var(--sv-card); }
-  #settingsView .theme-preview button.active{ border-color:var(--sv-purple); box-shadow:0 0 0 3px rgba(139,94,60,0.12); }
-  #settingsView .theme-preview span{ color:var(--sv-ink); }
-  #settingsView .theme-preview .swatch.light{ background:linear-gradient(160deg,#f0ebe5,#ffffff); border:1px solid #e4ddd4; }
-  #settingsView .theme-preview .swatch.dark{ background:linear-gradient(160deg,#14120f,#1e1912); border:1px solid #2e2820; }
-  #settingsView .settings-note{
-    background:var(--sv-bg); border:1px solid var(--sv-line); color:var(--sv-muted); border-radius:12px;
-  }
-
-  /* ===== Settings tab ===== */
-  .settings-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:16px; max-width:820px; }
-  .settings-card{
-    background:var(--paper); border:1px solid var(--line); border-radius:14px;
-    padding:20px; display:flex; flex-direction:column; gap:16px;
-  }
-  .settings-card-head{ display:flex; align-items:center; gap:10px; }
-  .settings-card-icon{
-    width:38px; height:38px; border-radius:10px; flex-shrink:0;
-    background:var(--gold-soft); color:var(--gold);
-    display:flex; align-items:center; justify-content:center; font-size:17px;
-  }
-  .settings-card-title{ font-family:'Cormorant Garamond',serif; font-weight:700; font-size:17px; color:var(--ink); }
-  .settings-card-sub{ font-size:11.5px; color:var(--muted); margin-top:2px; }
-  .settings-row{
-    display:flex; align-items:center; justify-content:space-between; gap:14px;
-    padding:12px 14px; background:var(--card); border:1px solid var(--line); border-radius:11px;
-  }
-  .settings-row .settings-row-label{ font-size:13px; font-weight:600; color:var(--ink); }
-  .settings-row .settings-row-desc{ font-size:11px; color:var(--muted); margin-top:2px; }
-
-  /* Toggle switch */
-  .switch{ position:relative; display:inline-block; width:46px; height:26px; flex-shrink:0; }
-  .switch input{ opacity:0; width:0; height:0; }
-  .switch .slider{
-    position:absolute; cursor:pointer; inset:0;     background:rgba(139,94,60,0.15);
-    border-radius:999px; transition:.2s ease;
-  }
-  .switch .slider::before{
-    content:""; position:absolute; height:20px; width:20px; left:3px; top:3px;
-    background:#fff; border-radius:50%; transition:.2s ease; box-shadow:0 1px 3px rgba(0,0,0,0.25);
-  }
-  .switch input:checked + .slider{ background:linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%); }
-  .switch input:checked + .slider::before{ transform:translateX(20px); }
-  [dir="rtl"] .switch input:checked + .slider::before{ transform:translateX(-20px); }
-
-  /* Language segmented control */
-  .lang-switch{ display:flex; gap:6px; background:var(--card); border:1px solid var(--line); border-radius:11px; padding:5px; }
-  .lang-switch button{
-    flex:1; padding:9px 12px; border-radius:8px; border:none; background:transparent;
-    color:var(--muted); font-family:inherit; font-weight:700; font-size:12.5px; cursor:pointer;
-    display:flex; align-items:center; justify-content:center; gap:7px; transition:all .15s ease;
-  }
-  .lang-switch button:hover{ color:var(--ink); }
-  .lang-switch button.active{
-    background:linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%); color:#ffffff;
-    box-shadow:0 4px 10px rgba(107,66,38,0.18);
-  }
-  .theme-preview{ display:flex; gap:10px; }
-  .theme-preview button{
-    flex:1; border-radius:11px; border:2px solid var(--line); cursor:pointer; padding:12px 10px 10px;
-    display:flex; flex-direction:column; align-items:center; gap:8px; background:var(--card);
-    transition:all .15s ease; font-family:inherit;
-  }
-  .theme-preview button.active{ border-color:var(--gold); box-shadow:0 0 0 3px var(--gold-soft); }
-  .theme-preview .swatch{ width:100%; height:38px; border-radius:7px; }
-  .theme-preview .swatch.light{ background:linear-gradient(160deg,#f0ebe5,#ffffff); border:1px solid #e4ddd4; }
-  .theme-preview .swatch.dark{ background:linear-gradient(160deg,#14120f,#1e1912); border:1px solid #2e2820; }
-  .theme-preview span{ font-size:11.5px; font-weight:600; color:var(--ink); }
-  .settings-note{
-    font-size:11.5px; color:var(--muted); background:var(--gold-soft); border:1px solid var(--line);
-    border-radius:10px; padding:10px 13px; line-height:1.5; opacity:0.9;
-  }
-  @media (max-width:700px){ .settings-grid{ grid-template-columns:1fr; } }
-  .hist-banner{
-    display:none; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;
-    background:var(--gold-soft); border:1px solid var(--line); border-radius:12px;
-    padding:14px 18px; margin-bottom:22px;
-  }
-  .hist-banner .msg{ font-size:12.5px; color:var(--ink-2); font-weight:600; }
-  .hist-banner .msg span{ display:block; font-size:11px; color:var(--muted); font-weight:400; margin-top:2px; }
-  .hist-toolbar{
-    display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
-    margin-bottom:22px;
-  }
-  .hist-toolbar .left{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-  .hist-select{
-    padding:10px 14px; border-radius:9px; border:1px solid var(--line); background:var(--card);
-    color:var(--ink); font-family:'Inter',sans-serif; font-size:12.5px; font-weight:600; cursor:pointer; outline:none;
-  }
-  .save-snapshot-btn{
-    display:flex; align-items:center; gap:8px; padding:10px 18px; border-radius:9px; border:none;
-    background:linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%); color:#ffffff;
-    font-family:'Inter',sans-serif; font-weight:700; font-size:12.5px; cursor:pointer;
-    box-shadow:0 6px 16px rgba(107,66,38,0.16); transition:all .15s ease;
-  }
-  .save-snapshot-btn:hover{ filter:brightness(1.06); transform:translateY(-1px); }
-  .save-snapshot-btn:disabled{ opacity:.6; cursor:default; transform:none; }
-  .ghost-btn{
-    padding:10px 18px; border-radius:9px; border:1px solid var(--line); background:var(--card);
-    color:var(--ink); font-family:'Inter',sans-serif; font-weight:700; font-size:12.5px; cursor:pointer;
-    transition:all .15s ease;
-  }
-  .ghost-btn:hover{ border-color:var(--gold); }
-  .delta-cards{ display:grid; grid-template-columns:repeat(4,1fr); gap:13px; margin-bottom:28px; }
-  .delta-badge{ font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:3px; margin-top:8px; }
-  .delta-badge.up{ color:var(--success); }
-  .delta-badge.down{ color:var(--error); }
-  .delta-badge.flat{ color:var(--muted); }
-  .hist-table-note{ font-size:11px; color:var(--muted); margin-bottom:12px; }
-  .unpaid-link{
-    border:none; background:rgba(158,42,42,0.10); color:var(--error); cursor:pointer;
-    font-family:'Inter',sans-serif; font-weight:700; font-size:11.5px; padding:6px 11px; border-radius:8px;
-    transition:all .15s ease;
-  }
-  .unpaid-link:hover{ background:var(--error-soft); }
-
-  /* ===== Exam grades tab ===== */
-  .score-input{
-    width:90px; padding:8px 10px; border-radius:8px; border:1px solid var(--line);
-    background:var(--card); font-family:'Space Grotesk',sans-serif; font-size:13px; color:var(--ink); outline:none;
-  }
-  .score-input:focus{ border-color:var(--gold); box-shadow:0 0 0 3px var(--gold-soft); }
-
-  /* ===== Modal ===== */
-  .modal-overlay{
-    display:none; position:fixed; inset:0; background:rgba(42,37,32,0.50); z-index:80;
-    align-items:center; justify-content:center; padding:20px;
-  }
-  .modal-overlay.show{ display:flex; }
-  .modal-box{
-    background:var(--card); border-radius:16px; max-width:440px; width:100%; max-height:80vh;
-    overflow:auto; padding:22px; box-shadow:var(--shadow-lg); border:1px solid var(--line);
-  }
-  .modal-close{ border:none; background:none; font-size:22px; cursor:pointer; color:var(--muted); line-height:1; }
-  .modal-close:hover{ color:var(--ink); }
-
-  @media (max-width:900px){
+  @media (max-width:700px){
     .kpi-grid{ grid-template-columns:repeat(2,1fr); }
-    .two-col, .list-grid{ grid-template-columns:1fr; }
-    .delta-cards{ grid-template-columns:repeat(2,1fr); }
-  }
-  @media (prefers-reduced-motion: reduce){
-    .refresh-btn .spin, .state-msg .spinner, .kpi-card, .kpi-card::before{ animation:none !important; transition:none !important; }
+    .two-col, .contact-grid{ grid-template-columns:1fr; }
   }
 </style>
 </head>
 <body>
-  <!-- Parent Login -->
-<div id="parentLogin" class="login-screen">
-    <div class="login-card">
-        <h2>👨‍👩‍👦 Parent Portal</h2>
-        <p>Enter Student ID or QR Code</p>
 
-        <input
-            type="text"
-            id="parentSearch"
-            placeholder="Student ID / QR Code">
+<div class="wrap">
 
-        <div style="margin-top:15px;">
-            <button onclick="searchStudent()">
-                Search
-            </button>
-        </div>
-
-        <div id="parentError"
-             style="margin-top:15px;color:#ff4d4f;font-weight:bold;"></div>
-    </div>
-</div>
-
-<div class="topbar">
-  <div class="brand">
-    <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle Sidebar">
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-      </svg>
-    </button>
+  <div class="topbar">
     <div class="brand-mark">
       <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M4 19V9.5L12 4L20 9.5V19" stroke="#ffffff" stroke-width="1.8" stroke-linejoin="round"/>
         <path d="M9 19V13H15V19" stroke="#ffffff" stroke-width="1.8" stroke-linejoin="round"/>
       </svg>
     </div>
-    <div class="brand-text">
-      <div class="brand-eyebrow" data-i18n="brandEyebrow">Live insights</div>
-      <h1 data-i18n="brandTitle">Live Dashboard</h1>
-      <p data-i18n="brandSub">Attendance & payment insights</p>
-    </div>
-  </div>
-  <div class="top-actions">
-    <span class="updated-note" id="updatedNote"></span>
-    <a class="scanner-btn" href="index.html">
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/>
-        <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/>
-        <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/>
-        <path d="M14 14h7v7h-7z" stroke="currentColor" stroke-width="1.8"/>
-      </svg>
-      <span data-i18n="scannerBtn">Attendance Scanner</span>
-    </a>
-    <button class="refresh-btn" id="refreshBtn" onclick="loadDashboard()">
-      <span class="spin">↻</span> <span data-i18n="refreshBtn">Refresh data</span>
-    </button>
-  </div>
-</div>
-
-<div class="wrap">
-  <div class="tab-row" id="gradeTabs">
-    <!-- GRADES GROUP -->
-    <div class="tab-group-label" data-group="grades" onclick="toggleGroup(this)">▼ Grades</div>
-    <div class="tab-group" data-group="grades">
-      <div class="tab active" data-grade="all" data-i18n="tabAll">🎓 All Grades</div>
-      <div class="tab" data-grade="first" data-i18n="tabFirst">📘 First Secondary</div>
-      <div class="tab" data-grade="second" data-i18n="tabSecond">📗 Second Secondary</div>
-      <div class="tab" data-grade="third" data-i18n="tabThird">📙 Third Secondary</div>
-    </div>
-    
-    <!-- OTHER GROUP -->
-    <div class="tab-group-label" data-group="other" onclick="toggleGroup(this)">▼ Other</div>
-    <div class="tab-group" data-group="other">
-      <div class="tab exams-tab" id="examsTab" data-i18n="tabExams">📝 Exam Grades</div>
-      <div class="tab history-tab" id="historyTab" data-i18n="tabHistory">📂 Monthly History</div>
-    </div>
-    
-    <!-- SETTINGS GROUP -->
-    <div class="tab-group-label" data-group="settings" onclick="toggleGroup(this)">▼ Settings</div>
-    <div class="tab-group" data-group="settings">
-      <div class="tab settings-tab" id="settingsTab" data-i18n="tabSettings">⚙️ Settings</div>
-    </div>
+    <h1>بوابة ولي الأمر</h1>
+    <p>اطّلع على تقرير الحضور والدرجات والمدفوعات لابنك</p>
   </div>
 
-  <div class="tab-panel">
-    <div id="dashboardView">
-    <div class="state-msg show" id="loadingMsg">
-      <span class="spinner"></span> Loading data from Supabase…
+  <div class="search-card" id="searchCard">
+    <label for="lookupInput">رقم هاتف الطالب / رقم هاتف ولي الأمر / كود QR</label>
+    <div class="search-row">
+      <input type="text" id="lookupInput" placeholder="اكتب الرقم أو كود QR هنا…" onkeydown="if(event.key==='Enter') runSearch()">
+      <button class="search-btn" id="searchBtn" onclick="runSearch()">
+        <span>🔍</span> بحث
+      </button>
     </div>
-    <div class="state-msg err" id="errorMsg"></div>
+    <div class="search-hint">أدخل رقم الهاتف المسجل (هاتفك أو هاتف ابنك) أو كود الـ QR الخاص بالطالب.</div>
+  </div>
 
-    <div class="content" id="dashContent">
+  <div class="state-msg" id="loadingMsg">
+    <span class="spinner"></span> جاري البحث…
+  </div>
+  <div class="state-msg err" id="errorMsg"></div>
+  <div class="state-msg" id="emptyMsg">
+    <div style="font-size:32px;">🔎</div>
+    <div style="font-weight:700; margin-top:4px;">لم يتم العثور على نتائج</div>
+    <div style="font-size:12.5px;">تأكد من كتابة الرقم كما هو مسجل لدى المركز، أو جرّب كود الـ QR.</div>
+  </div>
 
-      <div class="kpi-grid">
-        <div class="kpi-card">
-          <div class="kpi-label" data-i18n="kpiTotalStudents">Total Students</div>
-          <div class="kpi-value num" id="kpiStudents">–</div>
-          <div class="kpi-sub" id="kpiStudentsSub"></div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label" data-i18n="kpiAttendanceRate">Attendance Rate</div>
-          <div class="kpi-value num" id="kpiAttendance">–</div>
-          <div class="kpi-sub" id="kpiAttendanceSub"></div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label" data-i18n="kpiTotalCollected">Total Collected</div>
-          <div class="kpi-value num" id="kpiRevenue">–</div>
-          <div class="kpi-sub" id="kpiRevenueSub"></div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label" data-i18n="kpiUnpaid">Unpaid</div>
-          <div class="kpi-value num" id="kpiUnpaid">–</div>
-          <div class="kpi-sub" id="kpiUnpaidSub"></div>
-        </div>
-        <div class="kpi-card seal">
-          <div class="seal-ring">
-            <svg width="58" height="58" viewBox="0 0 58 58">
-              <circle class="bg" cx="29" cy="29" r="24" fill="none" stroke-width="6"></circle>
-              <circle class="fg" id="collectionRing" cx="29" cy="29" r="24" fill="none" stroke-width="6"
-                stroke-dasharray="150.8" stroke-dashoffset="150.8"></circle>
-            </svg>
-            <div class="seal-pct" id="collectionPctText">–</div>
-          </div>
-          <div>
-            <div class="kpi-label" data-i18n="kpiCollectionRate">Collection Rate</div>
-            <div class="kpi-sub" id="kpiCollectionSub" style="margin-top:4px;" data-i18n="kpiOfAmountsDue">of amounts due</div>
-          </div>
-        </div>
+  <div class="picker" id="pickerList"></div>
+
+  <div class="report" id="reportView">
+    <div class="report-head">
+      <div>
+        <div class="name" id="repName">—</div>
+        <div class="grade-tag" id="repGrade">—</div>
       </div>
-
-      <div class="two-col">
-        <div class="chart-card">
-          <div class="section-title"><span data-i18n="secAttByGrade">Attendance Rate by Grade</span> <span class="tag" data-i18n="tagLive">Live</span></div>
-          <div class="chart-box">
-            <canvas id="attendanceByGradeChart"></canvas>
-            <div class="chart-empty" id="attChartEmpty" data-i18n="emptyAttendance">No attendance data yet</div>
-          </div>
-        </div>
-        <div class="chart-card">
-          <div class="section-title" data-i18n="secPaymentStatus">Payment Status</div>
-          <div class="chart-box">
-            <canvas id="paymentStatusChart"></canvas>
-            <div class="chart-empty" id="payChartEmpty" data-i18n="emptyPayment">No payment data yet</div>
-          </div>
-        </div>
+      <div class="head-actions">
+        <button class="back-btn" onclick="resetToSearch()">↩ بحث جديد</button>
+        <button class="pdf-btn" onclick="downloadParentReport()">📄 تحميل تقرير PDF</button>
       </div>
+    </div>
 
-      <div class="two-col">
-        <div class="chart-card">
-          <div class="section-title"><span data-i18n="secAvgExam">Average Exam Scores</span> <span class="tag" id="examAvgSourceTag">exams</span></div>
-          <div class="chart-box" style="height:190px;">
-            <canvas id="examAvgChart"></canvas>
-            <div class="chart-empty" id="examAvgChartEmpty" data-i18n="emptyExamScores">No exam scores recorded yet</div>
-          </div>
-        </div>
-        <div class="chart-card">
-          <div class="section-title"><span data-i18n="secScoreDist">Score Distribution</span> <span class="tag" data-i18n="tagByStudent">by student</span></div>
-          <div class="chart-box" style="height:190px;">
-            <canvas id="examDistChart"></canvas>
-            <div class="chart-empty" id="examDistChartEmpty" data-i18n="emptyExamScores">No exam scores recorded yet</div>
-          </div>
-        </div>
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">نسبة الحضور</div>
+        <div class="kpi-value num" id="kAttRate">–</div>
+        <div class="kpi-sub" id="kAttSub"></div>
       </div>
+      <div class="kpi-card">
+        <div class="kpi-label">آخر حضور</div>
+        <div class="kpi-value" id="kLastAtt" style="font-size:16px;">–</div>
+        <div class="kpi-sub">تاريخ آخر يوم حضور مسجّل</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">حالة الدفع</div>
+        <div class="kpi-value" id="kPayStatus" style="font-size:16px;">–</div>
+        <div class="kpi-sub" id="kPaySub"></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">متوسط الامتحانات</div>
+        <div class="kpi-value num" id="kExamAvg">–</div>
+        <div class="kpi-sub" id="kExamSub"></div>
+      </div>
+    </div>
 
-      
-      <div class="two-col" style="grid-template-columns: 1fr 1fr;">
-        <div class="chart-card">
-          <div class="section-title">
-            <span data-i18n="secAttVsPerf">Attendance vs. Performance</span>
-            <span class="tag">Correlation</span>
-          </div>
-          <div class="chart-box" style="height: 220px;">
-            <canvas id="attVsPerfChart"></canvas>
-            <div class="chart-empty" id="attVsPerfEmpty">Not enough data</div>
-          </div>
-        </div>
-        <div class="chart-card">
-          <div class="section-title">
-            <span data-i18n="secGradePerformance">Grade Performance Breakdown</span>
-            <span class="tag">Overview</span>
-          </div>
-          <div class="chart-box" style="height: 220px;">
-            <canvas id="gradeRadarChart"></canvas>
-            <div class="chart-empty" id="gradeRadarEmpty">No data</div>
-          </div>
-        </div>
-      </div>
-        
-      <div class="list-grid">
-        <div class="list-card">
-          <div class="section-title" data-i18n="secTopAttendance">Top Attendance</div>
-          <div id="topAttendersList"></div>
-        </div>
-        <div class="list-card">
-          <div class="section-title" data-i18n="secUnpaidStudents">Unpaid Students</div>
-          <div id="unpaidList"></div>
-        </div>
-      </div>
-
-      <div class="list-grid">
-        <div class="list-card">
-          <div class="section-title" data-i18n="secTopExam">Top Exam Performers</div>
-          <div id="topExamList"></div>
-        </div>
-        <div class="list-card">
-          <div class="section-title" data-i18n="secNeedsImprovement">Needs Improvement</div>
-          <div id="lowExamList"></div>
-        </div>
-      </div>
-
+    <div class="two-col">
       <div class="chart-card">
-        <div class="roster-head">
-          <div class="search-box">
-            <input type="text" id="rosterSearch" data-i18n-ph="searchNamePhone" placeholder="Search by name or phone…" oninput="renderRoster()">
-          </div>
-          <div class="pay-filter" id="payFilter">
-            <button class="active" data-f="all" onclick="setPayFilter('all')" data-i18n="filterAll">All</button>
-            <button data-f="paid" onclick="setPayFilter('paid')" data-i18n="filterPaid">Paid</button>
-            <button data-f="unpaid" onclick="setPayFilter('unpaid')" data-i18n="filterUnpaid">Unpaid</button>
-          </div>
-          <button class="ghost-btn" id="gradeReportBtn" onclick="generateGradeReport()">📄 <span data-i18n="gradeReportBtn">Grade Report (PDF)</span></button>
-          <button class="excel-btn" id="gradeExcelBtn" onclick="exportRosterExcel()">📊 <span data-i18n="exportExcel">Export Excel</span></button>
-        </div>
-        <div class="table-scroll-top" id="rosterScrollTop"><div class="table-scroll-top-inner" id="rosterScrollTopInner"></div></div>
-        <div class="table-wrap" id="rosterTableWrap">
-          <table>
-            <thead>
-              <tr>
-                <th data-i18n="colName">Name</th>
-                <th data-i18n="colGrade">Grade</th>
-                <th data-i18n="colPresent">Present</th>
-                <th data-i18n="colAbsent">Absent</th>
-                <th data-i18n="colAttendanceRate">Attendance Rate</th>
-                <th data-i18n="colStudentPhone">Student Phone</th>
-                <th data-i18n="colParentPhone">Parent Phone</th>
-                <th data-i18n="colPayment">Payment</th>
-                <th data-i18n="colLastAttendance">Last Attendance</th>
-                <th data-i18n="colReport">Report</th>
-              </tr>
-            </thead>
-            <tbody id="rosterBody"></tbody>
-          </table>
+        <div class="section-title">الحضور والغياب</div>
+        <div class="chart-box">
+          <canvas id="attChart"></canvas>
+          <div class="chart-empty" id="attChartEmpty">لا توجد بيانات حضور بعد</div>
         </div>
       </div>
-
-    </div>
-    </div>
-
-    <div id="historyView" style="display:none;">
-      <div class="state-msg show" id="histLoadingMsg">
-        <span class="spinner"></span> Loading monthly history…
-      </div>
-      <div class="state-msg err" id="histErrorMsg"></div>
-
-      <div class="content" id="histContent">
-
-        <div class="hist-banner" id="histBanner">
-          <div class="msg">
-            <span data-i18n="histBannerMsg">No snapshot saved yet for the current month.</span>
-            <span data-i18n="histBannerSub">Save it before the month rolls over, so this month's numbers aren't lost.</span>
-          </div>
-          <button class="save-snapshot-btn" onclick="saveCurrentMonthSnapshot()">💾 <span data-i18n="saveNow">Save current month now</span></button>
-        </div>
-
-        <div class="hist-toolbar">
-          <div class="left">
-            <select class="hist-select" id="histGradeSelect" onchange="onHistGradeChange()">
-              <option value="all" data-i18n="tabAll">All Grades</option>
-              <option value="first" data-i18n="tabFirst">First Secondary</option>
-              <option value="second" data-i18n="tabSecond">Second Secondary</option>
-              <option value="third" data-i18n="tabThird">Third Secondary</option>
-            </select>
-          </div>
-          <button class="save-snapshot-btn" id="saveSnapshotBtn" onclick="saveCurrentMonthSnapshot()">💾 <span data-i18n="saveCurrentMonth">Save Current Month</span></button>
-          <button class="ghost-btn" onclick="generateHistoryMonthReport()">📄 <span data-i18n="downloadLatestPdf">Download PDF (Latest Month)</span></button>
-          <button class="excel-btn" onclick="exportHistoryExcel()">📊 <span data-i18n="exportExcel">Export Excel</span></button>
-        </div>
-
-        <div class="delta-cards" id="deltaCards"></div>
-
-        <div class="two-col">
-          <div class="chart-card">
-            <div class="section-title"><span data-i18n="secAttCollTrend">Attendance & Collection Rate</span> <span class="tag" data-i18n="tagTrend">Trend</span></div>
-            <div class="chart-box">
-              <canvas id="histRateChart"></canvas>
-              <div class="chart-empty" id="histRateEmpty" data-i18n="emptyHistory">No history saved yet</div>
-            </div>
-          </div>
-          <div class="chart-card">
-            <div class="section-title" data-i18n="secRevenueByMonth">Revenue by Month</div>
-            <div class="chart-box">
-              <canvas id="histRevenueChart"></canvas>
-              <div class="chart-empty" id="histRevenueEmpty" data-i18n="emptyHistory">No history saved yet</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="chart-card" style="margin-bottom:28px;">
-          <div class="section-title"><span data-i18n="secStudentGrowth">Student Growth</span> <span class="tag" data-i18n="tagGrowth">Growth</span></div>
-          <div class="chart-box" style="height:200px;">
-            <canvas id="histStudentTrendChart"></canvas>
-            <div class="chart-empty" id="histStudentTrendEmpty" data-i18n="emptyHistory">No history saved yet</div>
-          </div>
-        </div>
-
-        <div class="chart-card">
-          <div class="section-title" data-i18n="secMonthComparison">Month-by-Month Comparison</div>
-          <div class="hist-table-note" data-i18n="histTableNote">Each row is a saved snapshot. Change vs. shows the difference from the previous saved month. Use "Who Hasn't Paid" to see who was unpaid that month.</div>
-          <div class="table-scroll-top" id="histScrollTop"><div class="table-scroll-top-inner" id="histScrollTopInner"></div></div>
-          <div class="table-wrap" id="histTableWrap">
-            <table>
-              <thead>
-                <tr>
-                  <th data-i18n="colMonth">Month</th>
-                  <th data-i18n="colStudents">Students</th>
-                  <th data-i18n="colAttendanceRate">Attendance Rate</th>
-                  <th data-i18n="colCollectionRate">Collection Rate</th>
-                  <th data-i18n="colRevenue">Revenue</th>
-                  <th data-i18n="colPaid">Paid</th>
-                  <th data-i18n="colUnpaid">Unpaid</th>
-                  <th data-i18n="colWhoUnpaid">Who Hasn't Paid</th>
-                </tr>
-              </thead>
-              <tbody id="histTableBody"></tbody>
-            </table>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    <div id="examsView" style="display:none;">
-      <div class="state-msg show" id="examLoadingMsg">
-        <span class="spinner"></span> Loading grades…
-      </div>
-      <div class="state-msg err" id="examErrorMsg"></div>
-
-      <div class="content" id="examContent">
-
-        <div class="hist-toolbar">
-          <div class="left">
-            <select class="hist-select" id="examGradeSelect" onchange="onExamGradeChange()">
-              <option value="first" data-i18n="tabFirst">First Secondary</option>
-              <option value="second" data-i18n="tabSecond">Second Secondary</option>
-              <option value="third" data-i18n="tabThird">Third Secondary</option>
-            </select>
-            <div class="search-box" style="min-width:200px;">
-              <input type="text" id="examSearch" data-i18n-ph="searchStudentName" placeholder="Search by student name…" oninput="renderExamTable()">
-            </div>
-          </div>
-
-          <button class="excel-btn" onclick="exportExamExcel()">📊 <span data-i18n="exportExcel">Export Excel</span></button>
-        </div>
-
-        <div class="chart-card">
-          <div class="section-title"><span data-i18n="secGradesTable">Grades Table</span> <span class="tag" data-i18n="tagPermanent">Permanent — not cleared monthly</span></div>
-          <div class="hist-table-note" data-i18n="gradesTableNote">Each exam is shown in its own column. To add a new exam or enter/edit scores, use the "Manage Exams" page.</div>
-          <div class="table-scroll-top" id="examScrollTop"><div class="table-scroll-top-inner" id="examScrollTopInner"></div></div>
-          <div class="table-wrap" id="examTableWrap">
-            <table>
-              <thead id="examTableHead"></thead>
-              <tbody id="examTableBody"></tbody>
-            </table>
-          </div>
+      <div class="chart-card">
+        <div class="section-title">تطور درجات الامتحانات</div>
+        <div class="chart-box">
+          <canvas id="examTrendChart"></canvas>
+          <div class="chart-empty" id="examTrendEmpty">لا توجد درجات امتحانات مسجّلة بعد</div>
         </div>
       </div>
     </div>
 
-    <div id="settingsView" style="display:none;">
-
-      <div class="sv-hero">
-        <div class="sv-hero-left">
-          <div class="sv-hero-avatar">⚙️</div>
-          <div>
-            <div class="sv-hero-title" data-i18n="settingsHeroTitle">Dashboard Settings</div>
-            <div class="sv-hero-sub" data-i18n="settingsHeroSub">Customize how your dashboard looks and speaks</div>
-          </div>
-        </div>
-        <div class="sv-hero-pill" data-i18n="settingsHeroPill">Changes save instantly</div>
+    <div class="contact-grid">
+      <div class="contact-card">
+        <div class="lbl">هاتف الطالب</div>
+        <div class="val" id="cStudentPhone">—</div>
       </div>
-
-      <div class="settings-grid">
-
-        <div class="settings-card">
-          <div class="settings-card-head">
-            <div class="settings-card-icon">🌓</div>
-            <div>
-              <div class="settings-card-title" data-i18n="settingsAppearance">Appearance</div>
-              <div class="settings-card-sub" data-i18n="settingsAppearanceSub">Choose how the dashboard looks</div>
-            </div>
-          </div>
-          <div class="theme-preview" id="themePreview">
-            <button type="button" data-theme-choice="light" onclick="setTheme('light')">
-              <span class="swatch light"></span>
-              <span data-i18n="settingsLight">Light</span>
-            </button>
-            <button type="button" data-theme-choice="dark" onclick="setTheme('dark')">
-              <span class="swatch dark"></span>
-              <span data-i18n="settingsDark">Dark</span>
-            </button>
-          </div>
-        </div>
-
-        <div class="settings-card">
-          <div class="settings-card-head">
-            <div class="settings-card-icon">🌐</div>
-            <div>
-              <div class="settings-card-title" data-i18n="settingsLanguage">Language</div>
-              <div class="settings-card-sub" data-i18n="settingsLanguageSub">Switch the interface language</div>
-            </div>
-          </div>
-          <div class="lang-switch" id="langSwitch">
-            <button type="button" data-lang-choice="en" onclick="setLanguage('en')">English</button>
-            <button type="button" data-lang-choice="ar" onclick="setLanguage('ar')">العربية</button>
-          </div>
-          <div class="settings-note" data-i18n="settingsLangNote">
-            Labels, buttons, and headers switch language instantly. Names and phone numbers stay exactly as stored in Supabase.
-          </div>
-        </div>
-
+      <div class="contact-card">
+        <div class="lbl">هاتف ولي الأمر</div>
+        <div class="val" id="cParentPhone">—</div>
       </div>
     </div>
 
+    <div class="exam-card">
+      <div class="section-title">درجات الامتحانات بالتفصيل</div>
+      <table>
+        <thead>
+          <tr><th>الامتحان</th><th>الدرجة</th><th>من إجمالي</th><th>النسبة</th></tr>
+        </thead>
+        <tbody id="examTableBody"></tbody>
+      </table>
+    </div>
   </div>
 
-  <div class="footer-note" data-i18n="footerNote">Data is read live from Supabase using a read-only anon key</div>
-</div>
+  <div class="footer-note">تُقرأ البيانات مباشرة من نظام المركز باستخدام مفتاح قراءة فقط</div>
 
-<!-- Unpaid-this-month modal -->
-<div class="modal-overlay" id="unpaidModalOverlay" onclick="if(event.target===this) closeUnpaidModal()">
-  <div class="modal-box">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-      <div class="section-title" id="unpaidModalTitle" style="margin-bottom:0;"></div>
-      <button class="modal-close" onclick="closeUnpaidModal()">×</button>
-    </div>
-    <div id="unpaidModalBody"></div>
-  </div>
-</div>
-
-<!-- Student trend modal -->
-<div class="modal-overlay" id="studentTrendModalOverlay" onclick="if(event.target===this) closeStudentTrendModal()">
-  <div class="modal-box" style="max-width:560px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-      <div class="section-title" id="studentTrendTitle" style="margin-bottom:0;"></div>
-      <button class="modal-close" onclick="closeStudentTrendModal()">×</button>
-    </div>
-    <div class="chart-box" style="height:260px;">
-      <canvas id="studentTrendChart"></canvas>
-      <div class="chart-empty" id="studentTrendEmpty">No exam scores recorded yet for this student</div>
-    </div>
-    <div id="studentTrendSummary" style="margin-top:14px; font-size:12.5px; color:var(--muted); text-align:center;"></div>
-  </div>
 </div>
 
 <script>
   /* ============================================================
-     SUPABASE CONNECTION
+     SUPABASE CONNECTION (same project/credentials as the main dashboard)
      ============================================================ */
   const SUPABASE_URL = "https://evbjulsahncllewwvlxp.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2Ymp1bHNhaG5jbGxld3d2bHhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2NzE5MjUsImV4cCI6MjA5OTI0NzkyNX0.Xg9sU6ZenUU3kC2RNIbvZmK19KvE28MM2oyGcKNn8UA";
   const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // Change only the right-hand side here if your real column/table names differ.
   const SCHEMA = {
     attendanceTable: (g) => `attendance_${g}_secondary`,
     paymentsTable: (g) => `payments_${g}_secondary`,
     col: {
-      fullName: "full_name",
-      qrCode: "qr_code",
-      studentPhone: "student_phone",
-      parentPhone: "parent_phone",
-      attendanceCount: "attendance_count",
-      absenceCount: "absence_count",
-      lastAttendance: "last_attendance",
-      amountPaid: "amount_paid",
-      paymentStatus: "payment_status",
-      lastPaymentDate: "last_payment_date"
+      fullName: "full_name", qrCode: "qr_code", studentPhone: "student_phone", parentPhone: "parent_phone",
+      attendanceCount: "attendance_count", absenceCount: "absence_count", lastAttendance: "last_attendance",
+      amountPaid: "amount_paid", paymentStatus: "payment_status", lastPaymentDate: "last_payment_date"
     }
   };
+  const EXAMS_SCHEMA = { table: "exams", col: { id: "id", name: "exam_name", maxScore: "max_score", grade: "grade", createdAt: "created_at" } };
+  const SCORES_SCHEMA = { table: "exam_scores", col: { id: "id", examId: "exam_id", studentCode: "student_code", score: "score" } };
 
-  const GRADE_LABELS = { first: "First Secondary", second: "Second Secondary", third: "Third Secondary" };
   const GRADES = ["first", "second", "third"];
-  const GRADE_COLORS = {
-    first:  "rgba(139,94,60,0.75)",     // coffee
-    second: "rgba(122,59,59,0.75)",     // dark red
-    third:  "rgba(110,100,90,0.70)"     // warm gray
-  };
+  const GRADE_LABELS = { first: "الصف الأول الثانوي", second: "الصف الثاني الثانوي", third: "الصف الثالث الثانوي" };
 
-  let currentGrade = "all";
-  let payFilterState = "all";
-  let combined = { students: [], statsRows: [], examAverages: {}, examStudentAverages: [] }; // students = merged attendance+payment rows, tagged with grade
-  let charts = { attVsPerf: null, gradeRadar: null };
-  let histCharts = { rate: null, rev: null, students: null };
+  let currentStudent = null;
+  let currentExamRows = []; // [{name, maxScore, score}]
+  let reportCharts = { att: null, exam: null };
 
-  /* ============================================================
-     SETTINGS: THEME + LANGUAGE (English / Arabic only)
-     Persisted in localStorage so the choice sticks between visits.
-     ============================================================ */
-  const I18N = {
-    en: {
-      tabAll: "🎓 All Grades", tabFirst: "📘 First Secondary", tabSecond: "📗 Second Secondary", tabThird: "📙 Third Secondary",
-      tabExams: "📝 Exam Grades", tabHistory: "📂 Monthly History", tabSettings: "⚙️ Settings",
-      brandEyebrow: "Live insights", brandTitle: "Live Dashboard", brandSub: "Attendance & payment insights",
-      scannerBtn: "Attendance Scanner", refreshBtn: "Refresh data",
-      kpiTotalStudents: "Total Students", kpiAttendanceRate: "Attendance Rate", kpiTotalCollected: "Total Collected",
-      kpiUnpaid: "Unpaid", kpiCollectionRate: "Collection Rate", kpiOfAmountsDue: "of amounts due",
-      secAttByGrade: "Attendance Rate by Grade", secAttVsPerf: "Attendance vs. Performance", secGradePerformance: "Grade Performance Breakdown", tagLive: "Live",
-      secPaymentStatus: "Payment Status",
-      secAvgExam: "Average Exam Scores",
-      secScoreDist: "Score Distribution", tagByStudent: "by student",
-      secTopAttendance: "Top Attendance", secUnpaidStudents: "Unpaid Students",
-      secTopExam: "Top Exam Performers", secNeedsImprovement: "Needs Improvement",
-      searchNamePhone: "Search by name or phone…",
-      filterAll: "All", filterPaid: "Paid", filterUnpaid: "Unpaid",
-      gradeReportBtn: "Grade Report (PDF)", exportExcel: "Export Excel",
-      colName: "Name", colGrade: "Grade", colPresent: "Present", colAbsent: "Absent",
-      colAttendanceRate: "Attendance Rate", colStudentPhone: "Student Phone", colParentPhone: "Parent Phone",
-      colPayment: "Payment", colLastAttendance: "Last Attendance", colReport: "Report",
-      colMonth: "Month", colStudents: "Students", colCollectionRate: "Collection Rate", colRevenue: "Revenue",
-      colPaid: "Paid", colUnpaid: "Unpaid", colWhoUnpaid: "Who Hasn't Paid",
-      histBannerMsg: "No snapshot saved yet for the current month.",
-      histBannerSub: "Save it before the month rolls over, so this month's numbers aren't lost.",
-      saveNow: "Save current month now", saveCurrentMonth: "Save Current Month",
-      downloadLatestPdf: "Download PDF (Latest Month)",
-      secAttCollTrend: "Attendance & Collection Rate", tagTrend: "Trend",
-      secRevenueByMonth: "Revenue by Month",
-      secStudentGrowth: "Student Growth", tagGrowth: "Growth",
-      secMonthComparison: "Month-by-Month Comparison",
-      histTableNote: "Each row is a saved snapshot. Change vs. shows the difference from the previous saved month. Use \"Who Hasn't Paid\" to see who was unpaid that month.",
-      manageExams: "Manage Exams",
-      secGradesTable: "Grades Table", tagPermanent: "Permanent — not cleared monthly",
-      gradesTableNote: "Each exam is shown in its own column.",
-      searchStudentName: "Search by student name…",
-      footerNote: "Data is read live from Supabase using a read-only anon key",
-      settingsAppearance: "Appearance", settingsAppearanceSub: "Choose how the dashboard looks",
-      settingsLight: "Light", settingsDark: "Dark",
-      settingsDarkMode: "Dark Mode", settingsDarkModeDesc: "Easier on the eyes at night",
-      settingsLanguage: "Language", settingsLanguageSub: "Switch the interface language",
-      settingsLangNote: "Labels, buttons, and headers switch language instantly. Names and phone numbers stay exactly as stored in Supabase.",
-      settingsHeroTitle: "Dashboard Settings", settingsHeroSub: "Customize how your dashboard looks and speaks",
-      settingsHeroPill: "Changes save instantly",
-      emptyAttendance: "No attendance data yet", emptyPayment: "No payment data yet",
-      emptyExamScores: "No exam scores recorded yet", emptyHistory: "No history saved yet",
-      chartLibFail: "Chart library failed to load — try refreshing",
-      noDataYet: "No data yet", everyonePaid: "🎉 Everyone has paid", everyonePaidMonth: "Everyone paid this month.",
-      moreSeeTable: "more — see the table below",
-      noExamScoresYet: "No exam scores yet", notEnoughExamData: "Not enough students with exam scores yet to show a separate list",
-      noMatchingResults: "No matching results",
-      noSavedMonths: "No saved months yet",
-      noSavedMonthsGrade: "No saved months yet for this grade — save the current month to start tracking.",
-      noStudentsGrade: "No students in this grade",
-      noStudentsMatch: "No students match",
-      acrossAllGrades: "across all grades",
-      avgOfStudents: "avg of", students_: "students", noAttendanceData: "no attendance data",
-      studentsPaid: "students paid",
-      outOf: "out of", noPaymentRecords: "no payment records",
-      lastUpdated: "Last updated:",
-      exams_: "exams", exam_: "exam"
-    },
-    ar: {
-      tabAll: "🎓 كل الصفوف", tabFirst: "📘 الصف الأول الثانوي", tabSecond: "📗 الصف الثاني الثانوي", tabThird: "📙 الصف الثالث الثانوي",
-      tabExams: "📝 درجات الامتحانات", tabHistory: "📂 السجل الشهري", tabSettings: "⚙️ الإعدادات",
-      brandEyebrow: "بيانات لحظية", brandTitle: "لوحة المتابعة", brandSub: "بيانات الحضور والمدفوعات",
-      scannerBtn: "ماسح الحضور", refreshBtn: "تحديث البيانات",
-      kpiTotalStudents: "إجمالي الطلاب", kpiAttendanceRate: "نسبة الحضور", kpiTotalCollected: "إجمالي التحصيل",
-      kpiUnpaid: "غير مدفوع", kpiCollectionRate: "نسبة التحصيل", kpiOfAmountsDue: "من المبالغ المستحقة",
-      secAttByGrade: "نسبة الحضور حسب الصف", secAttVsPerf: "الحضور مقابل الأداء", secGradePerformance: "تحليل أداء الصفوف", tagLive: "لحظي",
-      secPaymentStatus: "حالة الدفع",
-      secAvgExam: "متوسط درجات الامتحانات",
-      secScoreDist: "توزيع الدرجات", tagByStudent: "لكل طالب",
-      secTopAttendance: "الأعلى حضورًا", secUnpaidStudents: "الطلاب غير المدفوعين",
-      secTopExam: "الأعلى تحصيلًا", secNeedsImprovement: "بحاجة إلى تحسين",
-      searchNamePhone: "ابحث بالاسم أو رقم الهاتف…",
-      filterAll: "الكل", filterPaid: "مدفوع", filterUnpaid: "غير مدفوع",
-      gradeReportBtn: "تقرير الصف (PDF)", exportExcel: "تصدير إكسل",
-      colName: "الاسم", colGrade: "الصف", colPresent: "حضور", colAbsent: "غياب",
-      colAttendanceRate: "نسبة الحضور", colStudentPhone: "هاتف الطالب", colParentPhone: "هاتف ولي الأمر",
-      colPayment: "الدفع", colLastAttendance: "آخر حضور", colReport: "التقرير",
-      colMonth: "الشهر", colStudents: "الطلاب", colCollectionRate: "نسبة التحصيل", colRevenue: "الإيراد",
-      colPaid: "مدفوع", colUnpaid: "غير مدفوع", colWhoUnpaid: "من لم يدفع",
-      histBannerMsg: "لم يتم حفظ نسخة للشهر الحالي بعد.",
-      histBannerSub: "احفظها قبل بداية الشهر الجديد حتى لا تفقد أرقام هذا الشهر.",
-      saveNow: "احفظ الشهر الحالي الآن", saveCurrentMonth: "حفظ الشهر الحالي",
-      downloadLatestPdf: "تحميل PDF (آخر شهر)",
-      secAttCollTrend: "نسبة الحضور والتحصيل", tagTrend: "اتجاه",
-      secRevenueByMonth: "الإيراد حسب الشهر",
-      secStudentGrowth: "نمو عدد الطلاب", tagGrowth: "نمو",
-      secMonthComparison: "مقارنة شهرًا بشهر",
-      histTableNote: "كل صف هو نسخة محفوظة. يوضح عمود التغيير الفرق عن آخر شهر محفوظ. استخدم \"من لم يدفع\" لرؤية من لم يدفع في ذلك الشهر.",
-      manageExams: "إدارة الامتحانات",
-      secGradesTable: "جدول الدرجات", tagPermanent: "دائم — لا يُمسح شهريًا",
-      gradesTableNote: "يظهر كل امتحان في عمود مستقل.",
-      searchStudentName: "ابحث باسم الطالب…",
-      footerNote: "تُقرأ البيانات مباشرة من Supabase باستخدام مفتاح قراءة فقط",
-      settingsAppearance: "المظهر", settingsAppearanceSub: "اختر شكل لوحة المتابعة",
-      settingsLight: "فاتح", settingsDark: "داكن",
-      settingsDarkMode: "الوضع الداكن", settingsDarkModeDesc: "أريح للعين ليلًا",
-      settingsLanguage: "اللغة", settingsLanguageSub: "بدّل لغة الواجهة",
-      settingsLangNote: "تتغير التسميات والأزرار والعناوين فورًا. الأسماء وأرقام الهواتف تبقى كما هي في Supabase.",
-      settingsHeroTitle: "إعدادات لوحة التحكم", settingsHeroSub: "خصص شكل ولغة لوحة التحكم الخاصة بك",
-      settingsHeroPill: "التغييرات تُحفظ فورًا",
-      emptyAttendance: "لا توجد بيانات حضور بعد", emptyPayment: "لا توجد بيانات دفع بعد",
-      emptyExamScores: "لا توجد درجات امتحانات مسجلة بعد", emptyHistory: "لا يوجد سجل محفوظ بعد",
-      chartLibFail: "فشل تحميل مكتبة الرسوم البيانية — حاول التحديث",
-      noDataYet: "لا توجد بيانات بعد", everyonePaid: "🎉 الجميع دفع", everyonePaidMonth: "الجميع دفع هذا الشهر.",
-      moreSeeTable: "أكثر — انظر الجدول أدناه",
-      noExamScoresYet: "لا توجد درجات امتحانات بعد", notEnoughExamData: "لا يوجد عدد كافٍ من الطلاب بدرجات امتحانات لعرض قائمة منفصلة",
-      noMatchingResults: "لا توجد نتائج مطابقة",
-      noSavedMonths: "لا يوجد شهر محفوظ بعد",
-      noSavedMonthsGrade: "لا يوجد شهر محفوظ بعد لهذا الصف — احفظ الشهر الحالي لبدء المتابعة.",
-      noStudentsGrade: "لا يوجد طلاب في هذا الصف",
-      noStudentsMatch: "لا يوجد طلاب مطابقون لـ",
-      acrossAllGrades: "في كل الصفوف",
-      avgOfStudents: "متوسط", students_: "طالب", noAttendanceData: "لا توجد بيانات حضور",
-      studentsPaid: "طالب دفعوا",
-      outOf: "من أصل", noPaymentRecords: "لا توجد سجلات دفع",
-      lastUpdated: "آخر تحديث:",
-      exams_: "امتحانات", exam_: "امتحان"
-    }
-  };
-
-  let currentLang = localStorage.getItem("dashLang") || "en";
-  let currentTheme = localStorage.getItem("dashTheme") || "light";
-
-  function t(key){
-    return (I18N[currentLang] && I18N[currentLang][key] != null) ? I18N[currentLang][key] : (I18N.en[key] != null ? I18N.en[key] : key);
-  }
-
-  function tGradeLabel(grade){
-    const map = {
-      first: currentLang === "ar" ? I18N.ar.tabFirst : I18N.en.tabFirst,
-      second: currentLang === "ar" ? I18N.ar.tabSecond : I18N.en.tabSecond,
-      third: currentLang === "ar" ? I18N.ar.tabThird : I18N.en.tabThird
-    };
-    return map[grade] || GRADE_LABELS[grade] || "—";
-  }
-
-  function applyTranslations(){
-    document.querySelectorAll("[data-i18n]").forEach(el => {
-      const key = el.dataset.i18n;
-      el.textContent = t(key);
-    });
-    document.querySelectorAll("[data-i18n-ph]").forEach(el => {
-      el.placeholder = t(el.dataset.i18nPh);
-    });
-  }
-
-  function setTheme(theme){
-    currentTheme = theme === "dark" ? "dark" : "light";
-    localStorage.setItem("dashTheme", currentTheme);
-    document.documentElement.setAttribute("data-theme", currentTheme);
-    document.querySelectorAll("#themePreview button").forEach(b => {
-      b.classList.toggle("active", b.dataset.themeChoice === currentTheme);
-    });
-  }
-
-  function toggleSidebar() {
-    const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
-    localStorage.setItem("dashSidebarCollapsed", isCollapsed);
-  }
-
-  function applySidebarState() {
-    const isCollapsed = localStorage.getItem("dashSidebarCollapsed") === "true";
-    if (isCollapsed) {
-      document.body.classList.add('sidebar-collapsed');
-    }
-  }
-
-  function setLanguage(lang){
-    currentLang = (lang === "ar") ? "ar" : "en";
-    localStorage.setItem("dashLang", currentLang);
-    document.documentElement.lang = currentLang;
-    document.documentElement.dir = currentLang === "ar" ? "rtl" : "ltr";
-    document.querySelectorAll("#langSwitch button").forEach(b => {
-      b.classList.toggle("active", b.dataset.langChoice === currentLang);
-    });
-    applyTranslations();
-    // Re-render whichever view is currently visible so dynamically-built
-    // text (grade labels, Paid/Unpaid chips, empty states, dates) updates too.
-    if(document.getElementById("settingsView").style.display !== "none"){
-      // nothing dynamic to re-render on the settings view itself
-    } else if(document.getElementById("historyView").style.display !== "none"){
-      renderHistory();
-    } else if(document.getElementById("examsView").style.display !== "none"){
-      renderExamTable();
-    } else if(combined.students.length || document.getElementById("dashContent").classList.contains("show")){
-      renderAll();
-    }
-  }
-
-  document.getElementById("settingsTab").addEventListener("click", () => {
-    document.querySelectorAll("#gradeTabs .tab").forEach(t => t.classList.remove("active"));
-    document.getElementById("settingsTab").classList.add("active");
-    document.getElementById("dashboardView").style.display = "none";
-    document.getElementById("historyView").style.display = "none";
-    document.getElementById("examsView").style.display = "none";
-    document.getElementById("settingsView").style.display = "";
-  });
-
-  /* ---------- Tabs ---------- */
-  document.querySelectorAll("#gradeTabs .tab[data-grade]").forEach(tab => {
-    tab.addEventListener("click", () => {
-      document.querySelectorAll("#gradeTabs .tab").forEach(t => t.classList.remove("active"));
-      tab.classList.add("active");
-      currentGrade = tab.dataset.grade;
-      document.getElementById("dashboardView").style.display = "";
-      document.getElementById("historyView").style.display = "none";
-      document.getElementById("examsView").style.display = "none";
-      document.getElementById("settingsView").style.display = "none";
-      loadDashboard();
-    });
-  });
-
-  document.getElementById("historyTab").addEventListener("click", () => {
-    document.querySelectorAll("#gradeTabs .tab").forEach(t => t.classList.remove("active"));
-    document.getElementById("historyTab").classList.add("active");
-    document.getElementById("dashboardView").style.display = "none";
-    document.getElementById("historyView").style.display = "";
-    document.getElementById("examsView").style.display = "none";
-    document.getElementById("settingsView").style.display = "none";
-    document.getElementById("histGradeSelect").value = historyGradeFilter;
-    loadHistory();
-  });
-
-  document.getElementById("examsTab").addEventListener("click", () => {
-    document.querySelectorAll("#gradeTabs .tab").forEach(t => t.classList.remove("active"));
-    document.getElementById("examsTab").classList.add("active");
-    document.getElementById("dashboardView").style.display = "none";
-    document.getElementById("historyView").style.display = "none";
-    document.getElementById("examsView").style.display = "";
-    document.getElementById("settingsView").style.display = "none";
-    document.getElementById("examGradeSelect").value = examGrade;
-    loadExamGrades();
-  });
-
-  function setPayFilter(f){
-    payFilterState = f;
-    document.querySelectorAll("#payFilter button").forEach(b => b.classList.toggle("active", b.dataset.f === f));
-    renderRoster();
-  }
-
-  /* ---------- Top/bottom scrollbar sync for wide tables ----------
-     Each wide table gets a thin scrollbar strip above it (in addition
-     to the browser's native one at the bottom), so users can scroll
-     left/right without needing to reach the bottom of the table first. ---------- */
-  function wireTopScrollbar(topId, innerId, wrapId){
-    const top = document.getElementById(topId);
-    const inner = document.getElementById(innerId);
-    const wrap = document.getElementById(wrapId);
-    if(!top || !inner || !wrap) return;
-    const table = wrap.querySelector("table");
-    const sync = () => { inner.style.width = (table ? table.scrollWidth : wrap.scrollWidth) + "px"; };
-    sync();
-    new ResizeObserver(sync).observe(wrap);
-    let syncing = false;
-    top.addEventListener("scroll", () => { if(syncing) return; syncing = true; wrap.scrollLeft = top.scrollLeft; syncing = false; });
-    wrap.addEventListener("scroll", () => { if(syncing) return; syncing = true; top.scrollLeft = wrap.scrollLeft; syncing = false; });
-  }
-
-  /* ---------- Helpers ---------- */
   function isPaid(status){
     const s = String(status ?? "").trim().toLowerCase();
     return s === "paid" || s === "true" || s === "yes" || s === "1";
@@ -1461,1282 +327,132 @@
     return total > 0 ? Math.round((a / total) * 100) : null;
   }
   function fmtEGP(n){ return `EGP ${Number(n || 0).toLocaleString('en-US')}`; }
-  
-  function getScoreColor(score, opacity = 1) {
-    const alpha = opacity;
-    if (score >= 90) return `rgba(47, 158, 115, ${alpha})`; // Success - Green
-    if (score >= 75) return `rgba(102, 187, 106, ${alpha})`; // Good - Light Green
-    if (score >= 60) return `rgba(232, 164, 74, ${alpha})`; // Average - Warm Yellow
-    return `rgba(196, 72, 90, ${alpha})`; // Needs Work - Red
-  }
-  
-  function toggleGroup(labelEl) {
-    const groupName = labelEl.getAttribute('data-group');
-    const groupEl = document.querySelector(`.tab-group[data-group="${groupName}"]`);
-    const currentText = labelEl.textContent.trim();
-    const isCollapsed = groupEl.classList.contains('collapsed');
-    
-    groupEl.classList.toggle('collapsed');
-    
-    if (isCollapsed) {
-      labelEl.textContent = '▼ ' + currentText.substring(2);
-    } else {
-      labelEl.textContent = '▶ ' + currentText.substring(2);
-    }
+  function getScoreColor(score){
+    if(score >= 90) return "rgba(47,158,115,1)";
+    if(score >= 75) return "rgba(102,187,106,1)";
+    if(score >= 60) return "rgba(232,164,74,1)";
+    return "rgba(196,72,90,1)";
   }
 
-  /* ---------- Excel export helper ----------
-     Builds a workbook from an array-of-arrays (first row = headers)
-     and triggers a download. Used by every "Export Excel" button. ---------- */
-  function exportRowsToExcel(rows, sheetName, filename){
-    if(typeof XLSX === "undefined"){ alert("The Excel library failed to load — check your connection and try again."); return; }
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, sheetName.slice(0, 31));
-    XLSX.writeFile(wb, filename);
+  function setState(state){ // 'idle' | 'loading' | 'error' | 'empty' | 'picker' | 'report'
+    document.getElementById("searchCard").style.display = (state === "report") ? "none" : "block";
+    document.getElementById("loadingMsg").classList.toggle("show", state === "loading");
+    document.getElementById("errorMsg").classList.toggle("show", state === "error");
+    document.getElementById("emptyMsg").classList.toggle("show", state === "empty");
+    document.getElementById("pickerList").style.display = (state === "picker") ? "flex" : "none";
+    document.getElementById("reportView").classList.toggle("show", state === "report");
   }
 
-  function exportRosterExcel(){
-    if(!combined.students.length){ alert("No student data loaded yet — try refreshing the dashboard first."); return; }
-    const header = ["Name","Grade","Present","Absent","Attendance Rate","Student Phone","Parent Phone","Payment","Amount Paid","Last Attendance"];
-    const rows = combined.students.map(s => {
-      const p = pct(s.attendanceCount, s.absenceCount);
-      const paymentLabel = s.paymentStatus !== "" ? (isPaid(s.paymentStatus) ? "Paid" : "Unpaid") : "—";
-      return [
-        s.name || "—", tGradeLabel(s.grade) || "—", s.attendanceCount, s.absenceCount,
-        p != null ? `${p}%` : "—", s.studentPhone || "—", s.parentPhone || "—",
-        paymentLabel, s.amountPaid || 0, s.lastAttendance || "—"
-      ];
-    });
-    exportRowsToExcel([header, ...rows], "Roster", `roster_${currentGrade}_${new Date().toISOString().slice(0,10)}.xlsx`);
+  function resetToSearch(){
+    setState("idle");
+    document.getElementById("lookupInput").value = "";
+    document.getElementById("lookupInput").focus();
   }
 
-  function exportHistoryExcel(){
-    const col = HIST_SCHEMA.col;
-    const rows = historyRows
-      .filter(r => r[col.grade] === historyGradeFilter)
-      .sort((a,b) => (a[col.year]-b[col.year]) || (a[col.month]-b[col.month]));
-    if(!rows.length){ alert("No saved monthly snapshots yet for this grade."); return; }
-    const header = ["Month","Students","Attendance Rate","Collection Rate","Revenue","Paid","Unpaid"];
-    const body = rows.map(r => [
-      monthLabel(r[col.year], r[col.month]), r[col.students], `${r[col.attendanceRate]}%`,
-      `${r[col.collectionRate]}%`, r[col.revenue], r[col.paidCount], r[col.unpaidCount]
-    ]);
-    exportRowsToExcel([header, ...body], "Monthly History", `monthly_history_${historyGradeFilter}_${new Date().toISOString().slice(0,10)}.xlsx`);
-  }
+  /* ---------- Search across all three grades by phone or QR code ---------- */
+  async function runSearch(){
+    const raw = document.getElementById("lookupInput").value.trim();
+    if(!raw){ document.getElementById("lookupInput").focus(); return; }
 
-  function exportExamExcel(){
-    if(!examStudents.length){ alert("No student data loaded yet for this grade."); return; }
-    const ecol = EXAMS_SCHEMA.col, scol = SCORES_SCHEMA.col;
-    const header = ["Name", ...examList.map(e => e[ecol.name]), "Average"];
-    const rows = examStudents.map(s => {
-      let sumPct = 0, cnt = 0;
-      const cells = examList.map(e => {
-        const row = examScores.find(sc => sc[scol.examId] === e[ecol.id] && sc[scol.studentCode] === s.qrCode);
-        if(!row) return "—";
-        const sc = Number(row[scol.score]);
-        const mx = Number(e[ecol.maxScore]) || 100;
-        if(!isNaN(sc)){ sumPct += (sc / mx) * 100; cnt++; }
-        return `${row[scol.score]} / ${e[ecol.maxScore]}`;
-      });
-      const avg = cnt ? Math.round(sumPct / cnt) : null;
-      return [s.name || "—", ...cells, avg != null ? `${avg}%` : "—"];
-    });
-    exportRowsToExcel([header, ...rows], "Exam Grades", `exam_grades_${examGrade}_${new Date().toISOString().slice(0,10)}.xlsx`);
-  }
-
-  /* ---------- Fetch + merge one grade ---------- */
-  async function fetchGrade(grade){
-    const [{ data: att, error: attErr }, { data: pay, error: payErr }] = await Promise.all([
-      supa.from(SCHEMA.attendanceTable(grade)).select("*"),
-      supa.from(SCHEMA.paymentsTable(grade)).select("*")
-    ]);
-    if(attErr) throw new Error(`(${SCHEMA.attendanceTable(grade)}) ${attErr.message}`);
-    if(payErr) throw new Error(`(${SCHEMA.paymentsTable(grade)}) ${payErr.message}`);
-
-    const col = SCHEMA.col;
-    // Index payments by qr_code so we can attach payment info to each attendance row.
-    const payByCode = {};
-    (pay || []).forEach(p => { payByCode[p[col.qrCode]] = p; });
-
-    return (att || []).map(a => {
-      const p = payByCode[a[col.qrCode]] || {};
-      return {
-        grade,
-        name: a[col.fullName] ?? "",
-        qrCode: a[col.qrCode] ?? "",
-        studentPhone: a[col.studentPhone] ?? "",
-        parentPhone: a[col.parentPhone] ?? "",
-        attendanceCount: Number(a[col.attendanceCount] || 0),
-        absenceCount: Number(a[col.absenceCount] || 0),
-        lastAttendance: a[col.lastAttendance] ?? "",
-        paymentStatus: p[col.paymentStatus] ?? "",
-        amountPaid: Number(p[col.amountPaid] || 0),
-        lastPaymentDate: p[col.lastPaymentDate] ?? ""
-      };
-    });
-  }
-
-  async function fetchStats(){
-    try{
-      const { data, error } = await supa.from(HIST_SCHEMA.table).select("*");
-      if(error) throw error;
-      return data || [];
-    }catch(e){
-      return []; // monthly_snapshots table is optional — dashboard still works without it
-    }
-  }
-
-  /* ---------- Exam data for the dashboard charts ----------
-     Returns both:
-       perExam:   { grade: [{ name, avg }, ...] }               → for the trend chart
-       perStudent: [{ code, grade, avg }, ...]                  → for the distribution donut
-     One fetch of exams + exam_scores per grade feeds both charts. ---------- */
-  async function fetchExamData(grades){
-    const ecol = EXAMS_SCHEMA.col, scol = SCORES_SCHEMA.col;
-    const perExam = {};
-    const studentAgg = {}; // code -> { grade, sum, count }
-
-    await Promise.all(grades.map(async (g) => {
-      try{
-        const { data: exams, error: examsErr } = await supa
-          .from(EXAMS_SCHEMA.table).select("*")
-          .eq(ecol.grade, g).order(ecol.createdAt, { ascending: true });
-        if(examsErr) throw examsErr;
-        const examRows = exams || [];
-        if(!examRows.length){ perExam[g] = []; return; }
-
-        const ids = examRows.map(e => e[ecol.id]);
-        const { data: scores, error: scoresErr } = await supa
-          .from(SCORES_SCHEMA.table).select("*").in(scol.examId, ids);
-        const scoreRows = scoresErr ? [] : (scores || []);
-
-        perExam[g] = examRows.map(e => {
-          const rel = scoreRows.filter(s => s[scol.examId] === e[ecol.id]);
-          const pcts = rel
-            .map(s => (Number(s[scol.score]) / (Number(e[ecol.maxScore]) || 100)) * 100)
-            .filter(v => !isNaN(v));
-          const avg = pcts.length ? Math.round(pcts.reduce((a,b) => a+b, 0) / pcts.length) : null;
-          return { name: e[ecol.name], avg };
-        });
-
-        const examById = {};
-        examRows.forEach(e => { examById[e[ecol.id]] = e; });
-        scoreRows.forEach(s => {
-          const exam = examById[s[scol.examId]];
-          if(!exam) return;
-          const p = (Number(s[scol.score]) / (Number(exam[ecol.maxScore]) || 100)) * 100;
-          if(isNaN(p)) return;
-          const code = s[scol.studentCode];
-          if(!studentAgg[code]) studentAgg[code] = { grade: g, sum: 0, count: 0 };
-          studentAgg[code].sum += p;
-          studentAgg[code].count += 1;
-        });
-      }catch(err){
-        perExam[g] = []; // exams table missing / no policy — charts just show their empty state
-      }
-    }));
-
-    const perStudent = Object.keys(studentAgg).map(code => ({
-      code,
-      grade: studentAgg[code].grade,
-      avg: Math.round(studentAgg[code].sum / studentAgg[code].count),
-      count: studentAgg[code].count
-    }));
-
-    return { perExam, perStudent };
-  }
-
-  /* ---------- Main load ---------- */
-  async function loadDashboard(){
-    const loadingEl = document.getElementById("loadingMsg");
-    const errorEl = document.getElementById("errorMsg");
-    const contentEl = document.getElementById("dashContent");
-    const btn = document.getElementById("refreshBtn");
-
-    btn.classList.add("loading");
-    loadingEl.classList.add("show");
-    errorEl.classList.remove("show");
-    contentEl.classList.remove("show");
+    const btn = document.getElementById("searchBtn");
+    btn.disabled = true;
+    setState("loading");
 
     try{
-      const gradesToFetch = currentGrade === "all" ? GRADES : [currentGrade];
-      
-      // Fetch each grade individually to prevent one missing table from breaking everything
-      const results = [];
-      const errors = [];
-      for (const g of gradesToFetch) {
-        try {
-          const data = await fetchGrade(g);
-          results.push(data);
-        } catch (e) {
-          console.error(`Error fetching grade ${g}:`, e);
-          errors.push(`${g}: ${e.message}`);
-        }
-      }
-      
-      if (results.length === 0 && errors.length > 0) {
-        throw new Error("Could not load any data. Check if tables exist in Supabase.\n" + errors.join("\n"));
+      const col = SCHEMA.col;
+      const matches = [];
+
+      for(const grade of GRADES){
+        const { data, error } = await supa
+          .from(SCHEMA.attendanceTable(grade))
+          .select("*")
+          .or(`${col.studentPhone}.eq.${raw},${col.parentPhone}.eq.${raw},${col.qrCode}.eq.${raw}`);
+        if(error) continue; // table might not exist / RLS — just skip this grade
+        (data || []).forEach(row => matches.push({ grade, row }));
       }
 
-      combined.students = results.flat();
-      const examData = await fetchExamData(gradesToFetch);
-      combined.examAverages = examData.perExam;
-      combined.examStudentAverages = examData.perStudent;
+      if(!matches.length){ setState("empty"); return; }
 
-      renderAll();
-      
-      // Show partial error warning if some grades failed
-      if (errors.length > 0 && currentGrade === "all") {
-        console.warn("Some grades failed to load:", errors);
-        document.getElementById("updatedNote").textContent = "⚠️ Partial data loaded";
+      if(matches.length === 1){
+        await openStudentReport(matches[0].grade, matches[0].row);
       } else {
-        document.getElementById("updatedNote").textContent =
-          "Last updated: " + new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+        renderPicker(matches);
+        setState("picker");
       }
-      
-      contentEl.classList.add("show");
-      wireTopScrollbar("rosterScrollTop", "rosterScrollTopInner", "rosterTableWrap");
     }catch(err){
       console.error(err);
-      errorEl.innerHTML = `
-        <div style="font-weight:700;">Couldn't load data from Supabase</div>
-        <div style="font-size:12px; max-width:520px;">
-          ${err.message || err}<br><br>
-          Common causes: the table/column names in SCHEMA don't match your database,
-          or Row Level Security is enabled on these tables without a SELECT policy for the anon role —
-          this is the most common reason for everything showing 0 despite data being visible in Table Editor
-          (Table Editor uses elevated privileges, not the anon key).
-        </div>`;
-      errorEl.classList.add("show");
+      document.getElementById("errorMsg").innerHTML = `
+        <div style="font-weight:700;">تعذّر البحث</div>
+        <div style="font-size:12px; max-width:420px;">${err.message || err}</div>`;
+      setState("error");
     }finally{
-      loadingEl.classList.remove("show");
-      btn.classList.remove("loading");
+      btn.disabled = false;
     }
   }
 
-  /* ---------- Render everything ---------- */
-  function renderAll(){
-    const students = combined.students;
-
-    // ---- KPIs ----
-    const studentsCount = students.length;
-    const pcts = students.map(s => pct(s.attendanceCount, s.absenceCount)).filter(v => v != null);
-    const attendanceRate = pcts.length ? Math.round(pcts.reduce((a,b)=>a+b,0) / pcts.length) : null;
-
-    const paidStudents = students.filter(s => isPaid(s.paymentStatus));
-    const unpaidStudents = students.filter(s => !isPaid(s.paymentStatus) && s.paymentStatus !== "");
-    const withPaymentRecord = students.filter(s => s.paymentStatus !== "");
-    const collectionRate = withPaymentRecord.length ? Math.round((paidStudents.length / withPaymentRecord.length) * 100) : null;
-    const totalRevenue = paidStudents.reduce((sum, s) => sum + (s.amountPaid || 0), 0);
-
-    document.getElementById("kpiStudents").textContent = studentsCount;
-    document.getElementById("kpiStudentsSub").textContent =
-      currentGrade === "all" ? "across all grades" : tGradeLabel(currentGrade);
-
-    document.getElementById("kpiAttendance").textContent = attendanceRate != null ? `${attendanceRate}%` : "–";
-    document.getElementById("kpiAttendanceSub").textContent = pcts.length ? `avg of ${pcts.length} students` : "no attendance data";
-
-    document.getElementById("kpiRevenue").textContent = fmtEGP(totalRevenue);
-    document.getElementById("kpiRevenueSub").textContent =
-      (totalRevenue === 0 && paidStudents.length > 0)
-        ? "⚠️ paid students exist but amount_paid = 0 — check payment workflow"
-        : `${paidStudents.length} students paid`;
-
-    document.getElementById("kpiUnpaid").textContent = unpaidStudents.length;
-    document.getElementById("kpiUnpaidSub").textContent = withPaymentRecord.length ? `out of ${withPaymentRecord.length}` : "no payment records";
-
-    const ringEl = document.getElementById("collectionRing");
-    const circumference = 150.8;
-    if(collectionRate != null){
-      ringEl.style.strokeDashoffset = String(circumference - (circumference * collectionRate / 100));
-      document.getElementById("collectionPctText").textContent = `${collectionRate}%`;
-    } else {
-      ringEl.style.strokeDashoffset = String(circumference);
-      document.getElementById("collectionPctText").textContent = "–";
-    }
-
-    renderAttendanceByGradeChart(students);
-    renderPaymentStatusChart(paidStudents.length, unpaidStudents.length);
-    renderExamAvgChart();
-    renderExamDistChart();
-    renderAttVsPerfChart();
-    renderGradeRadarChart();
-    renderTopAttenders(students);
-    renderUnpaidList(unpaidStudents);
-    renderExamPerformerLists();
-    payFilterState = "all";
-    document.querySelectorAll("#payFilter button").forEach(b => b.classList.toggle("active", b.dataset.f === "all"));
-    document.getElementById("rosterSearch").value = "";
-    renderRoster();
-  }
-
-  function destroyChart(key){ if(charts[key]){ charts[key].destroy(); charts[key] = null; } }
-  const chartLibReady = () => typeof Chart !== "undefined";
-
-  function renderAttendanceByGradeChart(students){
-    const canvas = document.getElementById("attendanceByGradeChart");
-    const emptyEl = document.getElementById("attChartEmpty");
-    destroyChart("att");
-    if(!chartLibReady()){ canvas.style.display="none"; emptyEl.textContent="Chart library failed to load — try refreshing"; emptyEl.classList.add("show"); return; }
-
-    const gradesShown = currentGrade === "all" ? GRADES : [currentGrade];
-    const rows = gradesShown.map(g => {
-      const gs = students.filter(s => s.grade === g);
-      const pcts = gs.map(s => pct(s.attendanceCount, s.absenceCount)).filter(v => v != null);
-      return { grade: g, rate: pcts.length ? Math.round(pcts.reduce((a,b)=>a+b,0)/pcts.length) : null };
-    });
-    const hasData = rows.some(r => r.rate != null);
-    if(!hasData){ canvas.style.display = "none"; emptyEl.classList.add("show"); return; }
-    canvas.style.display = "block"; emptyEl.classList.remove("show");
-
-    charts.att = new Chart(canvas, {
-      type: "bar",
-      data: {
-        labels: rows.map(r => tGradeLabel(r.grade)),
-        datasets: [{
-          data: rows.map(r => r.rate ?? 0),
-          backgroundColor: "rgba(139,94,60,0.60)",
-          borderRadius: 6, maxBarThickness: 46
-        }]
-      },
-      options: {
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.raw}%` } } },
-        scales: {
-          y: { beginAtZero: true, max: 100, ticks: { callback: v => v + "%", font: { size: 10 } }, grid: { color: "rgba(139,94,60,0.05)" } },
-          x: { ticks: { font: { size: 11, family: "Inter" } }, grid: { display: false } }
-        }
-      }
-    });
-  }
-
-  function renderPaymentStatusChart(paidCount, unpaidCount){
-    const canvas = document.getElementById("paymentStatusChart");
-    const emptyEl = document.getElementById("payChartEmpty");
-    destroyChart("pay");
-    if(!chartLibReady()){ canvas.style.display="none"; emptyEl.textContent="Chart library failed to load — try refreshing"; emptyEl.classList.add("show"); return; }
-
-    if(paidCount + unpaidCount === 0){ canvas.style.display = "none"; emptyEl.classList.add("show"); return; }
-    canvas.style.display = "block"; emptyEl.classList.remove("show");
-
-    charts.pay = new Chart(canvas, {
-      type: "doughnut",
-      data: {
-        labels: ["Paid", "Unpaid"],
-        datasets: [{
-          data: [paidCount, unpaidCount],
-          backgroundColor: ["rgba(110,100,90,0.70)", "rgba(158,42,42,0.70)"],
-          borderWidth: 0
-        }]
-      },
-      options: {
-        maintainAspectRatio: false, cutout: "68%",
-        plugins: { legend: { position: "bottom", labels: { font: { family: "Inter", size: 12 }, padding: 14 } } }
-      }
-    });
-  }
-
-  function renderExamAvgChart(){
-    const canvas = document.getElementById("examAvgChart");
-    const emptyEl = document.getElementById("examAvgChartEmpty");
-    destroyChart("examAvg");
-    if(!chartLibReady()){ canvas.style.display="none"; emptyEl.textContent="Chart library failed to load — try refreshing"; emptyEl.classList.add("show"); return; }
-
-    const data = combined.examAverages || {};
-    const gradesShown = currentGrade === "all" ? GRADES : [currentGrade];
-    const anyData = gradesShown.some(g => (data[g] || []).some(e => e.avg != null));
-    if(!anyData){ canvas.style.display = "none"; emptyEl.classList.add("show"); return; }
-    canvas.style.display = "block"; emptyEl.classList.remove("show");
-
-    if(currentGrade === "all"){
-      // One line per grade, plotted by exam order (1st exam, 2nd exam, ...) since
-      // each grade can have a different set/number of exams.
-      const maxLen = Math.max(0, ...gradesShown.map(g => (data[g] || []).length));
-      const labels = Array.from({ length: maxLen }, (_, i) => `Exam ${i + 1}`);
-
-      charts.examAvg = new Chart(canvas, {
-        type: "line",
-        data: {
-          labels,
-          datasets: gradesShown.map(g => ({
-            label: tGradeLabel(g),
-            data: (data[g] || []).map(e => e.avg),
-            borderColor: GRADE_COLORS[g],
-            backgroundColor: GRADE_COLORS[g],
-            fill: false, tension: 0.3, spanGaps: true, pointRadius: 3
-          }))
-        },
-        options: {
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: true, position: "bottom", labels: { font: { family: "Inter", size: 11 }, padding: 12 } },
-            tooltip: { callbacks: { label: c => {
-              const g = gradesShown[c.datasetIndex];
-              const ex = (data[g] || [])[c.dataIndex];
-              return `${tGradeLabel(g)} – ${ex ? ex.name : ""}: ${c.raw}%`;
-            } } }
-          },
-          scales: {
-            y: { beginAtZero: true, max: 100, ticks: { callback: v => v + "%", font: { size: 10 } }, grid: { color: "rgba(139,94,60,0.05)" } },
-            x: { ticks: { font: { size: 10 } }, grid: { display: false } }
-          }
-        }
-      });
-    } else {
-      const rows = data[currentGrade] || [];
-      charts.examAvg = new Chart(canvas, {
-        type: "bar",
-        data: {
-          labels: rows.map(e => e.name),
-          datasets: [{
-            label: tGradeLabel(currentGrade),
-            data: rows.map(e => e.avg ?? 0),
-            backgroundColor: GRADE_COLORS[currentGrade],
-            borderRadius: 5, maxBarThickness: 40
-          }]
-        },
-        options: {
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.raw}%` } } },
-          scales: {
-            y: { beginAtZero: true, max: 100, ticks: { callback: v => v + "%", font: { size: 10 } }, grid: { color: "rgba(139,94,60,0.05)" } },
-            x: { ticks: { font: { size: 10 } }, grid: { display: false } }
-          }
-        }
-      });
-    }
-  }
-
-  
-  function renderAttVsPerfChart() {
-    const canvas = document.getElementById("attVsPerfChart");
-    const emptyEl = document.getElementById("attVsPerfEmpty");
-    destroyChart("attVsPerf");
-    if(!chartLibReady()){ return; }
-
-    const gradesShown = currentGrade === "all" ? GRADES : [currentGrade];
-    const examData = (combined.examStudentAverages || []).filter(r => gradesShown.includes(r.grade));
-    const students = combined.students.filter(s => gradesShown.includes(s.grade));
-    
-    const dataPoints = [];
-    examData.forEach(ed => {
-      const s = students.find(st => st.qrCode === ed.code);
-      if (s) {
-        const attRate = pct(s.attendanceCount, s.absenceCount);
-        if (attRate != null) {
-          dataPoints.push({ x: attRate, y: ed.avg, name: s.name, grade: s.grade });
-        }
-      }
-    });
-
-    if(dataPoints.length < 3){ canvas.style.display = "none"; emptyEl.classList.add("show"); return; }
-    canvas.style.display = "block"; emptyEl.classList.remove("show");
-
-    charts.attVsPerf = new Chart(canvas, {
-      type: 'scatter',
-      data: {
-        datasets: [{
-          label: 'Students',
-          data: dataPoints,
-          backgroundColor: dataPoints.map(d => getScoreColor(d.y, 0.6)),
-          borderColor: dataPoints.map(d => getScoreColor(d.y, 1)),
-          borderWidth: 1, pointRadius: 5
-        }]
-      },
-      options: {
-        maintainAspectRatio: false,
-        scales: {
-          x: { title: { display: true, text: 'Attendance %', font: { size: 10 } }, min: 0, max: 100 },
-          y: { title: { display: true, text: 'Exam Score %', font: { size: 10 } }, min: 0, max: 100 }
-        },
-        plugins: {
-          tooltip: { callbacks: { label: (c) => `${c.raw.name}: Att ${c.raw.x}%, Score ${c.raw.y}%` } },
-          legend: { display: false }
-        }
-      }
-    });
-  }
-
-  function renderGradeRadarChart() {
-    const canvas = document.getElementById("gradeRadarChart");
-    const emptyEl = document.getElementById("gradeRadarEmpty");
-    destroyChart("gradeRadar");
-    if(!chartLibReady()){ return; }
-
-    const grades = GRADES;
-    const attData = grades.map(g => {
-      const gs = combined.students.filter(s => s.grade === g);
-      const pcts = gs.map(s => pct(s.attendanceCount, s.absenceCount)).filter(v => v != null);
-      return pcts.length ? Math.round(pcts.reduce((a,b)=>a+b,0)/pcts.length) : 0;
-    });
-    
-    const scoreData = grades.map(g => {
-      const data = (combined.examAverages || {})[g] || [];
-      return data.length ? Math.round(data.reduce((a,b)=>a+(b.avg||0),0)/data.length) : 0;
-    });
-
-    if(attData.every(v => v === 0) && scoreData.every(v => v === 0)){ canvas.style.display = "none"; emptyEl.classList.add("show"); return; }
-    canvas.style.display = "block"; emptyEl.classList.remove("show");
-
-    charts.gradeRadar = new Chart(canvas, {
-      type: 'radar',
-      data: {
-        labels: grades.map(g => tGradeLabel(g)),
-        datasets: [
-          { label: 'Attendance', data: attData, borderColor: 'rgba(139,94,60,0.8)', backgroundColor: 'rgba(139,94,60,0.2)', fill: true },
-          { label: 'Exam Score', data: scoreData, borderColor: 'rgba(46, 125, 50, 0.8)', backgroundColor: 'rgba(46, 125, 50, 0.2)', fill: true }
-        ]
-      },
-      options: {
-        maintainAspectRatio: false,
-        scales: { r: { min: 0, max: 100, ticks: { display: false } } },
-        plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } }
-      }
-    });
-  }
-        
-  function renderExamDistChart(){
-    const canvas = document.getElementById("examDistChart");
-    const emptyEl = document.getElementById("examDistChartEmpty");
-    destroyChart("examDist");
-    if(!chartLibReady()){ canvas.style.display="none"; emptyEl.textContent="Chart library failed to load — try refreshing"; emptyEl.classList.add("show"); return; }
-
-    const gradesShown = currentGrade === "all" ? GRADES : [currentGrade];
-    const rows = (combined.examStudentAverages || []).filter(r => gradesShown.includes(r.grade));
-    if(!rows.length){ canvas.style.display = "none"; emptyEl.classList.add("show"); return; }
-    canvas.style.display = "block"; emptyEl.classList.remove("show");
-
-    // Performance bands based on each student's own average across all their recorded exams.
-    const bands = [
-      { label: "Excellent (90-100%)", min: 90, max: 101, color: "rgba(46, 125, 50, 0.8)" },
-      { label: "Good (75-89%)",       min: 75, max: 90,  color: "rgba(102, 187, 106, 0.8)" },
-      { label: "Average (60-74%)",    min: 60, max: 75,  color: "rgba(251, 192, 45, 0.8)" },
-      { label: "Needs Work (<60%)",   min: -1, max: 60,  color: "rgba(211, 47, 47, 0.8)" }
-    ];
-    const counts = bands.map(b => rows.filter(r => r.avg >= b.min && r.avg < b.max).length);
-
-    charts.examDist = new Chart(canvas, {
-      type: "doughnut",
-      data: {
-        labels: bands.map(b => b.label),
-        datasets: [{ data: counts, backgroundColor: bands.map(b => b.color), borderWidth: 0 }]
-      },
-      options: {
-        maintainAspectRatio: false, cutout: "62%",
-        plugins: {
-          legend: { position: "bottom", labels: { font: { family: "Inter", size: 10.5 }, padding: 10, boxWidth: 11 } },
-          tooltip: { callbacks: { label: c => `${c.label.split(" (")[0]}: ${c.raw} student${c.raw === 1 ? "" : "s"}` } }
-        }
-      }
-    });
-  }
-
-  function renderTopAttenders(students){
-    const el = document.getElementById("topAttendersList");
-    const top = [...students]
-      .map(s => ({ ...s, p: pct(s.attendanceCount, s.absenceCount) }))
-      .filter(s => s.p != null)
-      .sort((a,b) => b.p - a.p || b.attendanceCount - a.attendanceCount)
-      .slice(0, 6);
-    if(!top.length){ el.innerHTML = `<div class="empty-note">No data yet</div>`; return; }
-    el.innerHTML = top.map((s,i) => `
-      <div class="list-row">
-        <div class="list-name">
-          <span class="rank">${i+1}</span>
-          <span class="name">${s.name}</span>
-          ${currentGrade === "all" ? `<span class="grade-chip">${tGradeLabel(s.grade)}</span>` : ""}
+  function renderPicker(matches){
+    const col = SCHEMA.col;
+    const el = document.getElementById("pickerList");
+    el.innerHTML = matches.map((m,i) => `
+      <div class="picker-item" onclick="pickMatch(${i})">
+        <div>
+          <div class="pname">${m.row[col.fullName] || "—"}</div>
+          <div class="pgrade">${GRADE_LABELS[m.grade]}</div>
         </div>
-        <div class="val" style="color: ${getScoreColor(s.p, 1)}">${s.p}%</div>
+        <div class="arrow">←</div>
       </div>
     `).join("");
+    window.__pickerMatches = matches;
+  }
+  async function pickMatch(i){
+    const m = window.__pickerMatches[i];
+    await openStudentReport(m.grade, m.row);
   }
 
-  function renderUnpaidList(unpaidStudents){
-    const el = document.getElementById("unpaidList");
-    if(!unpaidStudents.length){ el.innerHTML = `<div class="empty-note">🎉 Everyone has paid</div>`; return; }
-    el.innerHTML = unpaidStudents.slice(0, 8).map(s => `
-      <div class="list-row">
-        <div class="list-name">
-          <span class="name">${s.name}</span>
-          ${currentGrade === "all" ? `<span class="grade-chip">${tGradeLabel(s.grade)}</span>` : ""}
-        </div>
-        ${s.studentPhone ? `<a class="phone-link" href="tel:${s.studentPhone}">${s.studentPhone}</a>` : `<span class="empty-note" style="padding:0;">—</span>`}
-      </div>
-    `).join("") + (unpaidStudents.length > 8 ? `<div class="empty-note">+${unpaidStudents.length - 8} more — see the table below</div>` : "");
-  }
+  /* ---------- Build the full report for one student ---------- */
+  async function openStudentReport(grade, attRow){
+    setState("loading");
+    const col = SCHEMA.col;
 
-  /* ---------- Top / Lowest exam performers ----------
-     Ranked by each student's own average % across all their recorded
-     exam scores — scores are normalized against each exam's max_score
-     first, so an 18/20 and a 85/100 are compared fairly on the same scale. ---------- */
-  function renderExamPerformerLists(){
-    const gradesShown = currentGrade === "all" ? GRADES : [currentGrade];
-    const rows = (combined.examStudentAverages || []).filter(r => gradesShown.includes(r.grade));
-
-    const codeToStudent = {};
-    combined.students.forEach(s => { codeToStudent[s.qrCode] = s; });
-
-    const enriched = rows.map(r => {
-      const s = codeToStudent[r.code] || {};
-      return { avg: r.avg, count: r.count, grade: r.grade, name: s.name || r.code || "—" };
-    });
-
-    const topEl = document.getElementById("topExamList");
-    const lowEl = document.getElementById("lowExamList");
-
-    if(!enriched.length){
-      topEl.innerHTML = `<div class="empty-note">No exam scores yet</div>`;
-      lowEl.innerHTML = `<div class="empty-note">No exam scores yet</div>`;
-      return;
-    }
-
-    const examCountChip = (c) => `<span class="grade-chip" style="background:rgba(138,122,99,0.12); color:var(--muted);">${c} exam${c === 1 ? "" : "s"}</span>`;
-    const rowHtml = (s, i, valClass) => `
-      <div class="list-row">
-        <div class="list-name">
-          <span class="rank">${i+1}</span>
-          <span class="name">${s.name}</span>
-          ${currentGrade === "all" ? `<span class="grade-chip">${tGradeLabel(s.grade)}</span>` : ""}
-          ${examCountChip(s.count)}
-        </div>
-        <div class="val ${valClass}" style="color: ${getScoreColor(s.avg, 1)}">${s.avg}%</div>
-      </div>
-    `;
-
-    // Sort once, then split into a top half and a bottom half that never overlap.
-    const sortedDesc = [...enriched].sort((a,b) => b.avg - a.avg || b.count - a.count);
-    const n = sortedDesc.length;
-    const topCount = Math.min(6, Math.ceil(n / 2));
-    const lowCount = Math.min(6, Math.floor(n / 2));
-
-    const top = sortedDesc.slice(0, topCount);
-    const low = sortedDesc.slice(n - lowCount, n).reverse(); // lowest score first
-
-    topEl.innerHTML = top.map((s,i) => rowHtml(s, i, "high")).join("");
-    lowEl.innerHTML = lowCount
-      ? low.map((s,i) => rowHtml(s, i, "low")).join("")
-      : `<div class="empty-note">Not enough students with exam scores yet to show a separate list</div>`;
-  }
-
-  /* ---------- Roster table ---------- */
-  function renderRoster(){
-    const q = document.getElementById("rosterSearch").value.trim().toLowerCase();
-    let rows = combined.students;
-
-    if(payFilterState === "paid") rows = rows.filter(s => isPaid(s.paymentStatus));
-    if(payFilterState === "unpaid") rows = rows.filter(s => !isPaid(s.paymentStatus));
-
-    if(q){
-      rows = rows.filter(s =>
-        (s.name || "").toLowerCase().includes(q) ||
-        (s.studentPhone || "").includes(q) ||
-        (s.parentPhone || "").includes(q) ||
-        (s.qrCode || "").toLowerCase().includes(q)
-      );
-    }
-
-    const body = document.getElementById("rosterBody");
-    if(!rows.length){
-      body.innerHTML = `<tr><td colspan="10" style="text-align:center; color:var(--muted); padding:24px;">No matching results</td></tr>`;
-      return;
-    }
-
-    body.innerHTML = rows.map(s => {
-      const p = pct(s.attendanceCount, s.absenceCount);
-      const paid = isPaid(s.paymentStatus);
-      const hasPaymentRecord = s.paymentStatus !== "";
-      return `
-        <tr>
-          <td style="font-weight:600;">${s.name || "—"}</td>
-          <td>${tGradeLabel(s.grade) || "—"}</td>
-          <td>${s.attendanceCount}</td>
-          <td>${s.absenceCount}</td>
-          <td>
-            ${p != null ? `<span class="bar-track"><span class="bar-fill" style="width:${p}%; background: ${getScoreColor(p, 0.7)};"></span></span><span style="color: ${getScoreColor(p, 1)}; font-weight: bold;">${p}%</span>` : "—"}
-          </td>
-          <td>${s.studentPhone ? `<a class="phone-link" href="tel:${s.studentPhone}">${s.studentPhone}</a>` : "—"}</td>
-          <td>${s.parentPhone ? `<a class="phone-link" href="tel:${s.parentPhone}">${s.parentPhone}</a>` : "—"}</td>
-          <td>${hasPaymentRecord ? `<span class="chip ${paid ? 'paid' : 'unpaid'}">${paid ? t('filterPaid') : t('filterUnpaid')}</span>` : "—"}</td>
-          <td>${s.lastAttendance || "—"}</td>
-          <td><button class="unpaid-link" onclick="generateStudentReport('${s.qrCode}')" title="Download PDF report">📄</button></td>
-        </tr>`;
-    }).join("");
-    wireTopScrollbar("rosterScrollTop", "rosterScrollTopInner", "rosterTableWrap");
-  }
-
-  /* ============================================================
-     MONTHLY HISTORY / ARCHIVE
-     Needs a "monthly_snapshots" table in Supabase with an INSERT +
-     SELECT (+ DELETE, for re-saving the same month) policy for the
-     anon role. Suggested columns:
-       year int, month int, grade text,
-       students_count int, attendance_rate numeric,
-       total_revenue numeric, paid_count int, unpaid_count int,
-       collection_rate numeric, unpaid_students jsonb default '[]',
-       created_at timestamptz default now()
-     ============================================================ */
-  const HIST_SCHEMA = {
-    table: "monthly_snapshots",
-    col: {
-      year: "year",
-      month: "month",
-      grade: "grade",
-      students: "students_count",
-      attendanceRate: "attendance_rate",
-      revenue: "total_revenue",
-      paidCount: "paid_count",
-      unpaidCount: "unpaid_count",
-      collectionRate: "collection_rate",
-      unpaidStudents: "unpaid_students"
-    }
-  };
-
-  let historyRows = [];
-  let historyGradeFilter = "all";
-
-  let currentHistRows = [];
-
-  function onHistGradeChange(){
-    historyGradeFilter = document.getElementById("histGradeSelect").value;
-    renderHistory();
-  }
-
-  function monthLabel(y, m){
-    return new Date(y, m - 1, 1).toLocaleString("en-US", { month: "short", year: "numeric" });
-  }
-
-  function computeKpis(students){
-    const studentsCount = students.length;
-    const pcts = students.map(s => pct(s.attendanceCount, s.absenceCount)).filter(v => v != null);
-    const attendanceRate = pcts.length ? Math.round(pcts.reduce((a,b)=>a+b,0) / pcts.length) : 0;
-    const paid = students.filter(s => isPaid(s.paymentStatus));
-    const withRecord = students.filter(s => s.paymentStatus !== "");
-    const unpaidStudents = students.filter(s => !isPaid(s.paymentStatus) && s.paymentStatus !== "");
-    const collectionRate = withRecord.length ? Math.round((paid.length / withRecord.length) * 100) : 0;
-    const revenue = paid.reduce((sum, s) => sum + (s.amountPaid || 0), 0);
-    return {
-      studentsCount, attendanceRate, revenue, paidCount: paid.length,
-      unpaidCount: unpaidStudents.length, collectionRate,
-      unpaidList: unpaidStudents.map(s => ({ name: s.name, studentPhone: s.studentPhone, parentPhone: s.parentPhone }))
-    };
-  }
-
-  async function computeAllGradeSnapshots(){
-    const results = await Promise.all(GRADES.map(fetchGrade));
-    const perGrade = {};
-    GRADES.forEach((g, i) => { perGrade[g] = computeKpis(results[i]); });
-    perGrade.all = computeKpis(results.flat());
-    return perGrade;
-  }
-
-  async function saveSnapshotForMonth(year, month, perGrade){
-    const col = HIST_SCHEMA.col;
-    const rows = Object.keys(perGrade).map(g => ({
-      [col.year]: year,
-      [col.month]: month,
-      [col.grade]: g,
-      [col.students]: perGrade[g].studentsCount,
-      [col.attendanceRate]: perGrade[g].attendanceRate,
-      [col.revenue]: perGrade[g].revenue,
-      [col.paidCount]: perGrade[g].paidCount,
-      [col.unpaidCount]: perGrade[g].unpaidCount,
-      [col.collectionRate]: perGrade[g].collectionRate,
-      [col.unpaidStudents]: perGrade[g].unpaidList
-    }));
-    // Clear any previous snapshot for this month first, so saving twice just updates it.
-    await supa.from(HIST_SCHEMA.table).delete().eq(col.year, year).eq(col.month, month);
-    const { error } = await supa.from(HIST_SCHEMA.table).insert(rows);
-    if(error) throw error;
-  }
-
-  async function saveCurrentMonthSnapshot(){
-    const btns = document.querySelectorAll(".save-snapshot-btn");
-    btns.forEach(b => { b.disabled = true; b.dataset.origText = b.textContent; b.textContent = "Saving…"; });
     try{
-      const now = new Date();
-      const year = now.getFullYear(), month = now.getMonth() + 1;
-      const perGrade = await computeAllGradeSnapshots();
-      await saveSnapshotForMonth(year, month, perGrade);
-      await loadHistory();
+      // Payment record for this student
+      const { data: payData } = await supa
+        .from(SCHEMA.paymentsTable(grade)).select("*").eq(col.qrCode, attRow[col.qrCode]).limit(1);
+      const pay = (payData && payData[0]) || {};
+
+      currentStudent = {
+        grade,
+        name: attRow[col.fullName] ?? "",
+        qrCode: attRow[col.qrCode] ?? "",
+        studentPhone: attRow[col.studentPhone] ?? "",
+        parentPhone: attRow[col.parentPhone] ?? "",
+        attendanceCount: Number(attRow[col.attendanceCount] || 0),
+        absenceCount: Number(attRow[col.absenceCount] || 0),
+        lastAttendance: attRow[col.lastAttendance] ?? "",
+        paymentStatus: pay[col.paymentStatus] ?? "",
+        amountPaid: Number(pay[col.amountPaid] || 0),
+        lastPaymentDate: pay[col.lastPaymentDate] ?? ""
+      };
+
+      // Exam scores for this student's grade
+      currentExamRows = await fetchStudentExamScores(grade, attRow[col.qrCode]);
+
+      renderReport();
+      setState("report");
     }catch(err){
       console.error(err);
-      alert("Couldn't save this month's snapshot: " + (err.message || err) +
-        "\n\nMake sure a \"monthly_snapshots\" table exists with INSERT/DELETE/SELECT policies for the anon role, and has an \"unpaid_students\" jsonb column.");
-    }finally{
-      btns.forEach(b => { b.disabled = false; b.textContent = b.dataset.origText || "💾 Save Current Month"; });
+      document.getElementById("errorMsg").innerHTML = `
+        <div style="font-weight:700;">تعذّر تحميل بيانات الطالب</div>
+        <div style="font-size:12px; max-width:420px;">${err.message || err}</div>`;
+      setState("error");
     }
-  }
-
-  /* ---------- Auto-backfill a missed previous month ---------------------------------------------------------------*/
-  async function autoBackfillMissedMonth(){
-    try{
-      const col = HIST_SCHEMA.col;
-      const now = new Date();
-      const curY = now.getFullYear(), curM = now.getMonth() + 1;
-      let prevM = curM - 1, prevY = curY;
-      if(prevM === 0){ prevM = 12; prevY -= 1; }
-
-      const { data, error } = await supa
-        .from(HIST_SCHEMA.table)
-        .select(`${col.year},${col.month}`)
-        .eq(col.year, prevY)
-        .eq(col.month, prevM)
-        .limit(1);
-      if(error) throw error; // table missing / no policy — just skip silently
-
-      if(data && data.length) return; // previous month already saved, nothing to do
-
-      const perGrade = await computeAllGradeSnapshots();
-      await saveSnapshotForMonth(prevY, prevM, perGrade);
-      console.info(`Auto-saved a snapshot for ${monthLabel(prevY, prevM)} because it hadn't been saved before the new month started.`);
-    }catch(err){
-      console.warn("Skipped auto-backfill of previous month:", err.message || err);
-    }
-  }
-
-  async function loadHistory(){
-    const loadingEl = document.getElementById("histLoadingMsg");
-    const errorEl = document.getElementById("histErrorMsg");
-    const contentEl = document.getElementById("histContent");
-    loadingEl.classList.add("show");
-    errorEl.classList.remove("show");
-    contentEl.classList.remove("show");
-
-    try{
-      const { data, error } = await supa.from(HIST_SCHEMA.table).select("*");
-      if(error) throw error;
-      historyRows = data || [];
-      renderHistory();
-      contentEl.classList.add("show");
-    }catch(err){
-      console.error(err);
-      errorEl.innerHTML = `
-        <div style="font-weight:700;">Couldn't load monthly history</div>
-        <div style="font-size:12px; max-width:520px;">
-          ${err.message || err}<br><br>
-          This most likely means the "monthly_snapshots" table doesn't exist yet, or the anon role
-          doesn't have a SELECT policy for it. Create the table with the columns listed in the code
-          comments above, and add read/write policies for the anon role.
-        </div>`;
-      errorEl.classList.add("show");
-    }finally{
-      loadingEl.classList.remove("show");
-    }
-  }
-
-  function renderHistory(){
-    const col = HIST_SCHEMA.col;
-    const rows = historyRows
-      .filter(r => r[col.grade] === historyGradeFilter)
-      .sort((a,b) => (a[col.year]-b[col.year]) || (a[col.month]-b[col.month]));
-
-    // Banner: warn if the current month hasn't been archived yet.
-    const now = new Date();
-    const curY = now.getFullYear(), curM = now.getMonth() + 1;
-    const hasCurrent = historyRows.some(r => r[col.year] === curY && r[col.month] === curM);
-    document.getElementById("histBanner").style.display = hasCurrent ? "none" : "flex";
-
-    renderDeltaCards(rows);
-    renderHistCharts(rows);
-    renderHistTable(rows);
-  }
-
-  function deltaBadge(curr, prev, suffix){
-    if(prev == null || curr == null) return "";
-    const diff = curr - prev;
-    if(diff === 0) return `<span class="delta-badge flat">— no change</span>`;
-    const dir = diff > 0 ? "up" : "down";
-    const arrow = diff > 0 ? "▲" : "▼";
-    return `<span class="delta-badge ${dir}">${arrow} ${Math.abs(diff)}${suffix || ""} vs last month</span>`;
-  }
-
-  function renderDeltaCards(rows){
-    const col = HIST_SCHEMA.col;
-    const el = document.getElementById("deltaCards");
-    const last = rows[rows.length - 1];
-    const prev = rows[rows.length - 2];
-    if(!last){ el.innerHTML = `<div class="empty-note" style="grid-column:1/-1;">No saved months yet for this grade — save the current month to start tracking.</div>`; return; }
-
-    const cards = [
-      { label: "Students", val: last[col.students], sub: monthLabel(last[col.year], last[col.month]), badge: deltaBadge(last[col.students], prev ? prev[col.students] : null, "") },
-      { label: "Attendance Rate", val: `${last[col.attendanceRate]}%`, sub: "average", badge: deltaBadge(last[col.attendanceRate], prev ? prev[col.attendanceRate] : null, "%") },
-      { label: "Revenue", val: fmtEGP(last[col.revenue]), sub: `${last[col.paidCount]} paid`, badge: deltaBadge(last[col.revenue], prev ? prev[col.revenue] : null, " EGP") },
-      { label: "Collection Rate", val: `${last[col.collectionRate]}%`, sub: `${last[col.unpaidCount]} unpaid`, badge: deltaBadge(last[col.collectionRate], prev ? prev[col.collectionRate] : null, "%") }
-    ];
-    el.innerHTML = cards.map(c => `
-      <div class="kpi-card">
-        <div class="kpi-label">${c.label}</div>
-        <div class="kpi-value num">${c.val}</div>
-        <div class="kpi-sub">${c.sub}</div>
-        ${c.badge}
-      </div>
-    `).join("");
-  }
-
-  function destroyHistChart(key){ if(histCharts[key]){ histCharts[key].destroy(); histCharts[key] = null; } }
-
-  function renderHistCharts(rows){
-    const col = HIST_SCHEMA.col;
-    const rateCanvas = document.getElementById("histRateChart");
-    const rateEmpty = document.getElementById("histRateEmpty");
-    const revCanvas = document.getElementById("histRevenueChart");
-    const revEmpty = document.getElementById("histRevenueEmpty");
-    const stuCanvas = document.getElementById("histStudentTrendChart");
-    const stuEmpty = document.getElementById("histStudentTrendEmpty");
-    destroyHistChart("rate");
-    destroyHistChart("rev");
-    destroyHistChart("students");
-
-    if(!chartLibReady() || !rows.length){
-      rateCanvas.style.display = "none"; rateEmpty.classList.add("show");
-      revCanvas.style.display = "none"; revEmpty.classList.add("show");
-      stuCanvas.style.display = "none"; stuEmpty.classList.add("show");
-      return;
-    }
-    rateCanvas.style.display = "block"; rateEmpty.classList.remove("show");
-    revCanvas.style.display = "block"; revEmpty.classList.remove("show");
-    stuCanvas.style.display = "block"; stuEmpty.classList.remove("show");
-
-    const labels = rows.map(r => monthLabel(r[col.year], r[col.month]));
-
-    histCharts.rate = new Chart(rateCanvas, {
-      type: "line",
-      data: {
-        labels,
-        datasets: [
-          { label: "Attendance Rate", data: rows.map(r => r[col.attendanceRate]), borderColor: "rgba(139,94,60,0.85)", backgroundColor: "rgba(139,94,60,0.10)", fill: true, tension: 0.3 },
-          { label: "Collection Rate", data: rows.map(r => r[col.collectionRate]), borderColor: "rgba(110,100,90,0.75)", backgroundColor: "rgba(110,100,90,0.08)", fill: true, tension: 0.3 }
-        ]
-      },
-      options: {
-        maintainAspectRatio: false,
-        plugins: { legend: { position: "bottom", labels: { font: { family: "Inter", size: 11 }, padding: 12 } }, tooltip: { callbacks: { label: c => `${c.dataset.label}: ${c.raw}%` } } },
-        scales: {
-          y: { beginAtZero: true, max: 100, ticks: { callback: v => v + "%", font: { size: 10 } }, grid: { color: "rgba(139,94,60,0.05)" } },
-          x: { ticks: { font: { size: 10 } }, grid: { display: false } }
-        }
-      }
-    });
-
-    histCharts.rev = new Chart(revCanvas, {
-      type: "bar",
-      data: {
-        labels,
-        datasets: [{ label: "Revenue", data: rows.map(r => r[col.revenue]), backgroundColor: "rgba(139,94,60,0.60)", borderRadius: 6, maxBarThickness: 40 }]
-      },
-      options: {
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmtEGP(c.raw) } } },
-        scales: {
-          y: { beginAtZero: true, ticks: { font: { size: 10 } }, grid: { color: "rgba(139,94,60,0.05)" } },
-          x: { ticks: { font: { size: 10 } }, grid: { display: false } }
-        }
-      }
-    });
-
-    histCharts.students = new Chart(stuCanvas, {
-      type: "line",
-      data: {
-        labels,
-        datasets: [{ label: "Total Students", data: rows.map(r => r[col.students]), borderColor: "rgba(47,158,115,0.85)", backgroundColor: "rgba(47,158,115,0.10)", fill: true, tension: 0.3, pointBackgroundColor: "rgba(47,158,115,1)" }]
-      },
-      options: {
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `Students: ${c.raw}` } } },
-        scales: {
-          y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } }, grid: { color: "rgba(139,94,60,0.05)" } },
-          x: { ticks: { font: { size: 10 } }, grid: { display: false } }
-        }
-      }
-    });
-  }
-
-  function renderHistTable(rows){
-    const col = HIST_SCHEMA.col;
-    const body = document.getElementById("histTableBody");
-    currentHistRows = rows;
-    if(!rows.length){
-      body.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--muted); padding:24px;">No saved months yet</td></tr>`;
-      return;
-    }
-    const reversed = rows.slice().reverse();
-    body.innerHTML = reversed.map((r, idx) => {
-      const olderRows = rows.slice(0, rows.length - 1 - idx);
-      const prev = olderRows.length ? olderRows[olderRows.length - 1] : null;
-      const origIdx = rows.length - 1 - idx;
-      return `
-        <tr>
-          <td style="font-weight:600;">${monthLabel(r[col.year], r[col.month])}</td>
-          <td>${r[col.students]}</td>
-          <td>${r[col.attendanceRate]}% ${deltaBadge(r[col.attendanceRate], prev ? prev[col.attendanceRate] : null, "%")}</td>
-          <td>${r[col.collectionRate]}% ${deltaBadge(r[col.collectionRate], prev ? prev[col.collectionRate] : null, "%")}</td>
-          <td>${fmtEGP(r[col.revenue])} ${deltaBadge(r[col.revenue], prev ? prev[col.revenue] : null, " EGP")}</td>
-          <td>${r[col.paidCount]}</td>
-          <td>${r[col.unpaidCount]}</td>
-          <td><button class="unpaid-link" onclick="showUnpaidModal(${origIdx})">👁 Who Hasn't Paid</button></td>
-        </tr>`;
-    }).join("");
-    wireTopScrollbar("histScrollTop", "histScrollTopInner", "histTableWrap");
-  }
-
-  function showUnpaidModal(origIdx){
-    const col = HIST_SCHEMA.col;
-    const row = currentHistRows[origIdx];
-    if(!row) return;
-    const list = row[col.unpaidStudents] || [];
-    document.getElementById("unpaidModalTitle").textContent =
-      `Who Hasn't Paid – ${monthLabel(row[col.year], row[col.month])}`;
-    const body = document.getElementById("unpaidModalBody");
-    if(!list.length){
-      body.innerHTML = `<div class="empty-note">🎉 No one was unpaid this month (or this month was saved before the "Who Hasn't Paid" feature was added)</div>`;
-    } else {
-      body.innerHTML = list.map(s => `
-        <div class="list-row">
-          <div class="list-name"><span class="name">${s.name || "—"}</span></div>
-          ${s.studentPhone ? `<a class="phone-link" href="tel:${s.studentPhone}">${s.studentPhone}</a>` : `<span class="empty-note" style="padding:0;">—</span>`}
-        </div>
-      `).join("");
-    }
-    document.getElementById("unpaidModalOverlay").classList.add("show");
-  }
-  function closeUnpaidModal(){
-    document.getElementById("unpaidModalOverlay").classList.remove("show");
-  }
-
-  /* ============================================================
-     EXAM GRADES (dynamic columns, driven by an "exams" table)
-     ============================================================ */
-  const EXAMS_SCHEMA = {
-    table: "exams",
-    col: { id: "id", name: "exam_name", maxScore: "max_score", grade: "grade", createdAt: "created_at" }
-  };
-  const SCORES_SCHEMA = {
-    table: "exam_scores",
-    col: { id: "id", examId: "exam_id", studentCode: "student_code", score: "score" }
-  };
-
-  let examGrade = "first";
-  let examStudents = [];
-  let examList = [];    // rows from `exams` for the selected grade
-  let examScores = [];  // rows from `exam_scores` for those exams
-
-  function onExamGradeChange(){
-    examGrade = document.getElementById("examGradeSelect").value;
-    loadExamGrades();
-  }
-
-  async function loadExamGrades(){
-    const loadingEl = document.getElementById("examLoadingMsg");
-    const errorEl = document.getElementById("examErrorMsg");
-    const contentEl = document.getElementById("examContent");
-    loadingEl.classList.add("show");
-    errorEl.classList.remove("show");
-    contentEl.classList.remove("show");
-    try{
-      const ecol = EXAMS_SCHEMA.col;
-      const [students, { data: exams, error: examsErr }] = await Promise.all([
-        fetchGrade(examGrade),
-        supa.from(EXAMS_SCHEMA.table).select("*").eq(ecol.grade, examGrade).order(ecol.createdAt, { ascending: true })
-      ]);
-      if(examsErr) throw examsErr;
-
-      examStudents = students;
-      examList = exams || [];
-
-      let scores = [];
-      if(examList.length){
-        const scol = SCORES_SCHEMA.col;
-        const ids = examList.map(e => e[ecol.id]);
-        const { data: scoreRows, error: scoresErr } = await supa.from(SCORES_SCHEMA.table).select("*").in(scol.examId, ids);
-        if(scoresErr) throw scoresErr;
-        scores = scoreRows || [];
-      }
-      examScores = scores;
-
-      renderExamTable();
-      contentEl.classList.add("show");
-    }catch(err){
-      console.error(err);
-      errorEl.innerHTML = `
-        <div style="font-weight:700;">Couldn't load grades</div>
-        <div style="font-size:12px; max-width:520px;">
-          ${err.message || err}<br><br>
-          This most likely means the "exams" or "exam_scores" tables don't exist yet, or the anon role
-          doesn't have SELECT permission for them. See the schema in the code comments above.
-        </div>`;
-      errorEl.classList.add("show");
-    }finally{
-      loadingEl.classList.remove("show");
-    }
-  }
-
-  /* ---------- Read-only grades table (Exam Grades tab) ---------- */
-  function renderExamTable(){
-    const head = document.getElementById("examTableHead");
-    const body = document.getElementById("examTableBody");
-    const ecol = EXAMS_SCHEMA.col;
-    const scol = SCORES_SCHEMA.col;
-
-    head.innerHTML = `<tr>
-      <th>Name</th>
-      ${examList.map(e => `<th>${e[ecol.name]}</th>`).join("")}
-      <th>Average</th>
-      <th>Trend</th>
-    </tr>`;
-
-    if(!examStudents.length){
-      body.innerHTML = `<tr><td colspan="${examList.length + 3}" style="text-align:center; color:var(--muted); padding:24px;">No students in this grade</td></tr>`;
-      wireTopScrollbar("examScrollTop", "examScrollTopInner", "examTableWrap");
-      return;
-    }
-
-    const q = (document.getElementById("examSearch")?.value || "").trim().toLowerCase();
-    const rowsToShow = q ? examStudents.filter(s => (s.name || "").toLowerCase().includes(q)) : examStudents;
-
-    if(!rowsToShow.length){
-      body.innerHTML = `<tr><td colspan="${examList.length + 3}" style="text-align:center; color:var(--muted); padding:24px;">No students match "${q}"</td></tr>`;
-      wireTopScrollbar("examScrollTop", "examScrollTopInner", "examTableWrap");
-      return;
-    }
-
-    body.innerHTML = rowsToShow.map(s => {
-      let sumPct = 0, cnt = 0;
-      const cells = examList.map(e => {
-        const row = examScores.find(sc => sc[scol.examId] === e[ecol.id] && sc[scol.studentCode] === s.qrCode);
-        if(!row){ return `<td style="color:var(--muted); text-align:center;">☐</td>`; }
-        const sc = Number(row[scol.score]);
-        const mx = Number(e[ecol.maxScore]) || 100;
-        if(!isNaN(sc)){ sumPct += (sc / mx) * 100; cnt++; }
-        return `<td>${row[scol.score]} / ${e[ecol.maxScore]}</td>`;
-      }).join("");
-      const avg = cnt ? Math.round(sumPct / cnt) : null;
-      return `<tr>
-        <td style="font-weight:600;">${s.name || "—"}</td>
-        ${cells}
-        <td>${avg != null ? avg + "%" : "—"}</td>
-        <td><button class="unpaid-link" onclick="showStudentTrend('${s.qrCode}')" title="Show score trend">📈</button></td>
-      </tr>`;
-    }).join("");
-    wireTopScrollbar("examScrollTop", "examScrollTopInner", "examTableWrap");
-  }
-
-  /* ---------- Student trend chart ---------- */
-  let studentTrendChartInstance = null;
-
-  function showStudentTrend(qrCode){
-    const ecol = EXAMS_SCHEMA.col;
-    const scol = SCORES_SCHEMA.col;
-    const student = examStudents.find(s => s.qrCode === qrCode);
-    if(!student) return;
-
-    const points = examList.map(e => {
-      const row = examScores.find(sc => sc[scol.examId] === e[ecol.id] && sc[scol.studentCode] === qrCode);
-      if(!row) return null;
-      const sc = Number(row[scol.score]);
-      const mx = Number(e[ecol.maxScore]) || 100;
-      if(isNaN(sc)) return null;
-      return { examName: e[ecol.name], pct: Math.round((sc / mx) * 100), raw: row[scol.score], max: e[ecol.maxScore] };
-    }).filter(p => p != null);
-
-    document.getElementById("studentTrendTitle").textContent = `${student.name || "Student"} — Score Trend`;
-
-    const canvas = document.getElementById("studentTrendChart");
-    const emptyEl = document.getElementById("studentTrendEmpty");
-    const summaryEl = document.getElementById("studentTrendSummary");
-
-    if(studentTrendChartInstance){ studentTrendChartInstance.destroy(); studentTrendChartInstance = null; }
-
-    if(points.length < 2){
-      canvas.style.display = "none";
-      emptyEl.textContent = points.length === 1
-        ? "Only one exam recorded so far — add another exam score to see a trend"
-        : "No exam scores recorded yet for this student";
-      emptyEl.classList.add("show");
-      summaryEl.textContent = "";
-    } else if(!chartLibReady()){
-      canvas.style.display = "none";
-      emptyEl.textContent = "Chart library failed to load — try refreshing";
-      emptyEl.classList.add("show");
-      summaryEl.textContent = "";
-    } else {
-      canvas.style.display = "block";
-      emptyEl.classList.remove("show");
-
-      studentTrendChartInstance = new Chart(canvas, {
-        type: "line",
-        data: {
-          labels: points.map(p => p.examName),
-          datasets: [{
-            label: "Score",
-            data: points.map(p => p.pct),
-            borderColor: "rgba(139,94,60,0.85)",
-            backgroundColor: "rgba(139,94,60,0.10)",
-            fill: true, tension: 0.3, pointRadius: 4, pointBackgroundColor: "rgba(139,94,60,1)"
-          }]
-        },
-        options: {
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: { callbacks: { label: c => {
-              const p = points[c.dataIndex];
-              return `${p.raw} / ${p.max} (${p.pct}%)`;
-            } } }
-          },
-          scales: {
-            y: { beginAtZero: true, max: 100, ticks: { callback: v => v + "%", font: { size: 10 } }, grid: { color: "rgba(139,94,60,0.05)" } },
-            x: { ticks: { font: { size: 10 } }, grid: { display: false } }
-          }
-        }
-      });
-
-      const first = points[0].pct, last = points[points.length - 1].pct;
-      const diff = last - first;
-      if(diff > 0) summaryEl.innerHTML = `<span class="delta-badge up">▲ Improved by ${diff}%</span> from "${points[0].examName}" to "${points[points.length-1].examName}"`;
-      else if(diff < 0) summaryEl.innerHTML = `<span class="delta-badge down">▼ Dropped by ${Math.abs(diff)}%</span> from "${points[0].examName}" to "${points[points.length-1].examName}"`;
-      else summaryEl.innerHTML = `<span class="delta-badge flat">— No change</span> from "${points[0].examName}" to "${points[points.length-1].examName}"`;
-    }
-
-    document.getElementById("studentTrendModalOverlay").classList.add("show");
-  }
-
-  function closeStudentTrendModal(){
-    document.getElementById("studentTrendModalOverlay").classList.remove("show");
-  }
-
-  /* ============================================================
-     PDF REPORTS
-     ============================================================ */
-  const PDF_COLORS = {
-    gold: [154, 107, 67], gold2: [110, 74, 46], ink: [62, 44, 35],
-    success: [47, 158, 115], error: [196, 72, 90], muted: [138, 122, 112]
-  };
-  const pdfLibReady = () => typeof window.jspdf !== "undefined";
-
-  function pdfHeader(doc, title, subtitle){
-    const c = PDF_COLORS.gold2;
-    doc.setFillColor(c[0], c[1], c[2]);
-    doc.rect(0, 0, 210, 32, "F");
-    doc.setTextColor(255,255,255);
-    doc.setFontSize(18);
-    doc.text(title, 14, 16);
-    doc.setFontSize(10);
-    doc.text(subtitle, 14, 24);
-  }
-
-  function pdfFooterNote(doc, text){
-    doc.setFontSize(8);
-    doc.setTextColor(PDF_COLORS.muted[0], PDF_COLORS.muted[1], PDF_COLORS.muted[2]);
-    doc.text(text, 14, 290);
   }
 
   async function fetchStudentExamScores(grade, qrCode){
     const ecol = EXAMS_SCHEMA.col, scol = SCORES_SCHEMA.col;
     try{
       const { data: exams, error: examsErr } = await supa
-        .from(EXAMS_SCHEMA.table).select("*")
-        .eq(ecol.grade, grade).order(ecol.createdAt, { ascending: true });
+        .from(EXAMS_SCHEMA.table).select("*").eq(ecol.grade, grade).order(ecol.createdAt, { ascending: true });
       if(examsErr) throw examsErr;
       const examRows = exams || [];
       if(!examRows.length) return [];
@@ -2748,47 +464,158 @@
 
       return examRows.map(e => {
         const row = scoreRows.find(s => s[scol.examId] === e[ecol.id]);
-        return { name: e[ecol.name], maxScore: e[ecol.maxScore], score: row ? row[scol.score] : null };
+        return { name: e[ecol.name], maxScore: Number(e[ecol.maxScore]) || 100, score: row ? Number(row[scol.score]) : null };
       });
     }catch(err){
-      return []; // exams tables missing / no policy — report just shows "no exams" section
+      return [];
     }
   }
 
-  async function generateStudentReport(qrCode){
-    if(!pdfLibReady()){ alert("The PDF library failed to load — check your connection and try again."); return; }
-    const student = combined.students.find(s => s.qrCode === qrCode);
-    if(!student){ alert("Couldn't find this student's data — try refreshing the dashboard first."); return; }
+  /* ---------- Render the report UI ---------- */
+  function renderReport(){
+    const s = currentStudent;
+    document.getElementById("repName").textContent = s.name || "—";
+    document.getElementById("repGrade").textContent = GRADE_LABELS[s.grade] || "—";
 
-    const examRows = await fetchStudentExamScores(student.grade, qrCode);
+    const attRate = pct(s.attendanceCount, s.absenceCount);
+    document.getElementById("kAttRate").textContent = attRate != null ? `${attRate}%` : "–";
+    document.getElementById("kAttSub").textContent = `${s.attendanceCount} حضور / ${s.absenceCount} غياب`;
+
+    document.getElementById("kLastAtt").textContent = s.lastAttendance || "—";
+
+    const hasPaymentRecord = s.paymentStatus !== "";
+    const paid = isPaid(s.paymentStatus);
+    document.getElementById("kPayStatus").innerHTML = hasPaymentRecord
+      ? `<span class="chip ${paid ? 'paid' : 'unpaid'}">${paid ? "مدفوع" : "غير مدفوع"}</span>`
+      : "—";
+    document.getElementById("kPaySub").textContent = hasPaymentRecord ? fmtEGP(s.amountPaid) : "لا يوجد سجل دفع";
+
+    const validScores = currentExamRows.filter(e => e.score != null);
+    const avg = validScores.length
+      ? Math.round(validScores.reduce((sum,e) => sum + (e.score / e.maxScore) * 100, 0) / validScores.length)
+      : null;
+    document.getElementById("kExamAvg").textContent = avg != null ? `${avg}%` : "–";
+    document.getElementById("kExamSub").textContent = validScores.length ? `${validScores.length} امتحان مسجّل` : "لا توجد درجات بعد";
+
+    document.getElementById("cStudentPhone").innerHTML = s.studentPhone
+      ? `<a href="tel:${s.studentPhone}">${s.studentPhone}</a>` : "—";
+    document.getElementById("cParentPhone").innerHTML = s.parentPhone
+      ? `<a href="tel:${s.parentPhone}">${s.parentPhone}</a>` : "—";
+
+    renderExamTable();
+    renderAttChart(attRate);
+    renderExamTrendChart();
+  }
+
+  function renderExamTable(){
+    const body = document.getElementById("examTableBody");
+    if(!currentExamRows.length){
+      body.innerHTML = `<tr><td colspan="4" class="empty-note">لا توجد امتحانات مسجّلة لهذا الصف بعد</td></tr>`;
+      return;
+    }
+    body.innerHTML = currentExamRows.map(e => {
+      if(e.score == null) return `<tr><td>${e.name}</td><td>—</td><td>${e.maxScore}</td><td>—</td></tr>`;
+      const p = Math.round((e.score / e.maxScore) * 100);
+      return `<tr><td>${e.name}</td><td>${e.score}</td><td>${e.maxScore}</td><td style="color:${getScoreColor(p)}; font-weight:700;">${p}%</td></tr>`;
+    }).join("");
+  }
+
+  function destroyChart(key){ if(reportCharts[key]){ reportCharts[key].destroy(); reportCharts[key] = null; } }
+  const chartLibReady = () => typeof Chart !== "undefined";
+
+  function renderAttChart(attRate){
+    const canvas = document.getElementById("attChart");
+    const emptyEl = document.getElementById("attChartEmpty");
+    destroyChart("att");
+    const s = currentStudent;
+    if(!chartLibReady() || (s.attendanceCount + s.absenceCount) === 0){
+      canvas.style.display = "none"; emptyEl.classList.add("show"); return;
+    }
+    canvas.style.display = "block"; emptyEl.classList.remove("show");
+    reportCharts.att = new Chart(canvas, {
+      type: "doughnut",
+      data: {
+        labels: ["حضور", "غياب"],
+        datasets: [{ data: [s.attendanceCount, s.absenceCount], backgroundColor: ["rgba(47,158,115,0.75)", "rgba(196,72,90,0.70)"], borderWidth: 0 }]
+      },
+      options: {
+        maintainAspectRatio: false, cutout: "68%",
+        plugins: { legend: { position: "bottom", labels: { font: { family: "Cairo", size: 12 }, padding: 14 } } }
+      }
+    });
+  }
+
+  function renderExamTrendChart(){
+    const canvas = document.getElementById("examTrendChart");
+    const emptyEl = document.getElementById("examTrendEmpty");
+    destroyChart("exam");
+    const points = currentExamRows.filter(e => e.score != null);
+    if(!chartLibReady() || points.length < 1){
+      canvas.style.display = "none"; emptyEl.classList.add("show"); return;
+    }
+    canvas.style.display = "block"; emptyEl.classList.remove("show");
+    reportCharts.exam = new Chart(canvas, {
+      type: "line",
+      data: {
+        labels: points.map(p => p.name),
+        datasets: [{
+          label: "الدرجة",
+          data: points.map(p => Math.round((p.score / p.maxScore) * 100)),
+          borderColor: "rgba(139,30,30,0.85)", backgroundColor: "rgba(139,30,30,0.10)",
+          fill: true, tension: 0.3, pointRadius: 4, pointBackgroundColor: "rgba(139,30,30,1)"
+        }]
+      },
+      options: {
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.raw}%` } } },
+        scales: {
+          y: { beginAtZero: true, max: 100, ticks: { callback: v => v + "%", font: { size: 10 } }, grid: { color: "rgba(139,30,30,0.05)" } },
+          x: { ticks: { font: { size: 10, family: "Cairo" } }, grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  /* ---------- PDF download for the parent ---------- */
+  const PDF_COLORS = { gold: [154, 30, 30], gold2: [94, 20, 20], ink: [43, 43, 43], success: [47, 158, 115], error: [196, 72, 90], muted: [124, 120, 115] };
+
+  function downloadParentReport(){
+    if(typeof window.jspdf === "undefined"){ alert("تعذّر تحميل مكتبة PDF — تحقق من الاتصال بالإنترنت وحاول مرة أخرى."); return; }
+    const s = currentStudent;
+    if(!s){ return; }
 
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-    pdfHeader(doc, "Student Report", `Generated ${new Date().toLocaleString("en-US")}`);
+
+    doc.setFillColor(PDF_COLORS.gold2[0], PDF_COLORS.gold2[1], PDF_COLORS.gold2[2]);
+    doc.rect(0, 0, 210, 32, "F");
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(18);
+    doc.text("Student Report", 14, 16);
+    doc.setFontSize(10);
+    doc.text(`Generated ${new Date().toLocaleString("en-US")}`, 14, 24);
 
     doc.setTextColor(PDF_COLORS.ink[0], PDF_COLORS.ink[1], PDF_COLORS.ink[2]);
     doc.setFontSize(14);
-    doc.text(student.name || "—", 14, 44);
+    doc.text(s.name || "—", 14, 44);
     doc.setFontSize(10);
     doc.setTextColor(PDF_COLORS.muted[0], PDF_COLORS.muted[1], PDF_COLORS.muted[2]);
-    doc.text(GRADE_LABELS[student.grade] || "—", 14, 50);
+    doc.text(GRADE_LABELS[s.grade] || "—", 14, 50);
 
-    const attRate = pct(student.attendanceCount, student.absenceCount);
-    const paid = isPaid(student.paymentStatus);
-    const hasPaymentRecord = student.paymentStatus !== "";
+    const attRate = pct(s.attendanceCount, s.absenceCount);
+    const paid = isPaid(s.paymentStatus);
+    const hasPaymentRecord = s.paymentStatus !== "";
 
     doc.autoTable({
-      startY: 58,
-      theme: "grid",
-      head: [["Field", "Value"]],
+      startY: 58, theme: "grid", head: [["Field", "Value"]],
       body: [
-        ["Student Phone", student.studentPhone || "—"],
-        ["Parent Phone", student.parentPhone || "—"],
-        ["Attendance", `${student.attendanceCount} present / ${student.absenceCount} absent${attRate != null ? ` (${attRate}%)` : ""}`],
-        ["Last Attendance", student.lastAttendance || "—"],
+        ["Student Phone", s.studentPhone || "—"],
+        ["Parent Phone", s.parentPhone || "—"],
+        ["Attendance", `${s.attendanceCount} present / ${s.absenceCount} absent${attRate != null ? ` (${attRate}%)` : ""}`],
+        ["Last Attendance", s.lastAttendance || "—"],
         ["Payment Status", hasPaymentRecord ? (paid ? "Paid" : "Unpaid") : "No record"],
-        ["Amount Paid", fmtEGP(student.amountPaid)],
-        ["Last Payment Date", student.lastPaymentDate || "—"]
+        ["Amount Paid", fmtEGP(s.amountPaid)],
+        ["Last Payment Date", s.lastPaymentDate || "—"]
       ],
       headStyles: { fillColor: PDF_COLORS.gold, textColor: 255 },
       styles: { fontSize: 10, cellPadding: 4, lineColor: [220, 207, 195], lineWidth: 0.1 },
@@ -2796,246 +623,49 @@
     });
 
     let y = doc.lastAutoTable.finalY + 10;
+    const validScores = currentExamRows.filter(e => e.score != null);
 
-    if(examRows.length){
+    if(currentExamRows.length){
       doc.setFontSize(12);
       doc.setTextColor(PDF_COLORS.ink[0], PDF_COLORS.ink[1], PDF_COLORS.ink[2]);
       doc.text("Exam Scores", 14, y);
       y += 4;
 
-      let sumPct = 0, cnt = 0;
-      const body = examRows.map(e => {
+      const body = currentExamRows.map(e => {
         if(e.score == null) return [e.name, "—", `${e.maxScore}`, "—"];
-        const p = Math.round((Number(e.score) / (Number(e.maxScore) || 100)) * 100);
-        sumPct += p; cnt++;
+        const p = Math.round((e.score / e.maxScore) * 100);
         return [e.name, e.score, e.maxScore, `${p}%`];
       });
-      const avg = cnt ? Math.round(sumPct / cnt) : null;
 
       doc.autoTable({
-        startY: y,
-        theme: "grid",
-        head: [["Exam", "Score", "Out of", "Percentage"]],
-        body,
+        startY: y, theme: "grid", head: [["Exam", "Score", "Out of", "Percentage"]], body,
         headStyles: { fillColor: PDF_COLORS.gold, textColor: 255 },
         styles: { fontSize: 10, cellPadding: 4, lineColor: [220, 207, 195], lineWidth: 0.1 },
         margin: { left: 14, right: 14 }
       });
 
       y = doc.lastAutoTable.finalY + 8;
+      const avg = validScores.length
+        ? Math.round(validScores.reduce((sum,e) => sum + (e.score / e.maxScore) * 100, 0) / validScores.length)
+        : null;
       const avgColor = avg != null && avg >= 60 ? PDF_COLORS.success : PDF_COLORS.error;
       doc.setFontSize(11);
       doc.setTextColor(avgColor[0], avgColor[1], avgColor[2]);
       doc.text(`Overall Average: ${avg != null ? avg + "%" : "—"}`, 14, y);
-      y += 10;
     } else {
       doc.setFontSize(10);
       doc.setTextColor(PDF_COLORS.muted[0], PDF_COLORS.muted[1], PDF_COLORS.muted[2]);
       doc.text("No exam scores recorded for this student yet.", 14, y);
-      y += 10;
     }
 
-    pdfFooterNote(doc, "Generated from Live Dashboard — data reflects the moment this report was created.");
-    doc.save(`${(student.name || "student").trim().replace(/\s+/g, "_")}_report.pdf`);
+    doc.setFontSize(8);
+    doc.setTextColor(PDF_COLORS.muted[0], PDF_COLORS.muted[1], PDF_COLORS.muted[2]);
+    doc.text("Generated from the Parent Portal — data reflects the moment this report was created.", 14, 290);
+
+    doc.save(`${(s.name || "student").trim().replace(/\s+/g, "_")}_report.pdf`);
   }
 
-  function generateGradeReport(){
-    if(!pdfLibReady()){ alert("The PDF library failed to load — check your connection and try again."); return; }
-    const students = combined.students;
-    if(!students.length){ alert("No student data loaded yet — try refreshing the dashboard first."); return; }
-
-    const gradeLabel = currentGrade === "all" ? "All Grades" : GRADE_LABELS[currentGrade];
-    const kpis = computeKpis(students);
-
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    pdfHeader(doc, "Grade Report", `${gradeLabel} — Generated ${new Date().toLocaleString("en-US")}`);
-
-    doc.autoTable({
-      startY: 40,
-      theme: "grid",
-      head: [["Metric", "Value"]],
-      body: [
-        ["Total Students", kpis.studentsCount],
-        ["Attendance Rate", `${kpis.attendanceRate}%`],
-        ["Revenue Collected", fmtEGP(kpis.revenue)],
-        ["Paid", kpis.paidCount],
-        ["Unpaid", kpis.unpaidCount],
-        ["Collection Rate", `${kpis.collectionRate}%`]
-      ],
-      headStyles: { fillColor: PDF_COLORS.gold, textColor: 255 },
-      styles: { fontSize: 10, cellPadding: 4, lineColor: [220, 207, 195], lineWidth: 0.1 },
-      margin: { left: 14, right: 14 }
-    });
-
-    let y = doc.lastAutoTable.finalY + 10;
-    if(y > 250){ doc.addPage(); y = 20; }
-    doc.setFontSize(12);
-    doc.setTextColor(PDF_COLORS.ink[0], PDF_COLORS.ink[1], PDF_COLORS.ink[2]);
-    doc.text("Student Roster", 14, y);
-    y += 4;
-
-    const rosterBody = students.map(s => {
-      const p = pct(s.attendanceCount, s.absenceCount);
-      const paymentLabel = s.paymentStatus !== "" ? (isPaid(s.paymentStatus) ? "Paid" : "Unpaid") : "—";
-      return [s.name || "—", GRADE_LABELS[s.grade] || "—", p != null ? `${p}%` : "—", paymentLabel];
-    });
-    doc.autoTable({
-      startY: y,
-      theme: "grid",
-      head: [["Name", "Grade", "Attendance", "Payment"]],
-      body: rosterBody,
-      headStyles: { fillColor: PDF_COLORS.gold2, textColor: 255 },
-      styles: { fontSize: 9, cellPadding: 3, lineColor: [220, 207, 195], lineWidth: 0.1 },
-      margin: { left: 14, right: 14 }
-    });
-
-    y = doc.lastAutoTable.finalY + 10;
-    const gradesShown = currentGrade === "all" ? GRADES : [currentGrade];
-    const examRows = [];
-    gradesShown.forEach(g => {
-      (combined.examAverages[g] || []).forEach(e => {
-        examRows.push([GRADE_LABELS[g], e.name, e.avg != null ? `${e.avg}%` : "—"]);
-      });
-    });
-
-    if(examRows.length){
-      if(y > 250){ doc.addPage(); y = 20; }
-      doc.setFontSize(12);
-      doc.setTextColor(PDF_COLORS.ink[0], PDF_COLORS.ink[1], PDF_COLORS.ink[2]);
-      doc.text("Exam Averages", 14, y);
-      y += 4;
-      doc.autoTable({
-        startY: y,
-        theme: "grid",
-        head: [["Grade", "Exam", "Average"]],
-        body: examRows,
-        headStyles: { fillColor: PDF_COLORS.gold, textColor: 255 },
-        styles: { fontSize: 9, cellPadding: 3, lineColor: [220, 207, 195], lineWidth: 0.1 },
-        margin: { left: 14, right: 14 }
-      });
-    }
-
-    doc.save(`grade_report_${currentGrade}_${new Date().toISOString().slice(0,10)}.pdf`);
-  }
-
-  function generateHistoryMonthReport(){
-    if(!pdfLibReady()){ alert("The PDF library failed to load — check your connection and try again."); return; }
-    if(!currentHistRows.length){ alert("No saved monthly snapshot yet for this grade — save a month first using the button above."); return; }
-
-    const col = HIST_SCHEMA.col;
-    const row = currentHistRows[currentHistRows.length - 1];
-    const prev = currentHistRows.length > 1 ? currentHistRows[currentHistRows.length - 2] : null;
-    const gradeLabel = historyGradeFilter === "all" ? "All Grades" : GRADE_LABELS[historyGradeFilter];
-
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    pdfHeader(doc, "Monthly Report", `${gradeLabel} — ${monthLabel(row[col.year], row[col.month])}`);
-
-    doc.autoTable({
-      startY: 40,
-      theme: "grid",
-      head: [["Metric", "This Month", prev ? "Change vs Last Month" : ""]],
-      body: [
-        ["Students", row[col.students], prev ? (row[col.students] - prev[col.students]) : "—"],
-        ["Attendance Rate", `${row[col.attendanceRate]}%`, prev ? `${row[col.attendanceRate] - prev[col.attendanceRate]}%` : "—"],
-        ["Collection Rate", `${row[col.collectionRate]}%`, prev ? `${row[col.collectionRate] - prev[col.collectionRate]}%` : "—"],
-        ["Revenue", fmtEGP(row[col.revenue]), prev ? fmtEGP(row[col.revenue] - prev[col.revenue]) : "—"],
-        ["Paid", row[col.paidCount], "—"],
-        ["Unpaid", row[col.unpaidCount], "—"]
-      ],
-      headStyles: { fillColor: PDF_COLORS.gold, textColor: 255 },
-      styles: { fontSize: 10, cellPadding: 4, lineColor: [220, 207, 195], lineWidth: 0.1 },
-      margin: { left: 14, right: 14 }
-    });
-
-    let y = doc.lastAutoTable.finalY + 10;
-    doc.setFontSize(12);
-    doc.setTextColor(PDF_COLORS.ink[0], PDF_COLORS.ink[1], PDF_COLORS.ink[2]);
-    doc.text("Who Hasn't Paid", 14, y);
-    y += 4;
-
-    const unpaidList = row[col.unpaidStudents] || [];
-    if(unpaidList.length){
-      doc.autoTable({
-        startY: y,
-        theme: "grid",
-        head: [["Name", "Student Phone"]],
-        body: unpaidList.map(s => [s.name || "—", s.studentPhone || "—"]),
-        headStyles: { fillColor: PDF_COLORS.error, textColor: 255 },
-        styles: { fontSize: 9, cellPadding: 3, lineColor: [220, 207, 195], lineWidth: 0.1 },
-        margin: { left: 14, right: 14 }
-      });
-    } else {
-      doc.setFontSize(10);
-      doc.setTextColor(PDF_COLORS.muted[0], PDF_COLORS.muted[1], PDF_COLORS.muted[2]);
-      doc.text("Everyone paid this month.", 14, y);
-    }
-
-    pdfFooterNote(doc, "Generated from the Monthly History tab of the Live Dashboard.");
-    doc.save(`monthly_report_${historyGradeFilter}_${row[col.year]}_${row[col.month]}.pdf`);
-  }
-
-  /* ---------- Startup: Restore saved theme and language ---------- */
-  setTheme(currentTheme);
-  setLanguage(currentLang);
-  applySidebarState();
-
-  loadDashboard();
-  autoBackfillMissedMonth();
+  setState("idle");
 </script>
-  async function searchStudent(){
-
-    const keyword=document
-        .getElementById("parentSearch")
-        .value
-        .trim();
-
-    if(!keyword)return;
-
-    document.getElementById("parentError").innerHTML="";
-
-    let student=null;
-
-    const tables=[
-        "attendance_first_secondary",
-        "attendance_second_secondary",
-        "attendance_third_secondary"
-    ];
-
-    for(const table of tables){
-
-        const {data}=await supabase
-        .from(table)
-        .select("*")
-        .or(`student_id.eq.${keyword},qr_code.eq.${keyword}`)
-        .limit(1);
-
-        if(data && data.length){
-
-            student=data[0];
-
-            break;
-
-        }
-
-    }
-
-    if(!student){
-
-        document.getElementById("parentError").innerHTML=
-        "Student Not Found";
-
-        return;
-
-    }
-
-    window.currentStudent=student;
-
-    document.getElementById("parentLogin").style.display="none";
-
-    loadParentDashboard(student);
-
-}
 </body>
 </html>
