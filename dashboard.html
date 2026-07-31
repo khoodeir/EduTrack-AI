@@ -692,6 +692,12 @@
       <div class="tab history-tab" id="historyTab" data-i18n="tabHistory">📂 Monthly History</div>
     </div>
     
+    <!-- REPORTS GROUP -->
+    <div class="tab-group-label" data-group="reports" onclick="toggleGroup(this)">▼ Reports</div>
+    <div class="tab-group" data-group="reports">
+      <div class="tab reports-tab" id="reportsTab" data-i18n="tabReports">📋 Student Reports</div>
+    </div>
+    
     <!-- SETTINGS GROUP -->
     <div class="tab-group-label" data-group="settings" onclick="toggleGroup(this)">▼ Settings</div>
     <div class="tab-group" data-group="settings">
@@ -2907,6 +2913,209 @@
 
   loadDashboard();
   autoBackfillMissedMonth();
+
+  /* ============================================================
+     REPORTS TAB FUNCTIONALITY
+     ============================================================ */
+  const sampleStudents = [
+    { code: "S001", name: "أحمد محمد علي", grade: "first", studentPhone: "+20 100 123 4567", parentPhone: "+20 100 765 4321", attendance: { present: 45, absent: 5, rate: 90 }, lastAttendance: "2026-07-31", payment: { status: "paid", amount: 0, lastDate: "15-07-2026" }, exams: [{ name: "الرياضيات", score: 85, maxScore: 100, percentage: 85 }, { name: "العربية", score: 92, maxScore: 100, percentage: 92 }, { name: "العلوم", score: 78, maxScore: 100, percentage: 78 }], generatedDate: new Date().toLocaleString("ar-EG") },
+    { code: "S002", name: "فاطمة خالد حسن", grade: "second", studentPhone: "+20 100 234 5678", parentPhone: "+20 100 876 5432", attendance: { present: 42, absent: 8, rate: 84 }, lastAttendance: "2026-07-30", payment: { status: "unpaid", amount: 0, lastDate: "" }, exams: [{ name: "الرياضيات", score: 75, maxScore: 100, percentage: 75 }, { name: "العربية", score: 88, maxScore: 100, percentage: 88 }], generatedDate: new Date().toLocaleString("ar-EG") },
+    { code: "S003", name: "محمود سارة إبراهيم", grade: "third", studentPhone: "+20 100 345 6789", parentPhone: "+20 100 987 6543", attendance: { present: 48, absent: 2, rate: 96 }, lastAttendance: "2026-07-31", payment: { status: "paid", amount: 0, lastDate: "20-07-2026" }, exams: [{ name: "الرياضيات", score: 95, maxScore: 100, percentage: 95 }, { name: "العربية", score: 91, maxScore: 100, percentage: 91 }, { name: "العلوم", score: 89, maxScore: 100, percentage: 89 }, { name: "الإنجليزية", score: 87, maxScore: 100, percentage: 87 }], generatedDate: new Date().toLocaleString("ar-EG") }
+  ];
+
+  // Populate student selector
+  function populateStudentSelector() {
+    const select = document.getElementById("reportStudentSelect");
+    sampleStudents.forEach(student => {
+      const option = document.createElement("option");
+      option.value = student.code;
+      option.textContent = `${student.name} (${GRADE_LABELS[student.grade]})`;
+      select.appendChild(option);
+    });
+  }
+
+  // Update report view when student is selected
+  function updateReportView() {
+    const select = document.getElementById("reportStudentSelect");
+    const studentCode = select.value;
+    const reportDisplay = document.getElementById("reportDisplay");
+    
+    if (!studentCode) {
+      reportDisplay.style.display = "none";
+      return;
+    }
+    
+    const student = sampleStudents.find(s => s.code === studentCode);
+    if (!student) return;
+    
+    // Update student info
+    document.getElementById("reportStudentName").textContent = student.name;
+    document.getElementById("reportStudentGrade").textContent = GRADE_LABELS[student.grade];
+    document.getElementById("reportStudentPhone").textContent = student.studentPhone;
+    document.getElementById("reportParentPhone").textContent = student.parentPhone;
+    
+    // Update KPIs
+    document.getElementById("reportAttendanceRate").textContent = `${student.attendance.rate}%`;
+    document.getElementById("reportAttendanceSub").textContent = `${student.attendance.present} حاضر / ${student.attendance.absent} غياب`;
+    
+    const paymentText = student.payment.status === "paid" ? "مدفوع" : "غير مدفوع";
+    const paymentColor = student.payment.status === "paid" ? "var(--success)" : "var(--error)";
+    document.getElementById("reportPaymentStatus").textContent = paymentText;
+    document.getElementById("reportPaymentStatus").style.color = paymentColor;
+    document.getElementById("reportPaymentSub").textContent = student.payment.lastDate || "لا يوجد سجل";
+    
+    if (student.exams.length > 0) {
+      const avgScore = Math.round(student.exams.reduce((sum, e) => sum + e.percentage, 0) / student.exams.length);
+      document.getElementById("reportAverageScore").textContent = `${avgScore}%`;
+      document.getElementById("reportScoreSub").textContent = `من ${student.exams.length} امتحانات`;
+    } else {
+      document.getElementById("reportAverageScore").textContent = "–";
+      document.getElementById("reportScoreSub").textContent = "لا توجد درجات";
+    }
+    
+    // Update exams table
+    const tbody = document.getElementById("reportExamsTable");
+    if (student.exams.length > 0) {
+      tbody.innerHTML = student.exams.map(exam => `
+        <tr style="border-bottom:1px solid var(--line);">
+          <td style="padding:10px 0; color:var(--ink);">${exam.name}</td>
+          <td style="padding:10px 0; text-align:center; color:var(--ink);">${exam.score}</td>
+          <td style="padding:10px 0; text-align:center; color:var(--ink);">${exam.maxScore}</td>
+          <td style="padding:10px 0; text-align:center; color:${exam.percentage >= 60 ? "var(--success)" : "var(--error)"}; font-weight:600;">${exam.percentage}%</td>
+        </tr>
+      `).join("");
+    } else {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--muted);">No exam scores recorded</td></tr>`;
+    }
+    
+    reportDisplay.style.display = "block";
+  }
+
+  // Generate PDF for student report
+  function generateStudentReportPDF() {
+    const select = document.getElementById("reportStudentSelect");
+    const studentCode = select.value;
+    
+    if (!studentCode) {
+      alert("Please select a student first");
+      return;
+    }
+    
+    const student = sampleStudents.find(s => s.code === studentCode);
+    if (!student || !pdfLibReady()) {
+      alert("PDF library not ready");
+      return;
+    }
+    
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    const PDF_COLORS = {
+      gold: [139, 30, 30],
+      gold2: [94, 20, 20],
+      ink: [43, 43, 43],
+      success: [47, 158, 115],
+      error: [196, 72, 90],
+      muted: [124, 120, 115]
+    };
+    
+    // Header
+    doc.setFillColor(PDF_COLORS.gold2[0], PDF_COLORS.gold2[1], PDF_COLORS.gold2[2]);
+    doc.rect(0, 0, 210, 32, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(18);
+    doc.text("تقرير الطالب", 14, 16);
+    doc.setFontSize(10);
+    doc.text(`تم الإنشاء ${student.generatedDate}`, 14, 24);
+    
+    // Student Info
+    doc.setTextColor(PDF_COLORS.ink[0], PDF_COLORS.ink[1], PDF_COLORS.ink[2]);
+    doc.setFontSize(14);
+    doc.text(student.name, 14, 44);
+    doc.setFontSize(10);
+    doc.setTextColor(PDF_COLORS.muted[0], PDF_COLORS.muted[1], PDF_COLORS.muted[2]);
+    doc.text(GRADE_LABELS[student.grade], 14, 50);
+    
+    // Main Info Table
+    const tableData = [
+      ["هاتف الطالب", student.studentPhone],
+      ["هاتف الوالد", student.parentPhone],
+      ["الحضور", `${student.attendance.present} حاضر / ${student.attendance.absent} غياب (${student.attendance.rate}%)`],
+      ["آخر حضور", student.lastAttendance],
+      ["حالة الدفع", student.payment.status === "paid" ? "مدفوع" : "غير مدفوع"],
+      ["آخر دفعة", student.payment.lastDate || "—"]
+    ];
+    
+    doc.autoTable({
+      startY: 58,
+      theme: "grid",
+      head: [["الحقل", "القيمة"]],
+      body: tableData,
+      headStyles: { fillColor: PDF_COLORS.gold, textColor: 255 },
+      bodyStyles: { fontSize: 10, cellPadding: 4, lineColor: [220, 207, 195], lineWidth: 0.1 },
+      margin: { left: 14, right: 14 }
+    });
+    
+    let y = doc.lastAutoTable.finalY + 10;
+    
+    if (student.exams.length > 0) {
+      doc.setFontSize(12);
+      doc.setTextColor(PDF_COLORS.ink[0], PDF_COLORS.ink[1], PDF_COLORS.ink[2]);
+      doc.text("درجات الامتحانات", 14, y);
+      y += 4;
+      
+      const examTableData = student.exams.map(exam => [
+        exam.name,
+        exam.score.toString(),
+        exam.maxScore.toString(),
+        `${exam.percentage}%`
+      ]);
+      
+      doc.autoTable({
+        startY: y,
+        theme: "grid",
+        head: [["الامتحان", "الدرجة", "من", "النسبة"]],
+        body: examTableData,
+        headStyles: { fillColor: PDF_COLORS.gold, textColor: 255 },
+        bodyStyles: { fontSize: 10, cellPadding: 4, lineColor: [220, 207, 195], lineWidth: 0.1 },
+        margin: { left: 14, right: 14 }
+      });
+    }
+    
+    const filename = `${student.name.replace(/\s+/g, "_")}_report.pdf`;
+    doc.save(filename);
+  }
+
+  // Tab switching logic
+  document.addEventListener("DOMContentLoaded", function() {
+    // Add click handler for reports tab
+    const reportsTab = document.getElementById("reportsTab");
+    if (reportsTab) {
+      reportsTab.addEventListener("click", function() {
+        // Hide all views
+        document.getElementById("dashboardView").style.display = "none";
+        document.getElementById("examsView").style.display = "none";
+        document.getElementById("historyView").style.display = "none";
+        document.getElementById("settingsView").style.display = "none";
+        
+        // Show reports view
+        document.getElementById("reportsView").style.display = "block";
+        
+        // Update active tab
+        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+        reportsTab.classList.add("active");
+        
+        // Populate student selector on first view
+        if (document.getElementById("reportStudentSelect").children.length === 1) {
+          populateStudentSelector();
+        }
+      });
+    }
+  });
+
+  // Initialize on page load
+  populateStudentSelector();
+
 </script>
 </body>
 </html>
