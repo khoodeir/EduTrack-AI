@@ -736,6 +736,7 @@
   </div>
 
   <div class="toolbar">
+    <button type="button" class="tool-btn" onclick="goBack()"><span>↩️</span> <span data-i18n="btn_back">Back</span></button>
     <button type="button" class="tool-btn" onclick="window.location.href='student_search.html'"><span>🔍</span> <span data-i18n="btn_search">Search</span></button>
   </div>
 
@@ -952,6 +953,7 @@
       title_logout:"Log out", title_settings:"Settings",
       eyebrow_scanner:"Live scanner", title_app:"Student Attendance System",
       btn_start_session:"Start Session", btn_search:"Search", btn_exam:"Exam", btn_dash:"Dash",
+      btn_start_session:"Start Session", btn_search:"Search", btn_back:"Back", btn_exam:"Exam", btn_dash:"Dash",
       mode_attendance:"Attendance", mode_payment:"Payment",
       label_grade:"Grade Level", label_month:"Month", label_amount:"Amount (EGP)",
       grade_lock_hint:"End the session to change grade level",
@@ -998,6 +1000,7 @@
       title_logout:"تسجيل الخروج", title_settings:"الإعدادات",
       eyebrow_scanner:"الماسح المباشر", title_app:"نظام حضور الطلاب",
       btn_start_session:"بدء الجلسة", btn_search:"بحث", btn_exam:"الامتحان", btn_dash:"لوحة",
+      btn_start_session:"بدء الجلسة", btn_search:"بحث", btn_back:"رجوع", btn_exam:"الامتحان", btn_dash:"لوحة",
       mode_attendance:"الحضور", mode_payment:"الدفع",
       label_grade:"المرحلة الدراسية", label_month:"الشهر", label_amount:"المبلغ (جنيه)",
       grade_lock_hint:"أنهِ الجلسة لتغيير المرحلة الدراسية",
@@ -1064,6 +1067,9 @@
     });
 
     renderLangButtons();
+    function goBack(){
+  window.history.back();
+}
     renderGradeOptions();
     if(!sessionActive) renderSessionBar();
     else renderSessionBar();
