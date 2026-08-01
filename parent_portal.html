@@ -54,6 +54,22 @@
     box-shadow:0 4px 10px rgba(107,66,38,0.18);
   }
 
+  /* Back-to-home button (top, opposite corner from language switcher) */
+  .back-top-btn{
+    position:absolute; top:0; z-index:5;
+    display:inline-flex; align-items:center; gap:6px;
+    height:auto; padding:8px 14px; border-radius:11px;
+    background:var(--card); border:1px solid var(--line); color:var(--ink);
+    font-family:inherit; font-weight:700; font-size:12px;
+    cursor:pointer; box-shadow:var(--shadow-sm); text-decoration:none;
+    transition:all .15s ease;
+  }
+  [dir="rtl"] .back-top-btn{ right:0; left:auto; }
+  [dir="ltr"] .back-top-btn{ left:0; right:auto; }
+  .back-top-btn:hover{ box-shadow:var(--shadow-md); transform:translateY(-1px); color:var(--ink); }
+  .back-top-btn svg{ width:16px; height:16px; transform:scaleX(-1); flex-shrink:0; }
+  [dir="rtl"] .back-top-btn svg{ transform:none; }
+
   /* Header */
   .topbar{ display:flex; align-items:center; gap:14px; margin-bottom:28px; justify-content:center; text-align:center; flex-direction:column; padding-top:6px; }
   .brand-mark{
@@ -219,12 +235,20 @@
     .kpi-grid{ grid-template-columns:repeat(2,1fr); }
     .two-col, .contact-grid{ grid-template-columns:1fr; }
     .lang-switch{ position:static; margin-bottom:12px; justify-content:center; display:flex; }
+    .back-top-btn{ position:static; display:inline-flex; margin-bottom:12px; }
   }
 </style>
 </head>
 <body>
 
 <div class="wrap">
+
+  <a class="back-top-btn" href="index.html">
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span data-i18n="backToHome">رجوع</span>
+  </a>
 
   <div class="lang-switch" id="langSwitch">
     <button type="button" data-lang="ar" onclick="setLanguage('ar')">العربية</button>
@@ -392,6 +416,7 @@
   const I18N = {
     ar: {
       title: "بوابة ولي الأمر", subtitle: "اطّلع على تقرير الحضور والدرجات والمدفوعات لابنك",
+      backToHome: "رجوع",
       searchLabel: "رقم هاتف الطالب / رقم هاتف ولي الأمر / كود QR",
       searchPlaceholder: "اكتب الرقم أو كود QR هنا…",
       scanBtn: "مسح QR", searchBtn: "بحث",
@@ -418,6 +443,7 @@
     },
     en: {
       title: "Parent Portal", subtitle: "View your child's attendance, grades, and payment report",
+      backToHome: "Back",
       searchLabel: "Student phone / Parent phone / QR code",
       searchPlaceholder: "Type the number or QR code here…",
       scanBtn: "Scan QR", searchBtn: "Search",
