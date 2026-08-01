@@ -257,22 +257,22 @@
   .end-session-btn:active{ transform:translateY(0) scale(0.96); }
 
   .toolbar{
-    display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:20px;
+    display:grid; grid-template-columns:1fr; gap:10px; margin-bottom:20px;
     margin-top:20px;
   }
   .tool-btn{
     position:relative;
-    padding:13px 8px 11px; border-radius:10px;
+    padding:14px 16px; border-radius:12px;
     border:1px solid var(--line);
     background:var(--field); color:var(--gold-2);
-    font-family:'Manrope',sans-serif; font-size:11px; font-weight:700;
-    text-transform:uppercase; letter-spacing:0.02em;
+    font-family:'Manrope',sans-serif; font-size:14px; font-weight:700;
+    letter-spacing:0.01em;
     cursor:pointer; transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
-    display:flex; flex-direction:column; align-items:center; gap:6px;
+    display:flex; flex-direction:row; align-items:center; justify-content:center; gap:8px;
     box-shadow:0 1px 0 var(--line), 0 4px 10px rgba(24,30,18,0.05);
     overflow:hidden;
   }
-  html[dir="rtl"] .tool-btn{ font-family:'Tajawal',sans-serif; text-transform:none; }
+  html[dir="rtl"] .tool-btn{ font-family:'Tajawal',sans-serif; }
   .tool-btn span:first-child{ font-size:17px; line-height:1; }
   .tool-btn::after{
     content:""; position:absolute; left:14%; right:14%; bottom:0; height:2px;
@@ -737,13 +737,6 @@
 
   <div class="toolbar">
     <button type="button" class="tool-btn" onclick="window.location.href='student_search.html'"><span>🔍</span> <span data-i18n="btn_search">Search</span></button>
-    <button
-  type="button"
-  class="tool-btn"
-  onclick="window.location.href='https://khoodeir.github.io/EduTrack-AI/Manage_exams.html'">
-  <span>📝</span> <span data-i18n="btn_exam">Exam</span>
- </button>
-    <button type="button" class="tool-btn" onclick="window.location.href='dashboard.html'"><span>📊</span> <span data-i18n="btn_dash">Dashboard</span></button>
   </div>
 
   <div class="mode-toggle">
