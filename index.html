@@ -19,6 +19,9 @@
 <link rel="prefetch" href="dashboard.html">
 <link rel="prefetch" href="parent_portal.html">
 <link rel="prefetch" href="scanner.html">
+<link rel="prefetch" href="student_search.html">
+<link rel="prefetch" href="Manage_exams.html">
+<link rel="prefetch" href="Student_registration.html">
 <style>
   /*
     Design: continues "The Register" — the same ledger, ink and brass-stamp
@@ -36,6 +39,8 @@
     --gold-2:#5E1414;
     --gold-soft:rgba(139,30,30,0.08);
     --gold-soft-2:rgba(139,30,30,0.14);
+    --success:#2F9E73;
+    --success-soft:rgba(47,158,115,0.14);
     --error:#C4485A;
     --error-soft:rgba(196,72,90,0.14);
     --on-accent:#ffffff;
@@ -54,6 +59,8 @@
     --gold-2:#E7B4A9;
     --gold-soft:rgba(217,123,107,0.14);
     --gold-soft-2:rgba(217,123,107,0.22);
+    --success:#5FC69A;
+    --success-soft:rgba(95,198,154,0.16);
     --error:#E48A96;
     --error-soft:rgba(228,138,150,0.16);
     --on-accent:#221312;
@@ -76,9 +83,10 @@
   [dir="rtl"] body{ font-family:'Cairo',sans-serif; }
 
   .topbar{
-    width:100%; max-width:920px; display:flex; justify-content:flex-end;
+    width:100%; max-width:920px; display:flex; justify-content:space-between; align-items:center;
     gap:10px; margin-bottom:6px;
   }
+  .topbar-left{ display:flex; align-items:center; gap:8px; }
   .icon-toggle-btn{
     display:inline-flex; align-items:center; justify-content:center; gap:6px;
     height:38px; padding:0 14px; border-radius:10px;
@@ -110,16 +118,21 @@
   [dir="rtl"] h1{ font-family:'Cairo',serif; letter-spacing:0; }
   .subtitle{ color:var(--muted); font-size:15px; max-width:420px; margin:0 auto; line-height:1.6; }
 
-  .roles{
+  .roles, .hub-grid{
     width:100%; max-width:920px; display:grid;
     grid-template-columns:repeat(3,1fr); gap:18px;
   }
-  @media (max-width:760px){ .roles{ grid-template-columns:1fr; max-width:420px; } }
+  .hub-grid{ grid-template-columns:repeat(4,1fr); }
+  @media (max-width:760px){
+    .roles{ grid-template-columns:1fr; max-width:420px; }
+    .hub-grid{ grid-template-columns:1fr 1fr; max-width:520px; }
+  }
 
   .role-card{
     position:relative; background:var(--card); border:1px solid var(--line);
     border-radius:16px; padding:28px 22px 24px; text-align:center;
-    cursor:pointer; box-shadow:var(--shadow-sm);
+    cursor:pointer; box-shadow:var(--shadow-sm); text-decoration:none; color:inherit;
+    display:block;
     transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
   }
   .role-card::before{
@@ -149,12 +162,28 @@
   [dir="rtl"] .role-card h2{ font-family:'Cairo',serif; }
   .role-card p{ font-size:12.5px; color:var(--muted); margin:0; line-height:1.55; }
 
+  .hub-grid .role-card{ padding:24px 16px 20px; }
+  .hub-grid .role-icon{ width:44px; height:44px; }
+  .hub-grid .role-icon svg{ width:20px; height:20px; }
+  .hub-grid .role-card h2{ font-size:18px; }
+
+  .hub-actions{ display:flex; gap:14px; margin-top:26px; align-items:center; flex-wrap:wrap; justify-content:center; }
+  .link-btn{
+    background:none; border:none; cursor:pointer; color:var(--muted);
+    font-family:inherit; font-size:12.5px; font-weight:700; text-decoration:underline;
+    text-underline-offset:3px; padding:4px;
+  }
+  .link-btn:hover{ color:var(--gold); }
+
   .footer{
     margin-top:40px; font-size:11.5px; color:var(--muted);
     letter-spacing:0.04em;
   }
 
-  /* Password overlay (teacher) */
+  #hubScreen{ display:none; width:100%; }
+  #hubScreen .hero{ margin-bottom:28px; }
+
+  /* Overlays (password / change-password) */
   .overlay{
     position:fixed; inset:0; background:rgba(20,15,13,0.55);
     display:none; align-items:center; justify-content:center; padding:20px;
@@ -180,11 +209,12 @@
     font-family:inherit; outline:none;
   }
   .field input:focus{ border-color:var(--gold); box-shadow:0 0 0 3px var(--gold-soft); }
-  .error-text{
-    font-size:12px; color:var(--error); background:var(--error-soft);
-    border-radius:8px; padding:8px 10px; margin-bottom:12px; display:none;
+  .msg-text{
+    font-size:12px; border-radius:8px; padding:8px 10px; margin-bottom:12px; display:none;
   }
-  .error-text.show{ display:block; }
+  .msg-text.show{ display:block; }
+  .msg-text.error{ color:var(--error); background:var(--error-soft); }
+  .msg-text.success{ color:var(--success); background:var(--success-soft); }
   .btn-row{ display:flex; gap:10px; }
   .btn{
     flex:1; height:44px; border-radius:10px; border:none; cursor:pointer;
@@ -201,61 +231,149 @@
 <body>
 
   <div class="topbar">
-    <button class="icon-toggle-btn" id="langBtn" onclick="toggleLanguage()">EN</button>
-    <button class="icon-toggle-btn" id="themeBtn" onclick="toggleTheme()">🌙</button>
-  </div>
-
-  <div class="hero">
-    <div class="brand-mark">
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M4 19V9.5L12 4L20 9.5V19" stroke="#ffffff" stroke-width="1.8" stroke-linejoin="round"/>
-        <path d="M9 19V13H15V19" stroke="#ffffff" stroke-width="1.8" stroke-linejoin="round"/>
-      </svg>
-    </div>
-    <div class="eyebrow">Milestones Group</div>
-    <h1 data-i18n="title">أهلاً بيك، مين حضرتك؟</h1>
-    <p class="subtitle" data-i18n="subtitle">اختر دورك للمتابعة إلى الصفحة المناسبة لك</p>
-  </div>
-
-  <div class="roles">
-    <div class="role-card" onclick="selectRole('teacher', this)">
-      <div class="role-icon">
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 3L1 8l11 5 9-4.09V17h2V8L12 3z" fill="currentColor"/>
-          <path d="M5 10.18V14c0 1.86 3.13 4 7 4s7-2.14 7-4v-3.82l-7 3.18-7-3.18z" fill="currentColor"/>
-        </svg>
-      </div>
-      <h2 data-i18n="teacherTitle">المدرس</h2>
-      <p data-i18n="teacherDesc">دخول كامل للوحة التحكم والإدارة</p>
-    </div>
-
-    <div class="role-card" onclick="selectRole('guardian', this)">
-      <div class="role-icon">
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M4 19V9.5L12 4L20 9.5V19" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-          <path d="M9 19V13H15V19" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-        </svg>
-      </div>
-      <h2 data-i18n="guardianTitle">ولي الأمر</h2>
-      <p data-i18n="guardianDesc">تابع تقرير ابنك: الحضور والدرجات والمدفوعات</p>
-    </div>
-
-    <div class="role-card" onclick="selectRole('assistant', this)">
-      <div class="role-icon">
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="3" y="3" width="7" height="7" rx="1.2" stroke="currentColor" stroke-width="1.8"/>
-          <rect x="14" y="3" width="7" height="7" rx="1.2" stroke="currentColor" stroke-width="1.8"/>
-          <rect x="3" y="14" width="7" height="7" rx="1.2" stroke="currentColor" stroke-width="1.8"/>
-          <path d="M14 14h3v3h-3zM18 18h3v3h-3zM18 14h3M14 18v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-        </svg>
-      </div>
-      <h2 data-i18n="assistantTitle">المساعد</h2>
-      <p data-i18n="assistantDesc">تسجيل حضور الطلاب عن طريق المسح</p>
+    <div class="topbar-left"></div>
+    <div style="display:flex; gap:10px;">
+      <button class="icon-toggle-btn" id="langBtn" onclick="toggleLanguage()">EN</button>
+      <button class="icon-toggle-btn" id="themeBtn" onclick="toggleTheme()">🌙</button>
     </div>
   </div>
 
-  <div class="footer" data-i18n="footer">بدعم من Milestones Group</div>
+  <!-- ROLE SELECTION SCREEN -->
+  <div id="roleScreen">
+    <div class="hero">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 19V9.5L12 4L20 9.5V19" stroke="#ffffff" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M9 19V13H15V19" stroke="#ffffff" stroke-width="1.8" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="eyebrow">Milestones Group</div>
+      <h1 data-i18n="title">أهلاً بيك، مين حضرتك؟</h1>
+      <p class="subtitle" data-i18n="subtitle">اختر دورك للمتابعة إلى الصفحة المناسبة لك</p>
+    </div>
 
+    <div class="roles">
+      <div class="role-card" onclick="selectRole('teacher', this)">
+        <div class="role-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 3L1 8l11 5 9-4.09V17h2V8L12 3z" fill="currentColor"/>
+            <path d="M5 10.18V14c0 1.86 3.13 4 7 4s7-2.14 7-4v-3.82l-7 3.18-7-3.18z" fill="currentColor"/>
+          </svg>
+        </div>
+        <h2 data-i18n="teacherTitle">المدرس</h2>
+        <p data-i18n="teacherDesc">دخول كامل للوحة التحكم والإدارة</p>
+      </div>
+
+      <div class="role-card" onclick="selectRole('guardian', this)">
+        <div class="role-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 19V9.5L12 4L20 9.5V19" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            <path d="M9 19V13H15V19" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h2 data-i18n="guardianTitle">ولي الأمر</h2>
+        <p data-i18n="guardianDesc">تابع تقرير ابنك: الحضور والدرجات والمدفوعات</p>
+      </div>
+
+      <div class="role-card" onclick="selectRole('assistant', this)">
+        <div class="role-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3" y="3" width="7" height="7" rx="1.2" stroke="currentColor" stroke-width="1.8"/>
+            <rect x="14" y="3" width="7" height="7" rx="1.2" stroke="currentColor" stroke-width="1.8"/>
+            <rect x="3" y="14" width="7" height="7" rx="1.2" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M14 14h3v3h-3zM18 18h3v3h-3zM18 14h3M14 18v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h2 data-i18n="assistantTitle">المساعد</h2>
+        <p data-i18n="assistantDesc">تسجيل حضور الطلاب عن طريق المسح</p>
+      </div>
+    </div>
+
+    <div class="footer" data-i18n="footer">بدعم من Milestones Group</div>
+  </div>
+
+  <!-- TEACHER HUB SCREEN (shown after correct password) -->
+  <div id="hubScreen">
+    <div class="hero">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 3L1 8l11 5 9-4.09V17h2V8L12 3z" fill="#ffffff"/>
+          <path d="M5 10.18V14c0 1.86 3.13 4 7 4s7-2.14 7-4v-3.82l-7 3.18-7-3.18z" fill="#ffffff"/>
+        </svg>
+      </div>
+      <div class="eyebrow" data-i18n="hubEyebrow">المدرس</div>
+      <h1 data-i18n="hubTitle">إيه اللي عايز تعمله؟</h1>
+      <p class="subtitle" data-i18n="hubSubtitle">اختر الأداة اللي محتاجها دلوقتي</p>
+    </div>
+
+    <div class="hub-grid">
+      <a class="role-card" href="dashboard.html">
+        <div class="role-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 20V10M11 20V4M18 20v-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h2 data-i18n="hubDash">لوحة التحكم</h2>
+        <p data-i18n="hubDashDesc">نظرة حية على المركز</p>
+      </a>
+
+      <a class="role-card" href="student_search.html">
+        <div class="role-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M20 20l-4.7-4.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h2 data-i18n="hubSearch">بحث الطلاب</h2>
+        <p data-i18n="hubSearchDesc">دوّر على أي طالب</p>
+      </a>
+
+      <a class="role-card" href="Manage_exams.html">
+        <div class="role-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="5" y="3" width="14" height="18" rx="2" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M9 8h6M9 12h6M9 16h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h2 data-i18n="hubExams">إدارة الامتحانات</h2>
+        <p data-i18n="hubExamsDesc">أضف امتحانات ودرجات</p>
+      </a>
+
+      <a class="role-card" href="Student_registration.html">
+        <div class="role-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="10" cy="8" r="3.3" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M4 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M18 8v5M15.5 10.5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h2 data-i18n="hubRegister">تسجيل طالب</h2>
+        <p data-i18n="hubRegisterDesc">ضيف طالب جديد</p>
+      </a>
+
+      <a class="role-card" href="scanner.html">
+        <div class="role-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3" y="3" width="7" height="7" rx="1.2" stroke="currentColor" stroke-width="1.8"/>
+            <rect x="14" y="3" width="7" height="7" rx="1.2" stroke="currentColor" stroke-width="1.8"/>
+            <rect x="3" y="14" width="7" height="7" rx="1.2" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M14 14h3v3h-3zM18 18h3v3h-3zM18 14h3M14 18v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h2 data-i18n="hubScanner">ماسح الحضور</h2>
+        <p data-i18n="hubScannerDesc">سجّل حضور طالب</p>
+      </a>
+    </div>
+
+    <div class="hub-actions">
+      <button class="link-btn" onclick="openChangePasswordOverlay()" data-i18n="changePasswordLink">تغيير كلمة المرور</button>
+      <button class="link-btn" onclick="logoutTeacher()" data-i18n="logoutLink">تسجيل خروج</button>
+    </div>
+
+    <div class="footer" data-i18n="footer">بدعم من Milestones Group</div>
+  </div>
+
+  <!-- Teacher login overlay -->
   <div class="overlay" id="teacherOverlay">
     <div class="auth-card">
       <div class="role-icon" style="margin-inline:auto;">
@@ -270,7 +388,7 @@
         <label for="teacherPassword" data-i18n="passwordLabel">كلمة المرور</label>
         <input type="password" id="teacherPassword" autocomplete="current-password" onkeydown="if(event.key==='Enter') submitTeacherPassword()">
       </div>
-      <div class="error-text" id="teacherError" data-i18n="wrongPassword">كلمة المرور غير صحيحة</div>
+      <div class="msg-text error" id="teacherError" data-i18n="wrongPassword">كلمة المرور غير صحيحة</div>
       <div class="btn-row">
         <button class="btn btn-ghost" onclick="closeTeacherOverlay()" data-i18n="cancel">إلغاء</button>
         <button class="btn btn-primary" onclick="submitTeacherPassword()" data-i18n="enter">دخول</button>
@@ -278,9 +396,39 @@
     </div>
   </div>
 
+  <!-- Change password overlay -->
+  <div class="overlay" id="changePasswordOverlay">
+    <div class="auth-card">
+      <h3 data-i18n="changePasswordTitle">تغيير كلمة المرور</h3>
+      <div class="hint" data-i18n="changePasswordHint">هتتحفظ على المتصفح ده بس</div>
+      <div class="field">
+        <label for="currentPassword" data-i18n="currentPasswordLabel">كلمة المرور الحالية</label>
+        <input type="password" id="currentPassword" autocomplete="current-password">
+      </div>
+      <div class="field">
+        <label for="newPassword" data-i18n="newPasswordLabel">كلمة المرور الجديدة</label>
+        <input type="password" id="newPassword" autocomplete="new-password">
+      </div>
+      <div class="field">
+        <label for="confirmPassword" data-i18n="confirmPasswordLabel">تأكيد كلمة المرور</label>
+        <input type="password" id="confirmPassword" autocomplete="new-password" onkeydown="if(event.key==='Enter') submitChangePassword()">
+      </div>
+      <div class="msg-text error" id="changePasswordError"></div>
+      <div class="msg-text success" id="changePasswordSuccess" data-i18n="passwordChanged">تم تغيير كلمة المرور بنجاح</div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="closeChangePasswordOverlay()" data-i18n="cancel">إلغاء</button>
+        <button class="btn btn-primary" onclick="submitChangePassword()" data-i18n="save">حفظ</button>
+      </div>
+    </div>
+  </div>
+
 <script>
-  // ---- change this to set the teacher password ----
-  const TEACHER_PASSWORD = "milestones2026";
+  // First-time default teacher password (used only if none has been set yet on this browser).
+  const DEFAULT_TEACHER_PASSWORD = "milestones2026";
+
+  function getTeacherPassword(){
+    return localStorage.getItem('mgTeacherPassword') || DEFAULT_TEACHER_PASSWORD;
+  }
 
   const translations = {
     ar:{
@@ -293,7 +441,21 @@
       footer:"بدعم من Milestones Group",
       teacherAuthTitle:"دخول المدرس", teacherAuthHint:"من فضلك أدخل كلمة المرور للمتابعة",
       passwordLabel:"كلمة المرور", wrongPassword:"كلمة المرور غير صحيحة",
-      cancel:"إلغاء", enter:"دخول"
+      cancel:"إلغاء", enter:"دخول",
+      hubEyebrow:"المدرس", hubTitle:"إيه اللي عايز تعمله؟", hubSubtitle:"اختر الأداة اللي محتاجها دلوقتي",
+      hubDash:"لوحة التحكم", hubDashDesc:"نظرة حية على المركز",
+      hubSearch:"بحث الطلاب", hubSearchDesc:"دوّر على أي طالب",
+      hubExams:"إدارة الامتحانات", hubExamsDesc:"أضف امتحانات ودرجات",
+      hubRegister:"تسجيل طالب", hubRegisterDesc:"ضيف طالب جديد",
+      hubScanner:"ماسح الحضور", hubScannerDesc:"سجّل حضور طالب",
+      changePasswordLink:"تغيير كلمة المرور", logoutLink:"تسجيل خروج",
+      changePasswordTitle:"تغيير كلمة المرور", changePasswordHint:"هتتحفظ على المتصفح ده بس",
+      currentPasswordLabel:"كلمة المرور الحالية", newPasswordLabel:"كلمة المرور الجديدة",
+      confirmPasswordLabel:"تأكيد كلمة المرور", passwordChanged:"تم تغيير كلمة المرور بنجاح",
+      save:"حفظ",
+      errCurrentWrong:"كلمة المرور الحالية غير صحيحة",
+      errMismatch:"كلمة المرور الجديدة وتأكيدها مش متطابقين",
+      errTooShort:"لازم تكون كلمة المرور 4 حروف/أرقام على الأقل"
     },
     en:{
       pageTitle:"Sign In | Milestones Group",
@@ -305,7 +467,21 @@
       footer:"Powered by Milestones Group",
       teacherAuthTitle:"Teacher sign in", teacherAuthHint:"Enter your password to continue",
       passwordLabel:"Password", wrongPassword:"Incorrect password",
-      cancel:"Cancel", enter:"Enter"
+      cancel:"Cancel", enter:"Enter",
+      hubEyebrow:"Teacher", hubTitle:"What do you need?", hubSubtitle:"Pick the tool you need right now",
+      hubDash:"Dashboard", hubDashDesc:"Live view of the center",
+      hubSearch:"Student Search", hubSearchDesc:"Look up any student",
+      hubExams:"Manage Exams", hubExamsDesc:"Add exams and grades",
+      hubRegister:"Register Student", hubRegisterDesc:"Add a new student",
+      hubScanner:"Attendance Scanner", hubScannerDesc:"Check a student in",
+      changePasswordLink:"Change password", logoutLink:"Log out",
+      changePasswordTitle:"Change password", changePasswordHint:"Saved to this browser only",
+      currentPasswordLabel:"Current password", newPasswordLabel:"New password",
+      confirmPasswordLabel:"Confirm password", passwordChanged:"Password changed successfully",
+      save:"Save",
+      errCurrentWrong:"Current password is incorrect",
+      errMismatch:"New password and confirmation don't match",
+      errTooShort:"Password must be at least 4 characters"
     }
   };
 
@@ -349,11 +525,24 @@
     }
     if(role === 'teacher'){
       if(sessionStorage.getItem('mgTeacherOk') === '1'){
-        setTimeout(()=>{ window.location.href = 'dashboard.html'; }, 180);
+        setTimeout(showHub, 180);
         return;
       }
       setTimeout(openTeacherOverlay, 180);
     }
+  }
+
+  function showHub(){
+    document.getElementById('roleScreen').style.display = 'none';
+    document.getElementById('hubScreen').style.display = 'block';
+  }
+  function showRoleScreen(){
+    document.getElementById('hubScreen').style.display = 'none';
+    document.getElementById('roleScreen').style.display = 'block';
+  }
+  function logoutTeacher(){
+    sessionStorage.removeItem('mgTeacherOk');
+    showRoleScreen();
   }
 
   function openTeacherOverlay(){
@@ -367,15 +556,51 @@
   }
   function submitTeacherPassword(){
     const val = document.getElementById('teacherPassword').value;
-    if(val === TEACHER_PASSWORD){
+    if(val === getTeacherPassword()){
       sessionStorage.setItem('mgTeacherOk','1');
-      window.location.href = 'dashboard.html';
+      closeTeacherOverlay();
+      showHub();
     } else {
       document.getElementById('teacherError').classList.add('show');
       const card = document.querySelector('#teacherOverlay .auth-card');
       card.style.animation = 'none';
       requestAnimationFrame(()=>{ card.style.animation = 'stamp .38s ease'; });
     }
+  }
+
+  function openChangePasswordOverlay(){
+    document.getElementById('currentPassword').value = '';
+    document.getElementById('newPassword').value = '';
+    document.getElementById('confirmPassword').value = '';
+    document.getElementById('changePasswordError').classList.remove('show');
+    document.getElementById('changePasswordSuccess').classList.remove('show');
+    document.getElementById('changePasswordOverlay').classList.add('open');
+    document.getElementById('currentPassword').focus();
+  }
+  function closeChangePasswordOverlay(){
+    document.getElementById('changePasswordOverlay').classList.remove('open');
+  }
+  function submitChangePassword(){
+    const dict = translations[currentLang];
+    const cur = document.getElementById('currentPassword').value;
+    const next = document.getElementById('newPassword').value;
+    const confirm = document.getElementById('confirmPassword').value;
+    const errEl = document.getElementById('changePasswordError');
+    const okEl = document.getElementById('changePasswordSuccess');
+    errEl.classList.remove('show'); okEl.classList.remove('show');
+
+    if(cur !== getTeacherPassword()){
+      errEl.textContent = dict.errCurrentWrong; errEl.classList.add('show'); return;
+    }
+    if(next.length < 4){
+      errEl.textContent = dict.errTooShort; errEl.classList.add('show'); return;
+    }
+    if(next !== confirm){
+      errEl.textContent = dict.errMismatch; errEl.classList.add('show'); return;
+    }
+    localStorage.setItem('mgTeacherPassword', next);
+    okEl.classList.add('show');
+    setTimeout(closeChangePasswordOverlay, 1200);
   }
 
   // init
