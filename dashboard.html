@@ -1077,7 +1077,11 @@
      ============================================================ */
   const SUPABASE_URL = "https://evbjulsahncllewwvlxp.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2Ymp1bHNhaG5jbGxld3d2bHhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2NzE5MjUsImV4cCI6MjA5OTI0NzkyNX0.Xg9sU6ZenUU3kC2RNIbvZmK19KvE28MM2oyGcKNn8UA";
-  const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  global: {
+    fetch: (url, options = {}) => fetch(url, { ...options, cache: "no-store" })
+  }
+});
 
   // Change only the right-hand side here if your real column/table names differ.
   const SCHEMA = {
