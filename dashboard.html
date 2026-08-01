@@ -276,7 +276,7 @@
   .content.show{ display:block; }
 
   /* ===== KPI cards ===== */
-  .kpi-grid{ display:grid; grid-template-columns:repeat(5,1fr); gap:16px; margin-bottom:28px; }
+  .kpi-grid{ display:grid; grid-template-columns:repeat(6,1fr); gap:16px; margin-bottom:28px; }
   .kpi-card{
     background:var(--paper); border:1px solid var(--line); border-radius:16px;
     padding:20px; position:relative; overflow:hidden; transition:box-shadow .18s ease, transform .18s ease;
@@ -722,6 +722,11 @@
           <div class="kpi-sub" id="kpiRevenueSub"></div>
         </div>
         <div class="kpi-card">
+          <div class="kpi-label" data-i18n="kpiCollectedToday">Collected Today</div>
+          <div class="kpi-value num" id="kpiToday">–</div>
+          <div class="kpi-sub" id="kpiTodaySub"></div>
+        </div>
+        <div class="kpi-card">
           <div class="kpi-label" data-i18n="kpiUnpaid">Unpaid</div>
           <div class="kpi-value num" id="kpiUnpaid">–</div>
           <div class="kpi-sub" id="kpiUnpaidSub"></div>
@@ -1117,6 +1122,7 @@
       brandEyebrow: "Live insights", brandTitle: "Live Dashboard", brandSub: "Attendance & payment insights",
       backBtn: "Back", refreshBtn: "Refresh data",
       kpiTotalStudents: "Total Students", kpiAttendanceRate: "Attendance Rate", kpiTotalCollected: "Total Collected",
+      kpiCollectedToday: "Collected Today",
       kpiUnpaid: "Unpaid", kpiCollectionRate: "Collection Rate", kpiOfAmountsDue: "of amounts due",
       secAttByGrade: "Attendance Rate by Grade", secAttVsPerf: "Attendance vs. Performance", secGradePerformance: "Grade Performance Breakdown", tagLive: "Live",
       secPaymentStatus: "Payment Status",
@@ -1168,6 +1174,7 @@
       avgOfStudents: "avg of", students_: "students", noAttendanceData: "no attendance data",
       studentsPaid: "students paid",
       outOf: "out of", noPaymentRecords: "no payment records",
+      noPaymentsToday: "no payments recorded today",
       lastUpdated: "Last updated:",
       exams_: "exams", exam_: "exam"
     },
@@ -1177,6 +1184,7 @@
       brandEyebrow: "بيانات لحظية", brandTitle: "لوحة المتابعة", brandSub: "بيانات الحضور والمدفوعات",
       backBtn: "رجوع", refreshBtn: "تحديث البيانات",
       kpiTotalStudents: "إجمالي الطلاب", kpiAttendanceRate: "نسبة الحضور", kpiTotalCollected: "إجمالي التحصيل",
+      kpiCollectedToday: "المحصل اليوم",
       kpiUnpaid: "غير مدفوع", kpiCollectionRate: "نسبة التحصيل", kpiOfAmountsDue: "من المبالغ المستحقة",
       secAttByGrade: "نسبة الحضور حسب الصف", secAttVsPerf: "الحضور مقابل الأداء", secGradePerformance: "تحليل أداء الصفوف", tagLive: "لحظي",
       secPaymentStatus: "حالة الدفع",
@@ -1228,6 +1236,7 @@
       avgOfStudents: "متوسط", students_: "طالب", noAttendanceData: "لا توجد بيانات حضور",
       studentsPaid: "طالب دفعوا",
       outOf: "من أصل", noPaymentRecords: "لا توجد سجلات دفع",
+      noPaymentsToday: "لا توجد مدفوعات اليوم",
       lastUpdated: "آخر تحديث:",
       exams_: "امتحانات", exam_: "امتحان"
     }
@@ -1389,6 +1398,18 @@ function goBack(){
     return total > 0 ? Math.round((a / total) * 100) : null;
   }
   function fmtEGP(n){ return `EGP ${Number(n || 0).toLocaleString('en-US')}`; }
+
+  /* Normalizes a stored last_payment_date value (date string or full
+     timestamp) down to a plain "YYYY-MM-DD" so it can be compared
+     against today's date regardless of how Supabase returns it. */
+  function toDateOnly(value){
+    if(!value) return null;
+    const str = String(value);
+    if(/^\d{4}-\d{2}-\d{2}/.test(str)) return str.slice(0, 10);
+    const parsed = new Date(str);
+    if(isNaN(parsed.getTime())) return null;
+    return parsed.toISOString().slice(0, 10);
+  }
   
   function getScoreColor(score, opacity = 1) {
     const alpha = opacity;
@@ -1658,6 +1679,11 @@ function goBack(){
     const collectionRate = withPaymentRecord.length ? Math.round((paidStudents.length / withPaymentRecord.length) * 100) : null;
     const totalRevenue = paidStudents.reduce((sum, s) => sum + (s.amountPaid || 0), 0);
 
+    // ---- Collected today: paid students whose last payment date is today ----
+    const todayStr = toDateOnly(new Date().toISOString());
+    const paidToday = paidStudents.filter(s => toDateOnly(s.lastPaymentDate) === todayStr);
+    const todayRevenue = paidToday.reduce((sum, s) => sum + (s.amountPaid || 0), 0);
+
     document.getElementById("kpiStudents").textContent = studentsCount;
     document.getElementById("kpiStudentsSub").textContent =
       currentGrade === "all" ? "across all grades" : tGradeLabel(currentGrade);
@@ -1670,6 +1696,10 @@ function goBack(){
       (totalRevenue === 0 && paidStudents.length > 0)
         ? "⚠️ paid students exist but amount_paid = 0 — check payment workflow"
         : `${paidStudents.length} students paid`;
+
+    document.getElementById("kpiToday").textContent = fmtEGP(todayRevenue);
+    document.getElementById("kpiTodaySub").textContent =
+      paidToday.length ? `${paidToday.length} ${t('students_')}` : t('noPaymentsToday');
 
     document.getElementById("kpiUnpaid").textContent = unpaidStudents.length;
     document.getElementById("kpiUnpaidSub").textContent = withPaymentRecord.length ? `out of ${withPaymentRecord.length}` : "no payment records";
