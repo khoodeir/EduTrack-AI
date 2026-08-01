@@ -659,15 +659,12 @@
   </div>
   <div class="top-actions">
     <span class="updated-note" id="updatedNote"></span>
-    <a class="scanner-btn" href="index.html">
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/>
-        <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/>
-        <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/>
-        <path d="M14 14h7v7h-7z" stroke="currentColor" stroke-width="1.8"/>
-      </svg>
-      <span data-i18n="scannerBtn">Attendance Scanner</span>
-    </a>
+   <button class="scanner-btn" onclick="goBack()" style="border:none;">
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  <span data-i18n="backBtn">Back</span>
+</button>
     <button class="refresh-btn" id="refreshBtn" onclick="loadDashboard()">
       <span class="spin">↻</span> <span data-i18n="refreshBtn">Refresh data</span>
     </button>
@@ -1118,7 +1115,7 @@
       tabAll: "🎓 All Grades", tabFirst: "📘 First Secondary", tabSecond: "📗 Second Secondary", tabThird: "📙 Third Secondary",
       tabExams: "📝 Exam Grades", tabHistory: "📂 Monthly History", tabSettings: "⚙️ Settings",
       brandEyebrow: "Live insights", brandTitle: "Live Dashboard", brandSub: "Attendance & payment insights",
-      scannerBtn: "Attendance Scanner", refreshBtn: "Refresh data",
+      backBtn: "Back", refreshBtn: "Refresh data",
       kpiTotalStudents: "Total Students", kpiAttendanceRate: "Attendance Rate", kpiTotalCollected: "Total Collected",
       kpiUnpaid: "Unpaid", kpiCollectionRate: "Collection Rate", kpiOfAmountsDue: "of amounts due",
       secAttByGrade: "Attendance Rate by Grade", secAttVsPerf: "Attendance vs. Performance", secGradePerformance: "Grade Performance Breakdown", tagLive: "Live",
@@ -1178,7 +1175,7 @@
       tabAll: "🎓 كل الصفوف", tabFirst: "📘 الصف الأول الثانوي", tabSecond: "📗 الصف الثاني الثانوي", tabThird: "📙 الصف الثالث الثانوي",
       tabExams: "📝 درجات الامتحانات", tabHistory: "📂 السجل الشهري", tabSettings: "⚙️ الإعدادات",
       brandEyebrow: "بيانات لحظية", brandTitle: "لوحة المتابعة", brandSub: "بيانات الحضور والمدفوعات",
-      scannerBtn: "ماسح الحضور", refreshBtn: "تحديث البيانات",
+      backBtn: "رجوع", refreshBtn: "تحديث البيانات",
       kpiTotalStudents: "إجمالي الطلاب", kpiAttendanceRate: "نسبة الحضور", kpiTotalCollected: "إجمالي التحصيل",
       kpiUnpaid: "غير مدفوع", kpiCollectionRate: "نسبة التحصيل", kpiOfAmountsDue: "من المبالغ المستحقة",
       secAttByGrade: "نسبة الحضور حسب الصف", secAttVsPerf: "الحضور مقابل الأداء", secGradePerformance: "تحليل أداء الصفوف", tagLive: "لحظي",
@@ -1270,7 +1267,14 @@
       b.classList.toggle("active", b.dataset.themeChoice === currentTheme);
     });
   }
-
+function goBack(){
+  if(document.referrer && document.referrer !== location.href){
+    history.back();
+  } else {
+    // fallback لو الصفحة اتفتحت مباشرة من غير history (رابط جديد/تاب جديد)
+    window.location.href = "index.html";
+  }
+}
   function toggleSidebar() {
     const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
     localStorage.setItem("dashSidebarCollapsed", isCollapsed);
