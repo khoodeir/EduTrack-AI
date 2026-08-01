@@ -2192,30 +2192,32 @@
     }
   }
 
-  /* ---------- Auto-backfill a missed previous month ---------------------------------------------------------------*/
+  /* ---------- Auto-finalize the previous month once the new month starts ----------
+     Runs on every dashboard load. Recomputes the LATEST numbers for the month that
+     just ended and overwrites its saved snapshot with them — even if a snapshot was
+     already saved manually (e.g. a few days early, before more payments came in).
+     This is intentionally an overwrite rather than a "skip if already saved" check,
+     so late payments/attendance recorded after an early manual save are still
+     captured before the month is archived for good.
+     Each browser only finalizes a given month once (tracked in localStorage) so it
+     doesn't keep re-overwriting with fresh numbers every time the page is opened
+     later in the new month. ---------------------------------------------------------------*/
   async function autoBackfillMissedMonth(){
     try{
-      const col = HIST_SCHEMA.col;
       const now = new Date();
       const curY = now.getFullYear(), curM = now.getMonth() + 1;
       let prevM = curM - 1, prevY = curY;
       if(prevM === 0){ prevM = 12; prevY -= 1; }
 
-      const { data, error } = await supa
-        .from(HIST_SCHEMA.table)
-        .select(`${col.year},${col.month}`)
-        .eq(col.year, prevY)
-        .eq(col.month, prevM)
-        .limit(1);
-      if(error) throw error; // table missing / no policy — just skip silently
-
-      if(data && data.length) return; // previous month already saved, nothing to do
+      const backfillKey = `dashBackfillFinalized_${prevY}_${prevM}`;
+      if(localStorage.getItem(backfillKey) === "true") return; // already finalized on this device
 
       const perGrade = await computeAllGradeSnapshots();
       await saveSnapshotForMonth(prevY, prevM, perGrade);
-      console.info(`Auto-saved a snapshot for ${monthLabel(prevY, prevM)} because it hadn't been saved before the new month started.`);
+      localStorage.setItem(backfillKey, "true");
+      console.info(`Finalized snapshot for ${monthLabel(prevY, prevM)} with the latest numbers.`);
     }catch(err){
-      console.warn("Skipped auto-backfill of previous month:", err.message || err);
+      console.warn("Skipped auto-finalize of previous month:", err.message || err);
     }
   }
 
