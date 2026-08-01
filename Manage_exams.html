@@ -287,12 +287,12 @@
   <div class="topbar-actions">
     <button class="icon-toggle-btn" id="langToggleBtn" onclick="toggleLanguage()">EN</button>
     <button class="icon-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()">🌙</button>
-    <a class="back-btn" href="index.html" id="t_back">
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
-      </svg>
-      <span id="backBtnText">ماسح الحضور</span>
-    </a>
+    <a class="back-btn" href="javascript:void(0)" id="t_back" onclick="goBack()">
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+  </svg>
+  <span id="backBtnText">رجوع</span>
+</a>
   </div>
 </div>
 
@@ -479,11 +479,7 @@
     document.getElementById("t_eyebrow").textContent = s.eyebrow;
     document.getElementById("t_title").textContent = s.title;
     document.getElementById("t_subtitle").textContent = s.subtitle;
-    document.getElementById("t_back").innerHTML = `
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
-      </svg>
-      <span>${s.back}</span>`;
+    document.getElementById("backBtnText").textContent = "رجوع";
     document.getElementById("langToggleBtn").textContent = s.langToggle;
     document.getElementById("examManageSearch").placeholder = s.searchPlaceholder;
     document.getElementById("t_addExamBtn").textContent = s.addExamBtn;
@@ -823,7 +819,13 @@
       btn.disabled = false; btn.textContent = s.saveGrades;
     }
   }
-
+function goBack(){
+  if(document.referrer && document.referrer !== window.location.href){
+    window.history.back();
+  } else {
+    window.location.href = "index.html";
+  }
+}
   // init
   applyTheme();
   applyLanguage();
