@@ -307,15 +307,12 @@
     <span class="updated-note" id="updatedNote"></span>
     <button class="icon-toggle-btn" id="langToggleBtn" onclick="toggleLang()" title="Switch language">EN</button>
     <button class="icon-toggle-btn" id="darkModeToggle" onclick="toggleDarkMode()" title="Dark mode">🌙</button>
-    <a class="scanner-btn" href="index.html">
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/>
-        <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/>
-        <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/>
-        <path d="M14 14h7v7h-7z" stroke="currentColor" stroke-width="1.8"/>
-      </svg>
-      <span id="scannerBtnText">ماسح الحضور</span>
-    </a>
+    <button class="scanner-btn" onclick="goBack()" style="border:none;">
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M19 12H5M5 12l7-7M5 12l7 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  <span id="scannerBtnText">رجوع</span>
+</button>
   </div>
 </div>
 
@@ -473,7 +470,7 @@
     en: {
       eyebrow: "Student lookup", title: "Student Search",
       subtitle: "Find a student by name or phone, per grade",
-      scannerBtn: "Attendance Scanner",
+      backBtn: "Back",
       updatedPrefix: "Last updated: ",
       gradeAll: "All Grades", gradeFirst: "First Secondary", gradeSecond: "Second Secondary", gradeThird: "Third Secondary",
       searchPlaceholder: "Search by name or phone…",
@@ -508,7 +505,7 @@
     ar: {
       eyebrow: "بحث عن طالب", title: "بحث الطلاب",
       subtitle: "ابحث عن طالب بالاسم أو رقم الهاتف، لكل صف",
-      scannerBtn: "ماسح الحضور",
+      backBtn: "رجوع",
       updatedPrefix: "آخر تحديث: ",
       gradeAll: "كل الصفوف", gradeFirst: "الصف الأول الثانوي", gradeSecond: "الصف الثاني الثانوي", gradeThird: "الصف الثالث الثانوي",
       searchPlaceholder: "ابحث بالاسم أو رقم الهاتف…",
@@ -591,7 +588,7 @@
     document.getElementById("brandEyebrow").textContent = tr.eyebrow;
     document.getElementById("brandTitle").textContent = tr.title;
     document.getElementById("brandSubtitle").textContent = tr.subtitle;
-    document.getElementById("scannerBtnText").textContent = tr.scannerBtn;
+    document.getElementById("scannerBtnText").textContent = tr.backBtn;
     document.getElementById("optGradeAll").textContent = tr.gradeAll;
     document.getElementById("optGradeFirst").textContent = tr.gradeFirst;
     document.getElementById("optGradeSecond").textContent = tr.gradeSecond;
@@ -617,7 +614,13 @@
     const updatedEl = document.getElementById("updatedNote");
     if(updatedEl.dataset.time) updatedEl.textContent = tr.updatedPrefix + updatedEl.dataset.time;
   }
-
+ function goBack(){
+  if(document.referrer && document.referrer !== location.href){
+    history.back();
+  } else {
+    window.location.href = "index.html";
+  }
+}
   function onGradeChange(){
     currentGrade = document.getElementById("gradeSelect").value;
     loadData();
