@@ -118,14 +118,19 @@
   [dir="rtl"] h1{ font-family:'Cairo',serif; letter-spacing:0; }
   .subtitle{ color:var(--muted); font-size:15px; max-width:420px; margin:0 auto; line-height:1.6; }
 
-  .roles, .hub-grid{
+  .roles{
     width:100%; max-width:920px; display:grid;
     grid-template-columns:repeat(3,1fr); gap:18px;
   }
-  .hub-grid{ grid-template-columns:repeat(4,1fr); }
+  .hub-grid{
+    width:100%; max-width:920px; display:flex; flex-wrap:wrap;
+    justify-content:center; gap:18px;
+  }
+  .hub-grid .role-card{ flex:1 1 190px; max-width:210px; }
   @media (max-width:760px){
     .roles{ grid-template-columns:1fr; max-width:420px; }
-    .hub-grid{ grid-template-columns:1fr 1fr; max-width:520px; }
+    .hub-grid{ max-width:520px; }
+    .hub-grid .role-card{ flex:1 1 150px; }
   }
 
   .role-card{
@@ -180,8 +185,8 @@
     letter-spacing:0.04em;
   }
 
-  #hubScreen{ display:none; width:100%; }
-  #hubScreen .hero{ margin-bottom:28px; }
+  #hubScreen, #assistantHubScreen{ display:none; width:100%; }
+  #hubScreen .hero, #assistantHubScreen .hero{ margin-bottom:28px; }
 
   /* Overlays (password / change-password) */
   .overlay{
@@ -373,6 +378,65 @@
     <div class="footer" data-i18n="footer">بدعم من Milestones Group</div>
   </div>
 
+  <!-- ASSISTANT HUB SCREEN -->
+  <div id="assistantHubScreen">
+    <div class="hero">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4" y="4" width="6.5" height="6.5" rx="1" stroke="#ffffff" stroke-width="1.8"/>
+          <rect x="13.5" y="4" width="6.5" height="6.5" rx="1" stroke="#ffffff" stroke-width="1.8"/>
+          <rect x="4" y="13.5" width="6.5" height="6.5" rx="1" stroke="#ffffff" stroke-width="1.8"/>
+        </svg>
+      </div>
+      <div class="eyebrow" data-i18n="assistantHubEyebrow">المساعد</div>
+      <h1 data-i18n="hubTitle">إيه اللي عايز تعمله؟</h1>
+      <p class="subtitle" data-i18n="hubSubtitle">اختر الأداة اللي محتاجها دلوقتي</p>
+    </div>
+
+    <div class="hub-grid">
+      <a class="role-card" href="scanner.html">
+        <div class="role-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3" y="3" width="7" height="7" rx="1.2" stroke="currentColor" stroke-width="1.8"/>
+            <rect x="14" y="3" width="7" height="7" rx="1.2" stroke="currentColor" stroke-width="1.8"/>
+            <rect x="3" y="14" width="7" height="7" rx="1.2" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M14 14h3v3h-3zM18 18h3v3h-3zM18 14h3M14 18v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h2 data-i18n="hubScanner">ماسح الحضور</h2>
+        <p data-i18n="hubScannerDesc">سجّل حضور طالب</p>
+      </a>
+
+      <a class="role-card" href="Manage_exams.html">
+        <div class="role-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="5" y="3" width="14" height="18" rx="2" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M9 8h6M9 12h6M9 16h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h2 data-i18n="hubExams">إدارة الامتحانات</h2>
+        <p data-i18n="hubExamsDesc">أضف امتحانات ودرجات</p>
+      </a>
+
+      <a class="role-card" href="student_search.html">
+        <div class="role-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M20 20l-4.7-4.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h2 data-i18n="hubSearch">بحث الطلاب</h2>
+        <p data-i18n="hubSearchDesc">دوّر على أي طالب</p>
+      </a>
+    </div>
+
+    <div class="hub-actions">
+      <button class="link-btn" onclick="showRoleScreen()" data-i18n="backLink">رجوع</button>
+    </div>
+
+    <div class="footer" data-i18n="footer">بدعم من Milestones Group</div>
+  </div>
+
   <!-- Teacher login overlay -->
   <div class="overlay" id="teacherOverlay">
     <div class="auth-card">
@@ -449,6 +513,7 @@
       hubRegister:"تسجيل طالب", hubRegisterDesc:"ضيف طالب جديد",
       hubScanner:"ماسح الحضور", hubScannerDesc:"سجّل حضور طالب",
       changePasswordLink:"تغيير كلمة المرور", logoutLink:"تسجيل خروج",
+      assistantHubEyebrow:"المساعد", backLink:"رجوع",
       changePasswordTitle:"تغيير كلمة المرور", changePasswordHint:"هتتحفظ على المتصفح ده بس",
       currentPasswordLabel:"كلمة المرور الحالية", newPasswordLabel:"كلمة المرور الجديدة",
       confirmPasswordLabel:"تأكيد كلمة المرور", passwordChanged:"تم تغيير كلمة المرور بنجاح",
@@ -475,6 +540,7 @@
       hubRegister:"Register Student", hubRegisterDesc:"Add a new student",
       hubScanner:"Attendance Scanner", hubScannerDesc:"Check a student in",
       changePasswordLink:"Change password", logoutLink:"Log out",
+      assistantHubEyebrow:"Assistant", backLink:"Back",
       changePasswordTitle:"Change password", changePasswordHint:"Saved to this browser only",
       currentPasswordLabel:"Current password", newPasswordLabel:"New password",
       confirmPasswordLabel:"Confirm password", passwordChanged:"Password changed successfully",
@@ -520,7 +586,7 @@
       return;
     }
     if(role === 'assistant'){
-      setTimeout(()=>{ window.location.href = 'scanner.html'; }, 180);
+      setTimeout(showAssistantHub, 180);
       return;
     }
     if(role === 'teacher'){
@@ -534,10 +600,17 @@
 
   function showHub(){
     document.getElementById('roleScreen').style.display = 'none';
+    document.getElementById('assistantHubScreen').style.display = 'none';
     document.getElementById('hubScreen').style.display = 'block';
+  }
+  function showAssistantHub(){
+    document.getElementById('roleScreen').style.display = 'none';
+    document.getElementById('hubScreen').style.display = 'none';
+    document.getElementById('assistantHubScreen').style.display = 'block';
   }
   function showRoleScreen(){
     document.getElementById('hubScreen').style.display = 'none';
+    document.getElementById('assistantHubScreen').style.display = 'none';
     document.getElementById('roleScreen').style.display = 'block';
   }
   function logoutTeacher(){
