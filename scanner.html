@@ -156,6 +156,9 @@
     position:absolute; top:18px; left:0; right:0; padding:0 22px;
     display:flex; justify-content:space-between; align-items:center;
   }
+  .header-actions-group{
+    display:flex; align-items:center; gap:8px;
+  }
   .icon-btn{
     width:38px; height:38px; border-radius:50%;
     border:1px solid var(--line);
@@ -717,7 +720,10 @@
 <div class="container" id="mainContainer" style="display:none;">
   <div class="header-actions">
     <button type="button" class="icon-btn" id="logoutBtn" onclick="handleLogout()" data-i18n-title="title_logout" title="Log out">🚪</button>
-    <button type="button" class="icon-btn" id="settingsBtn" onclick="openModal('settingsModal')" data-i18n-title="title_settings" title="Settings">⚙️</button>
+    <div class="header-actions-group">
+      <button type="button" class="icon-btn" id="backBtn" onclick="goBack()" data-i18n-title="title_back" title="Back">↩️</button>
+      <button type="button" class="icon-btn" id="settingsBtn" onclick="openModal('settingsModal')" data-i18n-title="title_settings" title="Settings">⚙️</button>
+    </div>
   </div>
 
   <div class="icon-circle">
@@ -736,7 +742,6 @@
   </div>
 
   <div class="toolbar">
-    <button type="button" class="tool-btn" onclick="goBack()"><span>↩️</span> <span data-i18n="btn_back">Back</span></button>
     <button type="button" class="tool-btn" onclick="window.location.href='student_search.html'"><span>🔍</span> <span data-i18n="btn_search">Search</span></button>
   </div>
 
@@ -919,6 +924,11 @@
     return new Date(hasTZ ? ts : ts + 'Z').getTime();
   }
 
+  // ---------- Back navigation ----------
+  function goBack(){
+    window.history.back();
+  }
+
   // ---------- Theme ----------
   const THEME_KEY = "scannerTheme";
   let currentTheme = localStorage.getItem(THEME_KEY) || "light";
@@ -950,10 +960,9 @@
 
   const I18N = {
     en: {
-      title_logout:"Log out", title_settings:"Settings",
+      title_logout:"Log out", title_settings:"Settings", title_back:"Back",
       eyebrow_scanner:"Live scanner", title_app:"Student Attendance System",
       btn_start_session:"Start Session", btn_search:"Search", btn_exam:"Exam", btn_dash:"Dash",
-      btn_start_session:"Start Session", btn_search:"Search", btn_back:"Back", btn_exam:"Exam", btn_dash:"Dash",
       mode_attendance:"Attendance", mode_payment:"Payment",
       label_grade:"Grade Level", label_month:"Month", label_amount:"Amount (EGP)",
       grade_lock_hint:"End the session to change grade level",
@@ -997,10 +1006,9 @@
       auto_resume_note:"Next scan opens automatically in {s}s"
     },
     ar: {
-      title_logout:"تسجيل الخروج", title_settings:"الإعدادات",
+      title_logout:"تسجيل الخروج", title_settings:"الإعدادات", title_back:"رجوع",
       eyebrow_scanner:"الماسح المباشر", title_app:"نظام حضور الطلاب",
       btn_start_session:"بدء الجلسة", btn_search:"بحث", btn_exam:"الامتحان", btn_dash:"لوحة",
-      btn_start_session:"بدء الجلسة", btn_search:"بحث", btn_back:"رجوع", btn_exam:"الامتحان", btn_dash:"لوحة",
       mode_attendance:"الحضور", mode_payment:"الدفع",
       label_grade:"المرحلة الدراسية", label_month:"الشهر", label_amount:"المبلغ (جنيه)",
       grade_lock_hint:"أنهِ الجلسة لتغيير المرحلة الدراسية",
@@ -1067,9 +1075,6 @@
     });
 
     renderLangButtons();
-    function goBack(){
-  window.history.back();
-}
     renderGradeOptions();
     if(!sessionActive) renderSessionBar();
     else renderSessionBar();
