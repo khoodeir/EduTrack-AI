@@ -1274,7 +1274,6 @@
 
     const frame = document.getElementById("scanFrame");
     frame.classList.add("session-off");
-    document.getElementById("reader").innerHTML = "";
     document.getElementById("cooldownBadge").classList.remove("show");
 
     showSessionEndedOverlay();
@@ -1314,6 +1313,7 @@
   let settingsInitialized = false;
   let scanner;
   let scannerRunning = false;
+  let scannerReleasePromise = Promise.resolve(); // tracks the in-flight camera teardown so a new scanner never starts before the old one has actually released the camera
   let sending = false;
   let resumeTimer = null;
   let lastScanTimes = {};
@@ -1574,7 +1574,6 @@
         sending = false;
         if(resumeTimer){ clearTimeout(resumeTimer); resumeTimer = null; }
         frame.classList.add("session-off");
-        document.getElementById("reader").innerHTML = "";
         document.getElementById("cooldownBadge").classList.remove("show");
       }
     }
@@ -1823,16 +1822,31 @@
   function stopScanner(){
     if(scanner && scannerRunning){
       scannerRunning = false;
-      scanner.clear().catch(()=>{});
+      const s = scanner;
+      scanner = null;
+      // Track the teardown so startScanner() can wait for the camera to actually be released
+      scannerReleasePromise = s.clear().catch(()=>{});
     }
+    return scannerReleasePromise;
   }
 
-  function startScanner(){
+  async function startScanner(){
     if(!canScan()) return;
     sending = false;
     document.getElementById("paymentHint").textContent = "";
     idleStatusKey = "status_wait_scanning";
     setStatus(t('status_wait_scanning'), "wait");
+
+    // Wait for any previous camera instance to fully release before requesting a new one.
+    // This is the fix for the scanner randomly hanging and requiring a page refresh:
+    // without this await, a new Html5QrcodeScanner could be created (and the #reader div
+    // wiped) before the old one's getUserMedia stream was actually stopped, leaving an
+    // orphaned camera stream that blocks the next camera request.
+    try{ await scannerReleasePromise; }catch(e){}
+
+    // State may have changed while we were waiting (e.g. session ended) — bail out if so.
+    if(!canScan()) return;
+
     document.getElementById("reader").innerHTML = "";
     scanner = new Html5QrcodeScanner(
       "reader",
