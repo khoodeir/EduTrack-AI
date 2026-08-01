@@ -173,6 +173,19 @@
   .hub-grid .role-card h2{ font-size:18px; }
 
   .hub-actions{ display:flex; gap:14px; margin-top:26px; align-items:center; flex-wrap:wrap; justify-content:center; }
+
+  .back-top-row{ width:100%; max-width:920px; margin:0 0 8px; }
+  .back-top-btn{
+    display:inline-flex; align-items:center; gap:6px;
+    height:38px; padding:0 14px; border-radius:10px;
+    background:var(--card); border:1px solid var(--line); color:var(--ink);
+    font-family:inherit; font-size:12.5px; font-weight:700;
+    cursor:pointer; box-shadow:var(--shadow-sm);
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .back-top-btn:hover{ transform:translateY(-1px); box-shadow:var(--shadow-md); }
+  .back-top-btn svg{ width:16px; height:16px; transform:scaleX(-1); }
+  [dir="rtl"] .back-top-btn svg{ transform:none; }
   .link-btn{
     background:none; border:none; cursor:pointer; color:var(--muted);
     font-family:inherit; font-size:12.5px; font-weight:700; text-decoration:underline;
@@ -299,6 +312,14 @@
 
   <!-- TEACHER HUB SCREEN (shown after correct password) -->
   <div id="hubScreen">
+    <div class="back-top-row">
+      <button class="back-top-btn" onclick="showRoleScreen()">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span data-i18n="backLink">رجوع</span>
+      </button>
+    </div>
     <div class="hero">
       <div class="brand-mark">
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -380,6 +401,14 @@
 
   <!-- ASSISTANT HUB SCREEN -->
   <div id="assistantHubScreen">
+    <div class="back-top-row">
+      <button class="back-top-btn" onclick="showRoleScreen()">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span data-i18n="backLink">رجوع</span>
+      </button>
+    </div>
     <div class="hero">
       <div class="brand-mark">
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -428,10 +457,6 @@
         <h2 data-i18n="hubSearch">بحث الطلاب</h2>
         <p data-i18n="hubSearchDesc">دوّر على أي طالب</p>
       </a>
-    </div>
-
-    <div class="hub-actions">
-      <button class="link-btn" onclick="showRoleScreen()" data-i18n="backLink">رجوع</button>
     </div>
 
     <div class="footer" data-i18n="footer">بدعم من Milestones Group</div>
