@@ -122,11 +122,11 @@
     width:100%; max-width:920px; display:grid;
     grid-template-columns:repeat(3,1fr); gap:18px;
   }
-  .hub-grid{
-    width:100%; max-width:920px; display:flex; flex-wrap:wrap;
-    justify-content:center; gap:18px;
-  }
-  .hub-grid .role-card{ flex:1 1 190px; max-width:210px; }
+.hub-grid{
+  width:100%; max-width:920px; margin:0 auto; display:flex; flex-wrap:wrap;
+  justify-content:center; gap:18px;
+}
+.hub-grid .role-card{ flex:0 1 190px; width:190px; max-width:210px; }
   @media (max-width:760px){
     .roles{ grid-template-columns:1fr; max-width:420px; }
     .hub-grid{ max-width:520px; }
