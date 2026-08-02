@@ -175,16 +175,6 @@ button.submit:disabled{ opacity:0.5; cursor:not-allowed; box-shadow:none; }
   object-fit:contain;
   margin:0 auto;
 }
-.qr-code-text{
-  margin-top:12px;
-  text-align:center;
-  font-family:'Inter', monospace;
-  font-size:13px;
-  font-weight:700;
-  letter-spacing:1px;
-  color:var(--text);
-  word-break:break-all;
-}
 .qr-caption{
   font-size:12px;
   color:var(--muted);
@@ -390,7 +380,6 @@ button.submit:disabled{ opacity:0.5; cursor:not-allowed; box-shadow:none; }
 
     <div class="qr-wrap" id="qrWrap">
       <img id="qrImage" src="" alt="QR Code">
-      <div class="qr-code-text" id="qrCodeText"></div>
       <div class="qr-caption" data-i18n="qrCaption">Keep this QR code — you'll need it to attend</div>
       <div class="qr-actions">
         <a href="#" download="student-qr.png" class="qr-download" id="qrDownload" data-i18n="qrDownload">Download QR</a>
@@ -543,7 +532,6 @@ const titleWrap = document.querySelector('.title-wrap');
 const subtitle = document.querySelector('.subtitle');
 const qrWrap = document.getElementById('qrWrap');
 const qrImage = document.getElementById('qrImage');
-const qrCodeText = document.getElementById('qrCodeText');
 const qrDownload = document.getElementById('qrDownload');
 const qrPrint = document.getElementById('qrPrint');
 
@@ -622,7 +610,7 @@ function resolveQrSrc(qrValue){
   return `data:image/png;base64,${val}`;
 }
 
-function showQr(qrValue, codeText){
+function showQr(qrValue){
   const src = resolveQrSrc(qrValue);
   if (!src){
     qrWrap.style.display = 'none';
@@ -630,8 +618,6 @@ function showQr(qrValue, codeText){
   }
   qrImage.src = src;
   qrDownload.href = src;
-  qrCodeText.textContent = codeText || '';
-  qrCodeText.style.display = codeText ? 'block' : 'none';
   qrWrap.style.display = 'block';
 }
 
@@ -673,7 +659,7 @@ const data = await res.json();
 
 if (data.success === true) {
 
-  showQr(data.qr, data.student && data.student.id);
+  showQr(data.qr);
 
   form.style.display = 'none';
   titleWrap.style.display = 'none';
