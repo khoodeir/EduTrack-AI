@@ -774,12 +774,30 @@
       return `
       <div class="list-row">
         <div class="list-name"><span class="name">${st.name || "—"}</span></div>
-        <input type="number" class="score-input" data-code="${st.qrCode}" min="0" max="${maxScore}" step="0.5" placeholder="/ ${maxScore}" value="${existing ? existing[scol.score] : ''}">
+        <input type="number" class="score-input" data-code="${st.qrCode}" min="0" max="${maxScore}" step="0.5" placeholder="/ ${maxScore}" value="${existing ? existing[scol.score] : ''}" onkeydown="handleScoreEntryKeydown(event)">
       </div>`;
     }).join("");
     panel.style.display = "block";
     panel.dataset.examId = exam[ecol.id];
     panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    // Focus the first empty field so الكتابة تبدأ فورًا من غير ما تدوس بالماوس
+    const firstInput = document.querySelector("#examEntryBody .score-input");
+    if(firstInput) firstInput.focus();
+  }
+
+  /* Enter ينقل للحقل اللي بعده مباشرة (زي إكسيل)، ولو كنت في آخر حقل بيضغط
+     زرار "حفظ الدرجات" تلقائيًا عشان يحفظ كل اللي اتكتب لحد دلوقتي دفعة واحدة. */
+  function handleScoreEntryKeydown(e){
+    if(e.key !== "Enter") return;
+    e.preventDefault();
+    const inputs = Array.from(document.querySelectorAll("#examEntryBody .score-input"));
+    const idx = inputs.indexOf(e.target);
+    if(idx > -1 && idx < inputs.length - 1){
+      inputs[idx + 1].focus();
+      inputs[idx + 1].select();
+    } else if(idx === inputs.length - 1){
+      document.getElementById("saveExamEntryBtn").click();
+    }
   }
 
   function cancelScoreEntry(){
