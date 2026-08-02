@@ -410,8 +410,6 @@ button.submit:disabled{ opacity:0.5; cursor:not-allowed; box-shadow:none; }
 <script>
 /* ============================================================
    LANGUAGE (English / Arabic) — UI text only.
-   Does NOT touch WEBHOOK_URL, CHAT_WEBHOOK, payload field names,
-   or any fetch/n8n logic below — those stay exactly as they were.
    ============================================================ */
 const I18N = {
   en: {
@@ -519,9 +517,14 @@ document.querySelectorAll("#langToggle button").forEach(btn => {
 setLanguage(currentLang);
 
 /* ============================================================
-   FORM VALIDATION + SUBMISSION (unchanged n8n integration below)
+   FORM VALIDATION + SUBMISSION (n8n integration)
    ============================================================ */
+// NOTE: both endpoints now point at the PRODUCTION webhook path.
+// The "webhook-test" path only works while you have the n8n editor open
+// with "Listen for test event" active — that's why the chat was failing.
 const WEBHOOK_URL = "https://helmet-handrail-skipper.ngrok-free.dev/webhook/Student_Registration";
+const CHAT_WEBHOOK = "https://helmet-handrail-skipper.ngrok-free.dev/webhook/Student_Registration_Chat";
+
 const phoneRegex = /^01[0-9]{9}$/; // 11 digits total, starts with 01
 
 const form = document.getElementById('regForm');
@@ -587,10 +590,9 @@ async function extractErrorMessage(res){
       const data = JSON.parse(rawText);
       const msg = data.message || data.error || data.msg || data.detail;
       if (msg) return msg;
-      // JSON parsed fine but no recognizable message field, show status text if any
     } catch(e){
-      // not JSON, treat as plain text message
-      return rawText.trim();
+      // not JSON, treat as plain text message (trimmed so we never dump a full HTML page)
+      return rawText.trim().slice(0, 200);
     }
   }
 
@@ -604,6 +606,7 @@ async function extractErrorMessage(res){
 function resolveQrSrc(qrValue){
   if (!qrValue || typeof qrValue !== 'string') return null;
   const val = qrValue.trim();
+  if (!val) return null;
   if (val.startsWith('data:image')) return val;
   if (val.startsWith('http://') || val.startsWith('https://')) return val;
   // assume raw base64 (png)
@@ -648,40 +651,54 @@ form.addEventListener('submit', async (e) => {
 
   try{
     const res = await fetch(WEBHOOK_URL, {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify(payload)
-});
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // Required so ngrok's free-tier interstitial warning page doesn't
+        // intercept the request and return HTML instead of your JSON.
+        'ngrok-skip-browser-warning': 'true'
+      },
+      body: JSON.stringify(payload)
+    });
 
-const data = await res.json();
+    if (!res.ok){
+      statusEl.textContent = await extractErrorMessage(res);
+      statusEl.className = 'status failure';
+      submitBtn.disabled = false;
+      submitBtn.textContent = t('btnSubmit');
+      return;
+    }
 
-if (data.success === true) {
+    let data;
+    try{
+      data = await res.json();
+    } catch(parseErr){
+      statusEl.textContent = t('errGeneric');
+      statusEl.className = 'status failure';
+      submitBtn.disabled = false;
+      submitBtn.textContent = t('btnSubmit');
+      return;
+    }
 
-  showQr(data.qr);
-
-  form.style.display = 'none';
-  titleWrap.style.display = 'none';
-  subtitle.style.display = 'none';
-  successView.style.display = 'block';
-
-} else {
-
-  statusEl.textContent = data.message || t('errRegistrationFailed');
-  statusEl.className = "status failure";
-
-  submitBtn.disabled = false;
-  submitBtn.textContent = t('btnSubmit');
-}
+    if (data.success === true){
+      showQr(data.qr);
+      form.style.display = 'none';
+      titleWrap.style.display = 'none';
+      subtitle.style.display = 'none';
+      successView.style.display = 'block';
+    } else {
+      statusEl.textContent = data.message || t('errRegistrationFailed');
+      statusEl.className = 'status failure';
+      submitBtn.disabled = false;
+      submitBtn.textContent = t('btnSubmit');
+    }
   } catch(err){
     statusEl.textContent = t('errGeneric');
-    statusEl.classList.add('failure');
+    statusEl.className = 'status failure';
     submitBtn.disabled = false;
     submitBtn.textContent = t('btnSubmit');
   }
 });
-  const CHAT_WEBHOOK = "https://helmet-handrail-skipper.ngrok-free.dev/webhook-test/Student_Registration";
 
 const chatButton = document.getElementById("chatButton");
 const chatWindow = document.getElementById("chatWindow");
@@ -709,59 +726,66 @@ document.addEventListener("click", (e) => {
   }
 });
 
-function addMessage(text,type){
-  chatMessages.innerHTML += `
-    <div class="msg ${type}">
-      ${text}
-    </div>
-  `;
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function addMessage(text, type){
+  const msg = document.createElement('div');
+  msg.className = `msg ${type}`;
+  msg.textContent = text;
+  chatMessages.appendChild(msg);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
 async function sendMessage(){
-
   const message = chatInput.value.trim();
+  if (!message) return;
 
-  if(!message) return;
-
-  addMessage(message,"user");
-
-  chatInput.value="";
+  addMessage(message, "user");
+  chatInput.value = "";
+  sendChat.disabled = true;
 
   try{
-
-    const res = await fetch(CHAT_WEBHOOK,{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json"
+    const res = await fetch(CHAT_WEBHOOK, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "true"
       },
-      body:JSON.stringify({
-        message:message
-      })
+      body: JSON.stringify({ message: message })
     });
 
-    const data = await res.json();
+    if (!res.ok){
+      addMessage(t('chatServerError'), "bot");
+      return;
+    }
+
+    let data;
+    try{
+      data = await res.json();
+    } catch(parseErr){
+      addMessage(t('chatServerError'), "bot");
+      return;
+    }
 
     addMessage(
-    data.output ||
-    data.reply ||
-    data.message ||
-    t('chatNoResponse'),
-    "bot"
-);
-
-  }catch(e){
-
-    addMessage(t('chatServerError'),"bot");
-
+      data.output || data.reply || data.message || t('chatNoResponse'),
+      "bot"
+    );
+  } catch(e){
+    addMessage(t('chatServerError'), "bot");
+  } finally {
+    sendChat.disabled = false;
   }
-
 }
 
 sendChat.onclick = sendMessage;
 
-chatInput.addEventListener("keypress",function(e){
-  if(e.key==="Enter"){
+chatInput.addEventListener("keypress", function(e){
+  if (e.key === "Enter"){
     sendMessage();
   }
 });
