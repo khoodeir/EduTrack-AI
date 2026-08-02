@@ -2447,7 +2447,12 @@ function goBack(){
   function showUnpaidModal(origIdx){
     const col = HIST_SCHEMA.col;
     const row = currentHistRows[origIdx];
-    if(!row) return;
+    console.log('showUnpaidModal clicked, origIdx=', origIdx, 'row=', row, 'currentHistRows=', currentHistRows);
+    if(!row){
+      console.error('showUnpaidModal: no row found for origIdx', origIdx, '— currentHistRows length is', currentHistRows.length);
+      alert('حصل خطأ في فتح البيانات — افتح الـ Console (F12) وابعتلي اللي ظاهر');
+      return;
+    }
     const list = row[col.unpaidStudents] || [];
     document.getElementById("unpaidModalTitle").textContent =
       `Who Hasn't Paid – ${monthLabel(row[col.year], row[col.month])}`;
