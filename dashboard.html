@@ -665,7 +665,7 @@
   </svg>
   <span data-i18n="backBtn">Back</span>
 </button>
-    <button class="refresh-btn" id="refreshBtn" onclick="loadDashboard()">
+    <button class="refresh-btn" id="refreshBtn" onclick="refreshCurrentView()">
       <span class="spin">↻</span> <span data-i18n="refreshBtn">Refresh data</span>
     </button>
   </div>
@@ -872,14 +872,6 @@
       <div class="state-msg err" id="histErrorMsg"></div>
 
       <div class="content" id="histContent">
-
-        <div class="hist-banner" id="histBanner">
-          <div class="msg">
-            <span data-i18n="histBannerMsg">No snapshot saved yet for the current month.</span>
-            <span data-i18n="histBannerSub">Save it before the month rolls over, so this month's numbers aren't lost.</span>
-          </div>
-          <button class="save-snapshot-btn" onclick="saveCurrentMonthSnapshot()">💾 <span data-i18n="saveNow">Save current month now</span></button>
-        </div>
 
         <div class="hist-toolbar">
           <div class="left">
@@ -1142,9 +1134,7 @@
       colPayment: "Payment", colLastAttendance: "Last Attendance", colReport: "Report",
       colMonth: "Month", colStudents: "Students", colCollectionRate: "Collection Rate", colRevenue: "Revenue",
       colPaid: "Paid", colUnpaid: "Unpaid", colWhoUnpaid: "Who Hasn't Paid",
-      histBannerMsg: "No snapshot saved yet for the current month.",
-      histBannerSub: "Save it before the month rolls over, so this month's numbers aren't lost.",
-      saveNow: "Save current month now", saveCurrentMonth: "Save Current Month",
+      saveCurrentMonth: "Save Current Month",
       downloadLatestPdf: "Download PDF (Latest Month)",
       secAttCollTrend: "Attendance & Collection Rate", tagTrend: "Trend",
       secRevenueByMonth: "Revenue by Month",
@@ -1204,9 +1194,7 @@
       colPayment: "الدفع", colLastAttendance: "آخر حضور", colReport: "التقرير",
       colMonth: "الشهر", colStudents: "الطلاب", colCollectionRate: "نسبة التحصيل", colRevenue: "الإيراد",
       colPaid: "مدفوع", colUnpaid: "غير مدفوع", colWhoUnpaid: "من لم يدفع",
-      histBannerMsg: "لم يتم حفظ نسخة للشهر الحالي بعد.",
-      histBannerSub: "احفظها قبل بداية الشهر الجديد حتى لا تفقد أرقام هذا الشهر.",
-      saveNow: "احفظ الشهر الحالي الآن", saveCurrentMonth: "حفظ الشهر الحالي",
+      saveCurrentMonth: "حفظ الشهر الحالي",
       downloadLatestPdf: "تحميل PDF (آخر شهر)",
       secAttCollTrend: "نسبة الحضور والتحصيل", tagTrend: "اتجاه",
       secRevenueByMonth: "الإيراد حسب الشهر",
@@ -1366,6 +1354,21 @@ function goBack(){
     document.getElementById("examGradeSelect").value = examGrade;
     loadExamGrades();
   });
+
+  /* Refresh button now refreshes whichever tab is currently open (dashboard,
+     monthly history, or exam grades) instead of always reloading the main
+     dashboard data while the person is looking at a different tab. */
+  function refreshCurrentView(){
+    if(document.getElementById("historyView").style.display !== "none"){
+      loadHistory();
+    } else if(document.getElementById("examsView").style.display !== "none"){
+      loadExamGrades();
+    } else if(document.getElementById("settingsView").style.display !== "none"){
+      // nothing to refresh on the settings view
+    } else {
+      loadDashboard();
+    }
+  }
 
   function setPayFilter(f){
     payFilterState = f;
@@ -1813,9 +1816,17 @@ function goBack(){
 
     if(currentGrade === "all"){
       // One line per grade, plotted by exam order (1st exam, 2nd exam, ...) since
-      // each grade can have a different set/number of exams.
+      // each grade can have a different set/number of exams. Labels use the real
+      // exam name (taken from whichever grade has an exam at that position) instead
+      // of a generic "Exam N" placeholder.
       const maxLen = Math.max(0, ...gradesShown.map(g => (data[g] || []).length));
-      const labels = Array.from({ length: maxLen }, (_, i) => `Exam ${i + 1}`);
+      const labels = Array.from({ length: maxLen }, (_, i) => {
+        for(const g of gradesShown){
+          const ex = (data[g] || [])[i];
+          if(ex && ex.name) return ex.name;
+        }
+        return `Exam ${i + 1}`;
+      });
 
       charts.examAvg = new Chart(canvas, {
         type: "line",
@@ -2294,12 +2305,6 @@ function goBack(){
     const rows = historyRows
       .filter(r => r[col.grade] === historyGradeFilter)
       .sort((a,b) => (a[col.year]-b[col.year]) || (a[col.month]-b[col.month]));
-
-    // Banner: warn if the current month hasn't been archived yet.
-    const now = new Date();
-    const curY = now.getFullYear(), curM = now.getMonth() + 1;
-    const hasCurrent = historyRows.some(r => r[col.year] === curY && r[col.month] === curM);
-    document.getElementById("histBanner").style.display = hasCurrent ? "none" : "flex";
 
     renderDeltaCards(rows);
     renderHistCharts(rows);
